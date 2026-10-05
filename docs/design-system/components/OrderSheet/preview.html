@@ -1,0 +1,22 @@
+<!-- @dsCard group="Ordering" height=620 subtitle="Bottom sheet that turns the selection into a WhatsApp message" -->
+<div class="ad-root" style="padding:32px 24px 0;display:flex;justify-content:center">
+  <section class="ad-sheet" aria-labelledby="sheet-t" style="width:100%">
+    <div class="ad-sheet__grip"></div>
+    <h2 class="ad-sheet__title" id="sheet-t">سلة الطلب</h2>
+    <div class="ad-line">
+      <span class="ad-line__name">عود ملكي<span class="ad-line__meta">100 مل</span></span>
+      <span class="ad-stepper"><button type="button" aria-label="زيادة">+</button><span>1</span><button type="button" aria-label="إنقاص">−</button></span>
+      <span class="ad-line__price">₪ 180</span>
+    </div>
+    <div class="ad-line">
+      <span class="ad-line__name">كريم ترطيب اللحية<span class="ad-line__meta">50 مل</span></span>
+      <span class="ad-stepper"><button type="button" aria-label="زيادة">+</button><span>2</span><button type="button" aria-label="إنقاص">−</button></span>
+      <span class="ad-line__price">₪ 90</span>
+    </div>
+    <div class="ad-total"><span>المجموع</span><span class="ad-price">₪ 270</span></div>
+    <div class="ad-field"><label for="n">الاسم</label><input id="n" value="أحمد"></div>
+    <div class="ad-field"><label for="a">المنطقة</label><input id="a" placeholder="مثلاً: رفيديا"></div>
+    <button class="ad-btn ad-btn--whatsapp ad-btn--block" type="button">أرسل الطلب على واتساب</button>
+    <p class="ad-sheet__note">سيُفتح واتساب برسالة جاهزة، والدفع عند الاستلام.</p>
+  </section>
+</div>
