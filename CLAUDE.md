@@ -47,6 +47,7 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
   ```
   A negative delta that would go below 0 fails (check constraint). Staff never read `stock_quantity` directly (column grant); the admin reads it through `admin_*` functions. In the admin, «المخزون» (`admin_adjust_stock`) records receive / count / damage with a note; `sale` and `cancel` only come from orders.
 - New custom error codes: never `P0000`–`P0004` (Postgres's own; `P0004` is `assert_failure`, which `exception when others` can't catch). Admin codes so far: `P0001` stock / unavailable, `P0006` not found, `P0010` status change not allowed, `P0011` still in use, `P0013` option without values, `P0005` no account with this email, `P0012` already staff (`P0003` last owner predates the rule and stays).
+- Admin figures (`admin_owner_dashboard`, `admin_sales_daily`, owner only; `admin_staff_summary`, staff) are aggregated in Postgres: sales = orders `confirmed` or `done`, by placement day in `Asia/Hebron`; the week starts on Saturday. Charts are plain SVG with tokens (no chart library).
 - After any schema change, run the Supabase security advisors and fix new findings. Tests for each phase live in `supabase/tests/` (one DO block that ends in a deliberate exception, so it rolls back).
 - Clients: `src/lib/supabase/client.ts` (browser) and `src/lib/supabase/server.ts` (server components / route handlers).
 

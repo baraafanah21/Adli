@@ -63,6 +63,9 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_add_staff(email, role, is_barber)` | owner | F4 |
 | `admin_update_staff(user_id, role, is_barber)` | owner | F4 |
 | `admin_remove_staff(user_id)` | owner | F4 |
+| `admin_owner_dashboard(period)` | owner | F5 |
+| `admin_sales_daily(days)` | owner | F5 |
+| `admin_staff_summary()` | owner, staff | F5 |
 
 Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 
