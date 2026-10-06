@@ -1,4 +1,4 @@
--- Phase F4: categories and staff, owner only; the last owner is protected. Run in the SQL Editor after
+-- Phase F4: categories and staff, owner only; the last owner is protected (tested even when real owners exist). Run in the SQL Editor after
 -- 20261007000500_admin_categories_staff.sql. One DO block ending in a deliberate exception: everything is rolled back.
 -- Each line is one check; a line starting with FAIL is a failure.
 
@@ -13,10 +13,8 @@ declare
   cust uuid := gen_random_uuid();
   newbie uuid := gen_random_uuid();
   c_new uuid;
-  v_owners int;
+  v_roles int;
 begin
-  -- Real owners (if any) count towards «the last owner»; the test makes its own and checks relative to them.
-  select count(*) into v_owners from public.user_roles where role = 'owner';
 
   insert into auth.users (id, aud, role, email, created_at, updated_at) values
     (owner1, 'authenticated', 'authenticated', 'f4-owner1@test.invalid', now(), now()),
@@ -25,6 +23,10 @@ begin
     (cust,   'authenticated', 'authenticated', 'f4-cust@test.invalid',   now(), now()),
     (newbie, 'authenticated', 'authenticated', 'F4-Newbie@Test.invalid', now(), now());
   insert into public.user_roles (user_id, role) values (owner1, 'owner'), (staff, 'staff');
+  -- The real owner(s) step aside for the length of the test (allowed: owner1 is an owner too), so owner1 is the only
+  -- owner and the last-owner protection is always tested. The rollback at the end puts them back.
+  delete from public.user_roles where role = 'owner' and user_id <> owner1;
+  select count(*) into v_roles from public.user_roles;
 
   -- anon, customer, staff: no owner function
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -80,7 +82,7 @@ begin
   r := r || 'category after edit: ' || (select name_ar || ' ' || icon || ' ' || is_active::text from public.categories where id = c_new) || E'\n';
 
   -- staff (read through admin_staff(): RLS on user_roles shows each user only their own row)
-  r := r || 'staff list: ' || (select count(*) from public.admin_staff()) || ' rows (' || (v_owners + 2) || ' expected)' || E'\n';
+  r := r || 'staff list: ' || (select count(*) from public.admin_staff()) || ' rows (expect ' || v_roles || ')' || E'\n';
   begin
     perform public.admin_add_staff('nobody@test.invalid', 'staff'); r := r || 'FAIL unknown email added' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'unknown email: ' || st || ' (expect P0005)' || E'\n'; end;
@@ -95,22 +97,18 @@ begin
   r := r || 'newbie removed: ' || (not exists (select 1 from public.admin_staff() where user_id = newbie))::text || E'\n';
   reset role;
 
-  -- the last owner (only checkable when the test's owner1 is the only owner)
-  if v_owners = 0 then
-    set local role authenticated;
-    begin
-      perform public.admin_update_staff(owner1, 'staff', false); r := r || 'FAIL last owner demoted' || E'\n';
-    exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'demote last owner: ' || st || ' (expect P0003)' || E'\n'; end;
-    begin
-      perform public.admin_remove_staff(owner1); r := r || 'FAIL last owner removed' || E'\n';
-    exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'remove last owner: ' || st || ' (expect P0003)' || E'\n'; end;
-    perform public.admin_add_staff('f4-owner2@test.invalid', 'owner');
-    perform public.admin_remove_staff(owner1);
-    reset role;
-    r := r || 'with a second owner, owner1 removed itself: ' || (not exists (select 1 from public.user_roles where user_id = owner1))::text || E'\n';
-  else
-    r := r || 'last-owner checks skipped: ' || v_owners || ' real owner(s) exist' || E'\n';
-  end if;
+  -- the last owner: owner1 is the only owner here
+  set local role authenticated;
+  begin
+    perform public.admin_update_staff(owner1, 'staff', false); r := r || 'FAIL last owner demoted' || E'\n';
+  exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'demote last owner: ' || st || ' (expect P0003)' || E'\n'; end;
+  begin
+    perform public.admin_remove_staff(owner1); r := r || 'FAIL last owner removed' || E'\n';
+  exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'remove last owner: ' || st || ' (expect P0003)' || E'\n'; end;
+  perform public.admin_add_staff('f4-owner2@test.invalid', 'owner');
+  perform public.admin_remove_staff(owner1);
+  reset role;
+  r := r || 'with a second owner, owner1 removed itself: ' || (not exists (select 1 from public.user_roles where user_id = owner1))::text || E'\n';
 
   -- anon doesn't see the hidden category
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
