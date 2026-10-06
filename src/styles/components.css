@@ -250,3 +250,77 @@
   .ad-seal__img, .ad-chip, .ad-chip:active { transition: none; transform: none; }
   .ad-card:hover .ad-seal__img, .ad-card:focus-within .ad-seal__img { transform: none; }
 }
+
+/* ======================================================================
+   Phase A additions: the order sheet as a native <dialog>. Noted in OrderSheet/README.md.
+   The dialog lives in the browser's top layer, which sits above z-sheet by definition.
+   ====================================================================== */
+
+/* ---------- Order sheet: dialog shell (bottom sheet on phones, docked to the RTL end on desktop) ---------- */
+.ad-sheet-dialog {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: visible;
+  transform: translateY(0);
+  transition: transform var(--dur-panel) var(--ease-out), overlay var(--dur-panel) allow-discrete, display var(--dur-panel) allow-discrete;
+}
+.ad-sheet-dialog:not([open]) { transform: translateY(100%); }
+@starting-style { .ad-sheet-dialog[open] { transform: translateY(100%); } }
+.ad-sheet-dialog::backdrop {
+  background: color-mix(in srgb, var(--forest) 70%, transparent);
+  transition: opacity var(--dur-panel) var(--ease-out), overlay var(--dur-panel) allow-discrete, display var(--dur-panel) allow-discrete;
+}
+.ad-sheet-dialog:not([open])::backdrop { opacity: 0; }
+@starting-style { .ad-sheet-dialog[open]::backdrop { opacity: 0; } }
+.ad-sheet-dialog .ad-sheet { max-width: none; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom)); }
+
+@media (min-width: 720px) {
+  .ad-sheet-dialog { inset: 0 auto 0 0; inset-inline-start: auto; inset-inline-end: 0; width: 440px; height: 100dvh; max-height: none; }
+  .ad-sheet-dialog:not([open]) { transform: translateX(-100%); }
+  @starting-style { .ad-sheet-dialog[open] { transform: translateX(-100%); } }
+  .ad-sheet-dialog .ad-sheet { height: 100%; max-height: none; border-radius: 0; border-start-start-radius: var(--radius-md); border-end-start-radius: var(--radius-md); }
+  .ad-sheet-dialog .ad-sheet__grip { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-sheet-dialog, .ad-sheet-dialog::backdrop { transition: none; }
+}
+
+/* ---------- Order sheet: header, lines, states ---------- */
+.ad-sheet__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.ad-sheet__head .ad-sheet__title { margin: 0; }
+.ad-sheet__close {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--ink-muted);
+  font-size: 28px; line-height: 1; cursor: pointer;
+}
+.ad-sheet__close:hover { color: var(--ink); }
+.ad-sheet__lines { list-style: none; margin: 0; padding: 0; }
+.ad-stepper button { width: 44px; height: 44px; } /* touch target */
+.ad-stepper button[disabled] { opacity: 0.35; cursor: not-allowed; }
+.ad-line--out .ad-line__name { color: var(--ink-muted); }
+.ad-line--out .ad-line__meta { color: var(--oud); }
+.ad-line--out .ad-line__price { text-decoration: line-through; color: var(--ink-muted); }
+.ad-field__error { font-size: 13px; color: var(--ink); padding-inline-start: var(--space-2); border-inline-start: 2px solid var(--oud); }
+.ad-field input[aria-invalid="true"] { border-color: var(--oud); }
+.ad-field input::placeholder { color: var(--ink-muted); opacity: 0.8; }
+.ad-sheet__error {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--oud);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.ad-sheet__empty, .ad-sheet__done { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-8) 0; text-align: center; }
+.ad-sheet__empty p, .ad-sheet__done p { margin: 0; }
+a.ad-btn { text-decoration: none; } /* links styled as buttons (Button with href) */
