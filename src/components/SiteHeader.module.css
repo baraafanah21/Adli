@@ -118,3 +118,20 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+/* The badge re-mounts when the count changes, so this runs once per change. */
+.pulse {
+  animation: badge-pulse var(--dur-panel) var(--ease-out);
+}
+
+@keyframes badge-pulse {
+  40% {
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}
