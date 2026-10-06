@@ -1,11 +1,10 @@
 .hero {
-  min-height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-12) var(--space-4) var(--space-8);
+  text-align: center;
 }
 
 .hero h1,
@@ -13,36 +12,56 @@
   margin: 0;
 }
 
-.seal {
-  width: min(56vw, 240px);
-  aspect-ratio: 1;
-  border-radius: var(--radius-seal);
-  background: var(--cream);
-  padding: 6%;
-  margin-bottom: var(--space-6);
+.hero .wordmark {
+  margin-top: var(--space-4);
 }
 
-.ring {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-seal);
-  background: var(--forest);
-  padding: 4%;
+/* display-xl drops to display-lg under 720px (tokens.json). */
+@media (max-width: 719px) {
+  .hero .wordmark {
+    font-size: 64px;
+    line-height: 1.3;
+  }
 }
 
-.disc {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-seal);
-  border: 3px solid var(--cream);
+.hero .lede {
+  max-width: 34ch;
+  margin-top: var(--space-4);
+  color: var(--ink-muted);
+}
+
+.shelf {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4) var(--space-24);
+  scroll-margin-top: 56px;
+}
+
+.shelf:focus {
+  outline: none;
+}
+
+.shelf h2 {
+  margin: 0 0 var(--space-4);
+}
+
+@media (min-width: 720px) {
+  .shelf {
+    padding-inline: var(--space-8);
+  }
+}
+
+.error {
   display: grid;
-  place-items: center;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunk);
+  text-align: center;
 }
 
-.letter {
-  font-family: var(--font-amiri);
-  font-size: min(28vw, 120px);
-  line-height: 1;
-  color: var(--cream);
-  transform: translateY(-6%);
+.error p {
+  margin: 0;
 }
