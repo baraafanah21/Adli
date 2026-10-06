@@ -1,0 +1,19 @@
+.grid {
+  margin-top: var(--space-8);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding: var(--space-12) var(--space-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.empty p {
+  margin: 0;
+}
