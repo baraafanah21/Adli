@@ -12,6 +12,7 @@ const UNIQUE: Record<string, string> = {
   product_variants_sku_key: "رمز SKU هذا مستعمل لنسخة أخرى. اختر رمزاً مختلفاً.",
   product_options_product_id_name_ar_key: "للمنتج خيار بهذا الاسم من قبل.",
   product_option_values_option_id_label_ar_key: "هذه القيمة موجودة في هذا الخيار من قبل.",
+  categories_slug_key: "هذا الرابط مستعمل لفئة أخرى. اختر رابطاً مختلفاً.",
 };
 
 const CHECKS: Record<string, string> = {
@@ -25,6 +26,10 @@ const CHECKS: Record<string, string> = {
   bundle_has_no_options: "البكجة لا تأخذ خيارات (مقاس أو لون).",
   product_kind_locked: "لا يمكن تغيير نوع منتج له خيارات أو داخل بكجة.",
   variant_values_invalid: "كل نسخة تأخذ قيمة واحدة من كل خيار. ولّد النسخ من جديد.",
+  categories_slug_check: "رابط الفئة: حروف إنجليزية صغيرة وأرقام وشرطة فقط، مثل hair-beard.",
+  categories_icon_check: "اختر أيقونة من القائمة.",
+  categories_description_ar_check: "الوصف القصير 140 حرفاً على الأكثر.",
+  categories_name_ar_check: "اسم الفئة من حرف إلى 60 حرفاً.",
 };
 
 const RAISED: Record<string, string> = {
@@ -56,6 +61,12 @@ export function adminErrorMessage(error: DbError): string {
       return "هذه القيمة مستعملة في نسخ. أخفِ النسخ بدلاً من حذفها.";
     case "P0013":
       return "أضف قيمة واحدة على الأقل لكل خيار قبل توليد النسخ.";
+    case "P0003":
+      return "لا يمكن إزالة آخر صاحب صالون أو تحويله إلى طاقم. أضف صاحب صالون آخر أولاً.";
+    case "P0005":
+      return "هذا البريد لم يسجّل في الموقع بعد. اطلب منه إنشاء حساب ثم أضفه.";
+    case "P0012":
+      return "هذا الشخص في الطاقم من قبل. عدّل دوره من القائمة.";
     default:
       return "تعذّر الحفظ. تأكد من الاتصال وحاول مرة أخرى.";
   }
@@ -63,4 +74,4 @@ export function adminErrorMessage(error: DbError): string {
 
 /** Codes that are the user's to fix; anything else is logged on the server. */
 export const isExpectedAdminError = (code?: string) =>
-  !!code && ["42501", "23505", "23514", "23503", "22023", "P0006", "P0011", "P0013"].includes(code);
+  !!code && ["42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013"].includes(code);

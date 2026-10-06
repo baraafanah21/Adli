@@ -1,0 +1,60 @@
+.member {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.head {
+  display: grid;
+  gap: 2px;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.you {
+  font-weight: 400;
+  color: var(--brass);
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--ink-muted);
+  justify-self: start;
+}
+
+.remove {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--oud);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.remove:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.confirm {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--oud);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+}
+
+.question {
+  margin: 0;
+  font-weight: 500;
+}

@@ -1,0 +1,45 @@
+.icons {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.icons legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 48px);
+  gap: var(--space-2);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-seal);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.icon:hover {
+  border-color: var(--brass);
+}
+
+.icon:has(input:checked) {
+  border: 2px solid var(--brass);
+  color: var(--brass);
+  background: var(--surface-sunk);
+}
+
+.icon:has(input:focus-visible) {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}

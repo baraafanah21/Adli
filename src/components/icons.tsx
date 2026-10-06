@@ -203,6 +203,9 @@ const CATEGORY_PATHS = {
 
 export type CategoryIconName = keyof typeof CATEGORY_PATHS;
 
+/** The allowed names, in the order the admin's icon picker shows them. */
+export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_PATHS) as CategoryIconName[];
+
 /** A category's icon by name; an unknown or missing name falls back to the bottle. */
 export function CategoryIcon({ name, size = 24 }: IconProps & { name: string | null }) {
   const paths = name && name in CATEGORY_PATHS ? CATEGORY_PATHS[name as CategoryIconName] : null;
