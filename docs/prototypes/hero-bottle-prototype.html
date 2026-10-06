@@ -1,0 +1,382 @@
+<!doctype html>
+<!-- Reference prototype for the hero bottle (raw three.js). The site version is src/components/HeroBottle.tsx. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>قنينة عدلي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Readex+Pro:wght@300;400;500&display=swap">
+<style>
+  /* Layout: one full-bleed stage; the bottle is the page. Name top-start, controls bottom, both quiet. */
+  :root {
+    --forest: #0B300F;
+    --ground: #0B300F;
+    --surface: #124019;
+    --ink: #F5F5DB;
+    --ink-muted: #A9BBA3;
+    --brass: #C9A24A;
+    --on-brass: #0B300F;
+    --line-strong: #5E9466;
+    --font-display: Amiri, "Readex Pro", serif;
+    --font-sans: "Readex Pro", "Segoe UI", Tahoma, sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    overflow: hidden;
+  }
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  .stage canvas:active { cursor: grabbing; }
+
+  .name {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 20px);
+    inset-inline-start: 24px;
+    direction: rtl;
+    pointer-events: none;
+    display: grid;
+    gap: 2px;
+  }
+  .name h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(40px, 7vw, 64px); line-height: 1.2; margin: 0; }
+  .name p { margin: 0; font-size: 14px; color: var(--ink-muted); max-width: 22ch; }
+  @media (max-width: 520px) { .name h1 { font-size: 36px; } .name p { font-size: 13px; } }
+
+  .controls {
+    position: fixed;
+    inset-inline: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    direction: rtl;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 3px;
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .seg button, .toggle {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--brass); color: var(--on-brass); }
+  .toggle {
+    border: 1px solid var(--line-strong);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  button:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+  .hint { width: 100%; text-align: center; font-size: 13px; color: var(--ink-muted); margin: 0; }
+
+  .fallback {
+    position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+    padding-inline: 24px; color: var(--ink-muted); font-size: 15px;
+  }
+  .fallback[hidden] { display: none; }
+</style>
+
+<div class="stage" id="stage"></div>
+
+<div class="name">
+  <h1>عدلي</h1>
+  <p>نموذج القنينة الافتتاحية: غطاء منحوت بختم الشعار</p>
+</div>
+
+<div class="controls">
+  <div class="seg" role="group" aria-label="خامة الغطاء">
+    <button type="button" id="cap-brass" aria-pressed="true">نحاس</button>
+    <button type="button" id="cap-enamel" aria-pressed="false">مينا خضراء</button>
+  </div>
+  <button type="button" class="toggle" id="spin" aria-pressed="true">إيقاف الدوران</button>
+  <p class="hint">اسحب لتدوير القنينة، وقرّب بإصبعين أو بعجلة الماوس</p>
+</div>
+
+<p class="fallback" id="fallback">جارٍ تجهيز القنينة…</p>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const fallback = document.getElementById('fallback');
+
+// The ع traced from the Adli logo, in logo pixels around the seal centre (y down).
+const AIN = [[-50.0,-317.5],[-60.5,-315.5],[-72.0,-310.5],[-80.5,-304.5],[-93.0,-290.5],[-104.0,-271.5],[-115.0,-247.0],[-133.0,-214.0],[-142.5,-190.0],[-144.0,-183.0],[-144.0,-172.5],[-141.0,-161.0],[-136.5,-152.5],[-127.5,-142.0],[-117.5,-134.0],[-105.0,-128.0],[-84.5,-123.0],[-65.0,-122.0],[-64.5,-120.5],[-85.5,-93.5],[-105.0,-64.0],[-126.0,-25.0],[-142.0,12.5],[-153.0,47.0],[-155.0,58.5],[-157.0,64.0],[-161.0,88.0],[-163.5,119.0],[-163.0,150.0],[-161.0,168.0],[-160.0,170.0],[-158.0,184.5],[-149.0,214.5],[-135.0,242.5],[-127.0,254.0],[-113.5,268.5],[-104.5,276.0],[-89.5,286.0],[-81.5,290.0],[-68.0,295.0],[-53.5,298.5],[-34.0,301.0],[-1.5,301.0],[21.5,298.0],[38.5,294.0],[60.0,286.5],[78.0,278.0],[88.5,272.0],[113.0,255.0],[137.0,234.5],[154.5,216.5],[168.0,200.5],[184.5,178.5],[205.0,146.0],[215.5,126.5],[233.5,87.0],[241.5,66.5],[251.5,38.0],[257.0,18.0],[241.0,12.5],[225.0,51.5],[209.0,81.5],[193.0,106.0],[182.0,120.5],[166.5,138.5],[149.5,155.0],[128.0,172.0],[111.5,182.5],[93.5,191.5],[62.5,202.5],[33.5,208.5],[15.5,210.5],[-10.5,210.5],[-40.0,206.5],[-53.5,202.5],[-63.0,198.5],[-82.5,187.5],[-99.0,173.0],[-109.5,159.0],[-118.0,143.0],[-121.5,133.5],[-125.5,117.0],[-127.5,97.0],[-126.5,71.0],[-122.5,45.0],[-117.5,25.5],[-105.5,-6.0],[-97.5,-23.0],[-84.5,-46.0],[-64.5,-75.5],[-49.5,-94.5],[-35.0,-111.0],[-9.5,-136.5],[17.5,-160.0],[47.0,-181.5],[70.5,-220.5],[70.5,-221.5],[65.0,-227.0],[62.0,-227.5],[40.0,-214.5],[15.5,-202.5],[-2.5,-196.0],[-24.0,-191.5],[-51.0,-190.5],[-63.5,-193.0],[-72.0,-196.0],[-84.5,-202.5],[-93.5,-211.0],[-97.5,-218.0],[-99.0,-225.0],[-99.0,-233.0],[-97.5,-241.0],[-94.0,-249.0],[-90.5,-254.0],[-84.0,-260.5],[-72.5,-268.0],[-59.5,-272.5],[-49.5,-274.0],[-36.0,-274.0],[-24.5,-272.5],[-14.5,-269.0],[-11.5,-269.0],[-6.5,-276.0],[-5.5,-280.5],[-5.5,-287.5],[-7.0,-294.5],[-11.5,-303.0],[-17.0,-309.0],[-21.5,-312.5],[-28.0,-315.5],[-39.0,-317.5]];
+
+function start() {
+  const host = document.getElementById('stage');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  } catch (e) {
+    fallback.textContent = 'هذا الجهاز لا يدعم العرض ثلاثي الأبعاد. في الموقع ستظهر صورة القنينة بدلاً منه.';
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  host.appendChild(renderer.domElement);
+
+  const FOREST = new THREE.Color('#0B300F');
+  const scene = new THREE.Scene();
+  scene.background = FOREST.clone();
+  scene.fog = new THREE.Fog(FOREST, 22, 46);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+  scene.environmentIntensity = 0.9;
+
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+  camera.position.set(0, 6.5, 30);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 4.9, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.enablePan = false;
+  controls.minDistance = 14;
+  controls.maxDistance = 38;
+  controls.minPolarAngle = 0.95;
+  controls.maxPolarAngle = 1.68;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  controls.autoRotate = !reduceMotion;
+  controls.autoRotateSpeed = 1.1;
+
+  // ---------- Materials ----------
+  const brass = new THREE.MeshPhysicalMaterial({ color: '#C9A24A', metalness: 1, roughness: 0.3, clearcoat: 0.3, clearcoatRoughness: 0.2 });
+  const brassPolished = new THREE.MeshPhysicalMaterial({ color: '#E3C987', metalness: 1, roughness: 0.12 });
+  const enamel = new THREE.MeshPhysicalMaterial({ color: '#0B300F', metalness: 0, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.06 });
+  // Glass shell: a reflective transparent skin. The juice inside does the refraction,
+  // because WebGL transmission can't see one transmissive object through another.
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: '#ffffff', metalness: 0, roughness: 0.02, transparent: true, opacity: 0.1,
+    clearcoat: 1, clearcoatRoughness: 0.01, specularIntensity: 1, envMapIntensity: 3.2,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const juice = new THREE.MeshPhysicalMaterial({
+    color: '#ffe9c9', metalness: 0, roughness: 0.04, transmission: 1, thickness: 2.2, ior: 1.36,
+    attenuationColor: new THREE.Color('#D9813A'), attenuationDistance: 3.2,
+    clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.4,
+  });
+  const tube = new THREE.MeshPhysicalMaterial({ color: '#efe9dc', roughness: 0.4, transmission: 0, opacity: 0.85, transparent: true });
+
+  // ---------- Bottle ----------
+  const bottle = new THREE.Group();
+  scene.add(bottle);
+
+  const W = 5.4, H = 6.8, D = 2.8, BASE = 0.55;
+  const body = new THREE.Mesh(new RoundedBoxGeometry(W, H, D, 8, 0.45), glass);
+  body.position.y = H / 2;
+  body.renderOrder = 2;
+  bottle.add(body);
+
+  const juiceH = 4.7;
+  const liquid = new THREE.Mesh(new RoundedBoxGeometry(W - 0.75, juiceH, D - 0.75, 6, 0.28), juice);
+  liquid.position.y = BASE + juiceH / 2;
+  liquid.castShadow = true;
+  bottle.add(liquid);
+
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.86, 0.42, 64), brass);
+  collar.position.y = H + 0.21;
+  collar.castShadow = true;
+  bottle.add(collar);
+
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, H - BASE - 0.2, 12), tube);
+  stem.position.y = BASE + (H - BASE - 0.2) / 2 + 0.1;
+  bottle.add(stem);
+
+  // ---------- Cap: the seal, carved ----------
+  const RC = 1.85;            // cap radius
+  const CAP_DEPTH = 0.9;
+  const S = (RC * 0.86) / 577; // logo px → world units
+
+  const capGroup = new THREE.Group();
+  capGroup.position.y = H + 0.42 + RC + 0.02;
+  bottle.add(capGroup);
+
+  const discShape = new THREE.Shape();
+  discShape.absarc(0, 0, RC, 0, Math.PI * 2, false);
+  const capBodyGeo = new THREE.ExtrudeGeometry(discShape, {
+    depth: CAP_DEPTH, bevelEnabled: true, bevelThickness: 0.16, bevelSize: 0.14, bevelSegments: 8, curveSegments: 96,
+  });
+  capBodyGeo.translate(0, 0, -CAP_DEPTH / 2);
+  const capBody = new THREE.Mesh(capBodyGeo, brass);
+  capBody.castShadow = true;
+  capGroup.add(capBody);
+
+  // relief: the thin cream ring (r502–532 in the logo) and the ع, raised and polished
+  const ringShape = new THREE.Shape();
+  ringShape.absarc(0, 0, 532 * S, 0, Math.PI * 2, false);
+  const ringHole = new THREE.Path();
+  ringHole.absarc(0, 0, 502 * S, 0, Math.PI * 2, true);
+  ringShape.holes.push(ringHole);
+
+  const ainShape = new THREE.Shape();
+  const pts = AIN.map(([x, y]) => new THREE.Vector2(x * S, -y * S));
+  ainShape.moveTo(pts[0].x, pts[0].y);
+  ainShape.splineThru(pts.slice(1).concat([pts[0]]));
+
+  const reliefOpts = { depth: 0.07, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.018, bevelSegments: 4, curveSegments: 48 };
+  const ringGeo = new THREE.ExtrudeGeometry(ringShape, { ...reliefOpts, curveSegments: 128 });
+  const ainGeo = new THREE.ExtrudeGeometry(ainShape, reliefOpts);
+
+  const faceZ = CAP_DEPTH / 2 + 0.16 - 0.01;
+  for (const side of [1, -1]) {
+    const face = new THREE.Group();
+    face.rotation.y = side === 1 ? 0 : Math.PI;
+    face.position.z = 0;
+    const ring = new THREE.Mesh(ringGeo, brassPolished);
+    const ain = new THREE.Mesh(ainGeo, brassPolished);
+    ring.position.z = faceZ; ain.position.z = faceZ;
+    ring.castShadow = ain.castShadow = true;
+    face.add(ring, ain);
+    capGroup.add(face);
+  }
+
+  // ---------- Plinth: the seal turntable ----------
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, 0.5, 128), new THREE.MeshPhysicalMaterial({ color: '#0B300F', roughness: 0.6, clearcoat: 0.25, clearcoatRoughness: 0.35, envMapIntensity: 0.15 }));
+  plinth.position.y = -0.25;
+  plinth.receiveShadow = true;
+  scene.add(plinth);
+
+  const inlay = new THREE.Mesh(new THREE.TorusGeometry(4.75, 0.045, 12, 200), brassPolished);
+  inlay.rotation.x = Math.PI / 2;
+  inlay.position.y = 0.005;
+  scene.add(inlay);
+
+  const edge = new THREE.Mesh(new THREE.TorusGeometry(5.3, 0.06, 12, 200), brass);
+  edge.rotation.x = Math.PI / 2;
+  edge.position.y = -0.02;
+  scene.add(edge);
+
+  // soft contact shadow under the glass (glass itself casts none)
+  const cs = document.createElement('canvas'); cs.width = cs.height = 256;
+  const g = cs.getContext('2d');
+  const grad = g.createRadialGradient(128, 128, 10, 128, 128, 128);
+  grad.addColorStop(0, 'rgba(0,0,0,0.55)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 256, 256);
+  const contact = new THREE.Mesh(
+    new THREE.PlaneGeometry(W * 1.5, D * 2.6),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cs), transparent: true, depthWrite: false }),
+  );
+  contact.rotation.x = -Math.PI / 2;
+  contact.position.y = 0.012;
+  scene.add(contact);
+
+  // ---------- Light ----------
+  const key = new THREE.SpotLight('#ffe4bd', 900, 40, 0.5, 0.65, 2);
+  key.position.set(7, 14, 9);
+  key.target.position.set(0, 3, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.bias = -0.0004;
+  key.shadow.radius = 6;
+  scene.add(key, key.target);
+
+  const rim = new THREE.DirectionalLight('#E3C987', 2.2);
+  rim.position.set(-6, 8, -10);
+  scene.add(rim);
+
+  const fill = new THREE.HemisphereLight('#f5f5db', '#0B300F', 0.35);
+  scene.add(fill);
+
+  // ---------- Controls UI ----------
+  const btnBrass = document.getElementById('cap-brass');
+  const btnEnamel = document.getElementById('cap-enamel');
+  function setCap(mode) {
+    capBody.material = mode === 'enamel' ? enamel : brass;
+    btnBrass.setAttribute('aria-pressed', String(mode === 'brass'));
+    btnEnamel.setAttribute('aria-pressed', String(mode === 'enamel'));
+  }
+  btnBrass.addEventListener('click', () => setCap('brass'));
+  btnEnamel.addEventListener('click', () => setCap('enamel'));
+
+  const spin = document.getElementById('spin');
+  function syncSpin() {
+    spin.setAttribute('aria-pressed', String(controls.autoRotate));
+    spin.textContent = controls.autoRotate ? 'إيقاف الدوران' : 'تشغيل الدوران';
+  }
+  spin.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; syncSpin(); });
+  syncSpin();
+
+  // ---------- Size & loop ----------
+  function resize() {
+    const w = host.clientWidth, h = host.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    // keep the whole bottle in frame on narrow screens
+    camera.fov = w / h < 0.8 ? 46 : 30;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Backlight card: a warm glow that always sits behind the bottle, as in a studio perfume shot.
+  // The juice refracts it, which is what makes perfume glow amber on a dark set.
+  const hc = document.createElement('canvas'); hc.width = hc.height = 512;
+  const hg = hc.getContext('2d');
+  const hgrad = hg.createRadialGradient(256, 256, 0, 256, 256, 256);
+  // opaque on purpose: the transmission pass only samples opaque objects
+  hgrad.addColorStop(0, '#ffe0a8');
+  hgrad.addColorStop(0.3, '#c99a4c');
+  hgrad.addColorStop(0.62, '#2d4a1c');
+  hgrad.addColorStop(0.98, '#0B300F');
+  hgrad.addColorStop(1, '#0B300F');
+  hg.fillStyle = '#0B300F'; hg.fillRect(0, 0, 512, 512);
+  hg.fillStyle = hgrad; hg.fillRect(0, 0, 512, 512);
+  const haloTex = new THREE.CanvasTexture(hc);
+  haloTex.colorSpace = THREE.SRGBColorSpace;
+  const halo = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 96),
+    new THREE.MeshBasicMaterial({ map: haloTex, toneMapped: false, fog: false }),
+  );
+  scene.add(halo);
+  const haloCentre = new THREE.Vector3(0, 4.2, 0);
+  const toCam = new THREE.Vector3();
+
+  function frame() {
+    controls.update();
+    toCam.copy(camera.position).sub(haloCentre).setY(0).normalize();
+    halo.position.copy(haloCentre).addScaledVector(toCam, -4.5);
+    halo.lookAt(camera.position.x, halo.position.y, camera.position.z);
+    renderer.render(scene, camera);
+  }
+  renderer.setAnimationLoop(frame);
+  fallback.hidden = true;
+}
+
+try { start(); }
+catch (e) {
+  fallback.hidden = false;
+  fallback.textContent = 'تعذّر تشغيل العرض ثلاثي الأبعاد على هذا الجهاز.';
+  console.error(e);
+}
+</script>
