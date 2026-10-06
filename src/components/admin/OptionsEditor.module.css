@@ -1,0 +1,71 @@
+.option {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+}
+
+.optionHead,
+.value {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.values {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.values > li {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 2px solid var(--line-strong);
+}
+
+.hex {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.hex input[type="color"] {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-seal);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.hex input:not([type="color"]) {
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.delete {
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--oud);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.delete:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.deleteError {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--oud);
+}

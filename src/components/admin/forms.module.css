@@ -1,0 +1,87 @@
+/* Admin editor sections: one panel per concern, fields in a grid that collapses to one column on phones. */
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.lede {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.grid {
+  display: grid;
+  gap: 0 var(--space-3);
+}
+
+.grid :global(.ad-field) {
+  margin-bottom: var(--space-3);
+}
+
+.grid input,
+.grid select,
+.grid textarea {
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 599px) {
+  .actions > :global(.ad-btn) {
+    flex: 1 1 100%;
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.row :global(.ad-field) {
+  flex: 1 1 140px;
+  margin: 0;
+}
+
+.row input,
+.row select {
+  width: 100%;
+}
+
+.muted {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.danger {
+  border-color: var(--oud);
+}

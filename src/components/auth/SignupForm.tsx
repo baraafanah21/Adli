@@ -2,11 +2,16 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage, MIN_PASSWORD } from "@/lib/auth/errors";
+import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD } from "@/lib/auth/errors";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import { confirmUrl } from "@/components/auth/LoginForm";
 import styles from "./auth.module.css";
 
-type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string } | { kind: "sent"; email: string };
+type Status =
+  | { kind: "idle" }
+  | { kind: "busy" }
+  | { kind: "error"; message: string; contact?: boolean }
+  | { kind: "sent"; email: string };
 
 export function SignupForm({ next }: { next: string }) {
   const ids = { name: useId(), email: useId(), password: useId() };
@@ -21,6 +26,7 @@ export function SignupForm({ next }: { next: string }) {
     const em = email.trim();
     if (!n) return setStatus({ kind: "error", message: "اكتب اسمك ليظهر على طلباتك." });
     if (!em) return setStatus({ kind: "error", message: "اكتب بريدك الإلكتروني." });
+    if (!isCompleteEmail(em)) return setStatus({ kind: "error", message: EMAIL_INCOMPLETE });
     if (password.length < MIN_PASSWORD)
       return setStatus({ kind: "error", message: `كلمة المرور قصيرة. اكتب ${MIN_PASSWORD} أحرف على الأقل.` });
 
@@ -30,7 +36,11 @@ export function SignupForm({ next }: { next: string }) {
       password,
       options: { data: { full_name: n.slice(0, 80) }, emailRedirectTo: confirmUrl(next) },
     });
-    if (error) return setStatus({ kind: "error", message: authMessage(error) });
+    if (error) {
+      return setStatus(
+        isEmailSendFailure(error) ? { kind: "error", ...emailSendFailure("confirm") } : { kind: "error", message: authMessage(error) },
+      );
+    }
     // Same answer whether or not the email already had an account (Supabase hides it too).
     setStatus({ kind: "sent", email: em });
   }
@@ -78,11 +88,7 @@ export function SignupForm({ next }: { next: string }) {
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      {status.kind === "error" && (
-        <p className={styles.error} role="alert">
-          {status.message}
-        </p>
-      )}
+      {status.kind === "error" && <AuthAlert error={status} />}
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
         {status.kind === "busy" ? "جارٍ إنشاء الحساب…" : "أنشئ الحساب"}
       </button>

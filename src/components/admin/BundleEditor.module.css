@@ -1,0 +1,52 @@
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.line :global(.ad-stepper) button {
+  width: 44px;
+  height: 44px;
+}
+
+.name {
+  font-weight: 500;
+}
+
+.price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sums {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sum {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 15px;
+}
+
+.saving {
+  font-weight: 600;
+  color: var(--brass);
+}
+
+.warn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--oud);
+}

@@ -423,3 +423,22 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
 .ad-notice--ok { border-color: var(--brass); }
 .ad-notice--error { border-color: var(--oud); }
 .ad-notice:empty { display: none; }
+
+/* ---------- Admin fields: selects, text areas, checkboxes, the same look as .ad-field input ---------- */
+.ad-field select,
+.ad-field textarea {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+.ad-field textarea { padding-block: var(--space-2); line-height: 1.7; resize: vertical; }
+.ad-field__hint { font-size: 13px; color: var(--ink-muted); }
+.ad-check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; font-size: 15px; cursor: pointer; }
+.ad-check input { width: 20px; height: 20px; accent-color: var(--brass); }
+.ad-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+@media (max-width: 599px) { .ad-form-actions > .ad-btn { flex: 1 1 auto; } }

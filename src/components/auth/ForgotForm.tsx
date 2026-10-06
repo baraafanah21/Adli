@@ -2,10 +2,15 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage } from "@/lib/auth/errors";
+import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure } from "@/lib/auth/errors";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import styles from "./auth.module.css";
 
-type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string } | { kind: "sent"; email: string };
+type Status =
+  | { kind: "idle" }
+  | { kind: "busy" }
+  | { kind: "error"; message: string; contact?: boolean }
+  | { kind: "sent"; email: string };
 
 export function ForgotForm() {
   const id = useId();
@@ -16,6 +21,7 @@ export function ForgotForm() {
     e.preventDefault();
     const em = email.trim();
     if (!em) return setStatus({ kind: "error", message: "اكتب البريد الذي سجلت به." });
+    if (!isCompleteEmail(em)) return setStatus({ kind: "error", message: EMAIL_INCOMPLETE });
     setStatus({ kind: "busy" });
     const { error } = await createClient().auth.resetPasswordForEmail(em, {
       redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`,
@@ -23,6 +29,8 @@ export function ForgotForm() {
     if (error && (error.status === 429 || error.code?.startsWith("over_"))) {
       return setStatus({ kind: "error", message: authMessage(error) });
     }
+    // The send itself failed (500 unexpected_failure). Saying so is better than a «sent» that never arrives.
+    if (error && isEmailSendFailure(error)) return setStatus({ kind: "error", ...emailSendFailure("reset") });
     setStatus({ kind: "sent", email: em });
   }
 
@@ -41,11 +49,7 @@ export function ForgotForm() {
         <label htmlFor={id}>البريد الإلكتروني</label>
         <input id={id} type="email" autoComplete="email" inputMode="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
-      {status.kind === "error" && (
-        <p className={styles.error} role="alert">
-          {status.message}
-        </p>
-      )}
+      {status.kind === "error" && <AuthAlert error={status} />}
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
         {status.kind === "busy" ? "جارٍ الإرسال…" : "أرسل رابط الاستعادة"}
       </button>

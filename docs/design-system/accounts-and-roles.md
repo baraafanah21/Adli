@@ -46,8 +46,17 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_orders(status, from, to, q, limit, offset)` | owner, staff | F1 |
 | `admin_order(code)` | owner, staff | F1 |
 | `admin_new_orders_count()` | owner, staff | F1 |
+| `admin_create_product(kind, category_id, name_ar, slug, price_ils)` | owner, staff | F2 |
+| `admin_update_product(id, name_ar, slug, family_ar, description_ar, price_ils, volume_ml, category_id, sort, is_active)` | owner, staff | F2 |
+| `admin_set_product_image(id, path)` | owner, staff | F2 |
+| `admin_save_option(product_id, option_id, name_ar, kind, sort)` / `admin_delete_option(option_id)` | owner, staff | F2 |
+| `admin_save_option_value(option_id, value_id, label_ar, hex, sort)` / `admin_delete_option_value(value_id)` | owner, staff | F2 |
+| `admin_generate_variants(product_id)` | owner, staff | F2 |
+| `admin_update_variant(variant_id, sku, label_ar, price_ils, low_stock_threshold, is_active, sort)` | owner, staff | F2 |
+| `admin_variant_stock(product_id)` | owner, staff | F2 |
+| `admin_set_bundle(product_id, price_ils, items)` | owner, staff | F2 |
 
-Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` order not found.
+Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 
 ## Orders
 

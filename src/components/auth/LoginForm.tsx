@@ -9,13 +9,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage } from "@/lib/auth/errors";
+import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure } from "@/lib/auth/errors";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import styles from "./auth.module.css";
 
 type Status =
   | { kind: "idle" }
   | { kind: "busy" }
-  | { kind: "error"; message: string; canResend?: boolean }
+  | { kind: "error"; message: string; contact?: boolean; canResend?: boolean }
   | { kind: "sent"; message: string };
 
 export const confirmUrl = (next: string) => `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`;
@@ -52,9 +53,11 @@ export function LoginForm({ next }: { next: string }) {
       options: { emailRedirectTo: confirmUrl(next) },
     });
     setStatus(
-      error
-        ? { kind: "error", message: authMessage(error) }
-        : { kind: "sent", message: "أرسلنا رسالة تأكيد جديدة. افتحها من بريدك ثم ادخل." },
+      !error
+        ? { kind: "sent", message: "أرسلنا رسالة تأكيد جديدة. افتحها من بريدك ثم ادخل." }
+        : isEmailSendFailure(error)
+          ? { kind: "error", ...emailSendFailure("confirm") }
+          : { kind: "error", message: authMessage(error) },
     );
   }
 
@@ -63,6 +66,10 @@ export function LoginForm({ next }: { next: string }) {
     const target = email.trim();
     if (!target) {
       setLinkStatus({ kind: "error", message: "اكتب بريدك أولاً." });
+      return;
+    }
+    if (!isCompleteEmail(target)) {
+      setLinkStatus({ kind: "error", message: EMAIL_INCOMPLETE });
       return;
     }
     setLinkStatus({ kind: "busy" });
@@ -74,6 +81,11 @@ export function LoginForm({ next }: { next: string }) {
     // Rate limits are worth telling; "no such account" is not (it would reveal who has an account).
     if (error && (error.status === 429 || error.code?.startsWith("over_"))) {
       setLinkStatus({ kind: "error", message: authMessage(error) });
+      return;
+    }
+    // The send itself failed (500 unexpected_failure): say so instead of a «sent» that never arrives.
+    if (error && isEmailSendFailure(error)) {
+      setLinkStatus({ kind: "error", ...emailSendFailure("login") });
       return;
     }
     setLinkStatus({
@@ -119,11 +131,7 @@ export function LoginForm({ next }: { next: string }) {
             نسيت كلمة المرور؟
           </Link>
         </div>
-        {status.kind === "error" && (
-          <p className={styles.error} role="alert">
-            {status.message}
-          </p>
-        )}
+        {status.kind === "error" && <AuthAlert error={status} />}
         {status.kind === "sent" && (
           <p className={styles.notice} role="status">
             {status.message}
@@ -143,11 +151,7 @@ export function LoginForm({ next }: { next: string }) {
 
       <form className={styles.form} onSubmit={sendLink} noValidate>
         <p className={styles.lede}>نرسل لك رابطاً على بريدك، تضغطه فتدخل مباشرة.</p>
-        {linkStatus.kind === "error" && (
-          <p className={styles.error} role="alert">
-            {linkStatus.message}
-          </p>
-        )}
+        {linkStatus.kind === "error" && <AuthAlert error={linkStatus} />}
         {linkStatus.kind === "sent" ? (
           <p className={styles.notice} role="status">
             {linkStatus.message}

@@ -127,3 +127,10 @@
   text-underline-offset: 4px;
   cursor: pointer;
 }
+
+/* A link inside an error sentence (the WhatsApp contact). Plain text link: the WhatsApp fill is only for sending an order. */
+.inlineLink {
+  color: var(--brass);
+  font-weight: 500;
+  text-underline-offset: 4px;
+}

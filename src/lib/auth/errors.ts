@@ -32,3 +32,28 @@ export function authMessage(error: AuthErrorLike): string {
 }
 
 export const MIN_PASSWORD = 8;
+
+/*
+  type="email" accepts "name@gmail" (no dot after @). Supabase then tries to send to it, the send fails, and the
+  visitor sees a generic error. Check in the browser first.
+*/
+export const EMAIL_INCOMPLETE = "اكتب البريد كاملاً، مثل name@gmail.com";
+export const isCompleteEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@.]{2,}$/.test(email);
+
+/** Supabase answers 500 `unexpected_failure` when sending the email fails (bad address, the mail provider refused it). */
+export const isEmailSendFailure = (error: AuthErrorLike) => error?.code === "unexpected_failure" || error?.status === 500;
+
+/** What the failed email was, in the message. */
+const SENT_THING = {
+  confirm: "رسالة التأكيد",
+  login: "رابط الدخول",
+  reset: "رابط الاستعادة",
+} as const;
+
+/** An error to show; `contact` adds «تواصل معنا على واتساب» as a link at the end of the sentence. */
+export type AuthFailure = { message: string; contact?: boolean };
+
+export const emailSendFailure = (what: keyof typeof SENT_THING): AuthFailure => ({
+  message: `تعذّر إرسال ${SENT_THING[what]} إلى هذا البريد. تأكد منه وحاول مرة أخرى، أو`,
+  contact: true,
+});
