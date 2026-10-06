@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/Button";
-import styles from "./status.module.css";
+import styles from "@/components/StatusPage.module.css";
 
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {

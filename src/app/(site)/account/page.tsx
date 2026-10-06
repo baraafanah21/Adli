@@ -4,7 +4,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { requireUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/auth/actions";
+import { signOut } from "@/app/(site)/auth/actions";
 import styles from "@/components/auth/auth.module.css";
 
 export const metadata: Metadata = { title: "بياناتي", robots: { index: false } };

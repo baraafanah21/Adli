@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { UserIcon } from "@/components/icons";
-import { signOut } from "@/app/auth/actions";
+import { signOut } from "@/app/(site)/auth/actions";
 import styles from "@/components/SiteHeader.module.css";
 
 type Props = { user: { name: string | null; email: string | null } | null };

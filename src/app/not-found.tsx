@@ -1,16 +1,12 @@
-import { SealMark } from "@/components/SealMark";
-import { Button } from "@/components/Button";
-import styles from "./status.module.css";
+import { NotFoundBody } from "@/components/NotFoundBody";
+import { SiteChrome } from "@/components/SiteChrome";
 
+// Unmatched URLs only: rendered under the root layout, outside every route group, so it brings the site's header.
+// notFound() inside (site) or /admin uses the not-found.tsx next to that layout instead (no second header).
 export default function NotFound() {
   return (
-    <main className={styles.status}>
-      <SealMark />
-      <h1 className="title">لم نجد هذه الصفحة</h1>
-      <p className="body">ربما تغيّر الرابط أو لم يعد المنتج متوفراً.</p>
-      <Button variant="ghost" href="/#shelf">
-        تصفّح المنتجات
-      </Button>
-    </main>
+    <SiteChrome>
+      <NotFoundBody />
+    </SiteChrome>
   );
 }

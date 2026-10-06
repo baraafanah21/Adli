@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId } from "react";
-import { updateProfile, type ProfileState } from "@/app/account/actions";
+import { updateProfile, type ProfileState } from "@/app/(site)/account/actions";
 import styles from "@/components/auth/auth.module.css";
 
 type Props = { email: string | null; profile: { full_name: string | null; area: string | null; phone: string | null } };
