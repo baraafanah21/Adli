@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
         <ArrowBackIcon />
         {category ? category.name_ar : "كل المنتجات"}
       </Link>
-      <SealStage product={product} categoryName={category?.name_ar} size="lg" priority>
+      <SealStage product={product} categoryName={category?.name_ar} size="lg" preload>
         {product.description_ar && <p className={`body-lg ${styles.description}`}>{product.description_ar}</p>}
       </SealStage>
     </main>
