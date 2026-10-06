@@ -1,24 +1,36 @@
+import { SealMark } from "@/components/SealMark";
+import { Shelf } from "@/components/Shelf";
+import { Button } from "@/components/Button";
+import { getCatalog } from "@/lib/catalog";
 import styles from "./page.module.css";
 
-/*
-  Phase 0 placeholder. Phase 1 replaces this with the 3D seal scene
-  (see docs/ROADMAP.md). Kept on-brand so the first Vercel deploy is presentable.
-*/
-export default function Home() {
+export default async function Home() {
+  const catalog = await getCatalog();
+
   return (
-    <main className={styles.hero}>
-      <div className={styles.seal} aria-hidden="true">
-        <div className={styles.ring}>
-          <div className={styles.disc}>
-            <span className={styles.letter}>ع</span>
+    <main>
+      <section className={styles.hero}>
+        <SealMark />
+        <h1 className={`display-xl ${styles.wordmark}`}>عدلي</h1>
+        <p className="latin-mark">ADLI</p>
+        <p className={`body-lg ${styles.lede}`}>صالون حلاقة رجالي، وعطور وكريمات تختارها هنا وتثبّت طلبها على واتساب.</p>
+      </section>
+
+      <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
+        <h2 id="shelf-title" className="title">
+          منتجات الصالون
+        </h2>
+        {catalog.data ? (
+          <Shelf categories={catalog.data.categories} products={catalog.data.products} />
+        ) : (
+          <div className={styles.error} role="alert">
+            <p className="body">تعذّر تحميل المنتجات الآن. حاول مرة أخرى بعد قليل.</p>
+            <Button variant="ghost" href="/">
+              أعد المحاولة
+            </Button>
           </div>
-        </div>
-      </div>
-      <h1 className="display-xl">عدلي</h1>
-      <p className="latin-mark">ADLI</p>
-      <p className="body-lg" style={{ color: "var(--ink-muted)", maxWidth: "32ch", textAlign: "center" }}>
-        صالون حلاقة، وعطور وكريمات. الموقع قيد التجهيز.
-      </p>
+        )}
+      </section>
     </main>
   );
 }
