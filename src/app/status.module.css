@@ -1,0 +1,17 @@
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-24) var(--space-4);
+  text-align: center;
+}
+
+.status h1,
+.status p {
+  margin: 0;
+}
+
+.status p {
+  color: var(--ink-muted);
+}
