@@ -34,11 +34,26 @@ Roles are read from `user_roles` on every check (`private.has_role()`), never fr
 2. **Server**: the `/admin` layout and **every** Server Action call `requireRole()` (`src/lib/auth/guards.ts`) with `supabase.auth.getUser()`.
 3. **Database**: RLS on every table and role checks inside every security-definer function. This is the floor: a bug above it still can't leak or change data.
 
+## Admin database functions
+
+Every admin write, and every admin read that needs data the API roles can't see (stock quantities, other people's orders with their history), is a `public.admin_*` function: `security definer`, `set search_path = ''`, `execute` revoked from `public` and `anon` and granted to `authenticated`, and a role check (`private.has_role(...)`) as its first statement, so a signed-in customer gets `42501`.
+
+The Supabase advisor reports these as `authenticated_security_definer_function_executable`. That is expected: they must be callable by signed-in staff, and the role check inside is what protects them. (`place_order` is reported for `anon` too; it is protected by the server-held gateway secret.)
+
+| Function | Roles | Since |
+|---|---|---|
+| `admin_set_order_status(order_id, status, note)` | owner, staff | F1 |
+| `admin_orders(status, from, to, q, limit, offset)` | owner, staff | F1 |
+| `admin_order(code)` | owner, staff | F1 |
+| `admin_new_orders_count()` | owner, staff | F1 |
+
+Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` order not found.
+
 ## Orders
 
 - Created only through `/api/orders` → `place_order()`. The function requires a server-held gateway secret (so the browser can't call it directly), recomputes prices from the database, rate-limits per IP (5/min) and per user, and is idempotent on `idempotency_key`.
 - Lines live in `order_items` (with name and price snapshots).
-- Status machine: `new → confirmed | cancelled`, `confirmed → done | cancelled`. Confirming takes stock; cancelling a confirmed order returns it (one transaction, logged in `stock_movements`).
+- Status machine: `new → confirmed | cancelled`, `confirmed → done | cancelled`, only through `admin_set_order_status()`; the same status again changes nothing. Confirming takes stock (a bundle's pieces); cancelling a confirmed order returns exactly what it took (one transaction, logged in `stock_movements`). Each change is a row in `order_events` (from, to, who, when, note). A confirmed order's lines are never edited: cancel it and place a new one.
 
 ## Reviews
 

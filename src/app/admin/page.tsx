@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
-import { AuthShell } from "@/components/auth/AuthShell";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/guards";
+import { createClient } from "@/lib/supabase/server";
+import styles from "./admin-page.module.css";
 
-export const metadata: Metadata = { title: "لوحة الصالون", robots: { index: false } };
+export const metadata: Metadata = { title: "الرئيسية" };
 
-/*
-  Phase C: only proves the three layers (proxy → requireRole here → RLS). The dashboard itself is phase F.
-  Every admin Server Component and Server Action starts with requireRole(...).
-*/
-export default async function AdminPage() {
+// Phase F5 replaces this with the owner's sales figures and the staff's daily view.
+export default async function AdminHome() {
   const { user, role } = await requireRole(["owner", "staff"]);
+  const supabase = await createClient();
+  const { data: newOrders } = await supabase.rpc("admin_new_orders_count");
   const who = user.name ?? user.email ?? "";
-  const roleName = role.role === "owner" ? "صاحب الصالون" : role.is_barber ? "حلاق" : "طاقم";
 
   return (
-    <AuthShell title={`مرحباً، ${who}`} lede={`دخلت بصلاحية: ${roleName}. لوحة الصالون قيد التجهيز.`}>
-      <></>
-    </AuthShell>
+    <main className={styles.page}>
+      <h1 className="title">مرحباً، {who}</h1>
+      <p className={styles.tileLabel}>دخلت بصلاحية: {role.role === "owner" ? "صاحب الصالون" : role.is_barber ? "حلاق" : "طاقم"}</p>
+      <ul className={styles.tiles}>
+        <li>
+          <Link href="/admin/orders?status=new" className={styles.tile}>
+            <span className={styles.tileLabel}>طلبات بانتظار التأكيد</span>
+            <span className={styles.tileValue}>{typeof newOrders === "number" ? newOrders : "—"}</span>
+          </Link>
+        </li>
+      </ul>
+    </main>
   );
 }

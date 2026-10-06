@@ -65,6 +65,64 @@ export function WhatsAppIcon({ size = 20 }: IconProps) {
   );
 }
 
+/* ---------- Admin navigation ---------- */
+
+export function HomeIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" />
+    </svg>
+  );
+}
+
+export function ReceiptIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+      <path d="M9 8h6M9 12h6M9 16h3" />
+    </svg>
+  );
+}
+
+export function BoxIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z" />
+      <path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" />
+    </svg>
+  );
+}
+
+export function GridIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" />
+    </svg>
+  );
+}
+
+export function UsersIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="9" cy="8.5" r="3.5" />
+      <path d="M2.5 20c1-3.2 3.4-5 6.5-5s5.5 1.8 6.5 5M16 5.2a3.5 3.5 0 0 1 0 6.6M18 15.4c1.6.7 2.8 2.3 3.5 4.6" />
+    </svg>
+  );
+}
+
+export function MoreIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="5.5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="18.5" cy="12" r="1.2" />
+    </svg>
+  );
+}
+
 export function ChevronDownIcon({ size = 16 }: IconProps) {
   return (
     <svg {...base(size)}>

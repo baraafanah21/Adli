@@ -391,3 +391,35 @@ a.ad-btn { text-decoration: none; } /* links styled as buttons (Button with href
 @media (prefers-reduced-motion: reduce) {
   .ad-swatch { transition: none; }
 }
+
+/* ======================================================================
+   Phase F additions: the admin. Denser than the site, same tokens.
+   ====================================================================== */
+
+/* ---------- Order status badge: colour AND text, never colour alone ---------- */
+.ad-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.ad-status[data-status="new"] { background: var(--brass); border-color: var(--brass); color: var(--on-brass); }
+.ad-status[data-status="confirmed"] { border-color: var(--brass); color: var(--brass); }
+.ad-status[data-status="done"] { border-color: var(--line-strong); color: var(--ink); }
+.ad-status[data-status="cancelled"] { border-color: var(--line); background: var(--surface-sunk); color: var(--ink-muted); }
+
+/* ---------- Chips as links (filters that are URLs): the current one looks pressed ---------- */
+a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
+.ad-chip[aria-current="page"] { background: var(--brass); border-color: var(--brass); color: var(--on-brass); }
+
+/* ---------- Notices after an action: success repeats the action's name, an error says what to do ---------- */
+.ad-notice { margin: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-hair); font-size: 15px; }
+.ad-notice--ok { border-color: var(--brass); }
+.ad-notice--error { border-color: var(--oud); }
+.ad-notice:empty { display: none; }

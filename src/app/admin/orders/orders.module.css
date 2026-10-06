@@ -1,0 +1,200 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.page h1 {
+  margin: 0;
+}
+
+.chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* room for the focus ring inside the scroller */
+  padding: var(--space-1);
+  margin: calc(var(--space-1) * -1);
+}
+
+.chips a {
+  flex: none;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-3);
+  align-items: end;
+}
+
+.filters :global(.ad-field) {
+  margin-bottom: var(--space-3);
+}
+
+.search {
+  grid-column: 1 / -1;
+}
+
+.filterActions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (min-width: 900px) {
+  .filters {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .search {
+    grid-column: auto;
+  }
+
+  .filterActions {
+    grid-column: auto;
+    margin-bottom: var(--space-3);
+  }
+}
+
+.filters input {
+  width: 100%;
+}
+
+.count {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Table (desktop) ---------- */
+.table {
+  display: none;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+@media (min-width: 900px) {
+  .table {
+    display: table;
+  }
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.table thead th {
+  color: var(--ink-muted);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.table tbody th {
+  font-weight: 600;
+}
+
+.table tbody th a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  text-decoration-color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+.table tbody tr:hover {
+  background: var(--surface);
+}
+
+.time {
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+
+/* ---------- Cards (phones) ---------- */
+.cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 900px) {
+  .cards {
+    display: none;
+  }
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.card:active {
+  background: var(--surface-sunk);
+}
+
+.cardTop,
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.code {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardName {
+  font-size: 15px;
+}
+
+.cardBottom {
+  font-size: 13px;
+}
+
+.total {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brass);
+  font-variant-numeric: tabular-nums;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 14px;
+}
