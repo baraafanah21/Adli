@@ -1,0 +1,45 @@
+.seal {
+  display: block;
+  flex: none;
+  aspect-ratio: 1;
+  border-radius: var(--radius-seal);
+  width: var(--seal-size);
+  /* Percent padding would resolve against the parent's width, so size it from the seal itself. */
+  padding: calc(var(--seal-size) * 0.06);
+  background: var(--cream);
+  container-type: inline-size;
+}
+
+.lg {
+  --seal-size: min(44vw, 176px);
+}
+
+.sm {
+  --seal-size: 36px;
+}
+
+.ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-seal);
+  background: var(--forest);
+  padding: 4%;
+}
+
+.disc {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-seal);
+  border: max(1px, 1.4cqi) solid var(--cream);
+}
+
+.letter {
+  font-family: var(--font-amiri);
+  font-size: 52cqi;
+  line-height: 1;
+  color: var(--cream);
+  transform: translateY(-6%);
+}
