@@ -1,19 +1,28 @@
+/* ---------- Opening: forest in both themes (data-theme="night" on the section) ---------- */
 .hero {
+  display: grid;
+  background: var(--forest);
+  color: var(--ink);
+}
+
+.heroText {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-12) var(--space-4) var(--space-8);
+  padding: var(--space-12) var(--space-4) var(--space-6);
   text-align: center;
 }
 
-.hero h1,
-.hero p {
+.heroText h1,
+.heroText p {
   margin: 0;
 }
 
-.hero .wordmark {
-  margin-top: var(--space-4);
+.hero .lede {
+  max-width: 34ch;
+  margin-block: var(--space-4) var(--space-6);
+  color: var(--ink-muted);
 }
 
 /* display-xl drops to display-lg under 720px (tokens.json). */
@@ -24,16 +33,40 @@
   }
 }
 
-.hero .lede {
-  max-width: 34ch;
-  margin-top: var(--space-4);
-  color: var(--ink-muted);
+.heroStage {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
 }
 
+@media (min-width: 840px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+    align-items: center;
+    gap: var(--space-12);
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: var(--space-8);
+  }
+
+  /* Full-bleed forest behind the centred grid. */
+  .hero {
+    box-shadow: 0 0 0 100vmax var(--forest);
+    clip-path: inset(0 -100vmax);
+  }
+
+  .heroText {
+    align-items: flex-start;
+    text-align: start;
+    padding: 0;
+  }
+}
+
+/* ---------- Shelf ---------- */
 .shelf {
   max-width: 1200px;
   margin-inline: auto;
-  padding: var(--space-8) var(--space-4) var(--space-24);
+  padding: var(--space-24) var(--space-4);
   scroll-margin-top: 56px;
 }
 
@@ -43,12 +76,6 @@
 
 .shelf h2 {
   margin: 0 0 var(--space-4);
-}
-
-@media (min-width: 720px) {
-  .shelf {
-    padding-inline: var(--space-8);
-  }
 }
 
 .error {
@@ -64,4 +91,94 @@
 
 .error p {
   margin: 0;
+}
+
+/* ---------- Salon ---------- */
+.salon {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-24) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.salon h2,
+.salon h3,
+.salon p {
+  margin: 0;
+}
+
+.salon .salonText {
+  max-width: 52ch;
+  margin-top: var(--space-6);
+}
+
+.hours {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-12);
+  max-width: 420px;
+}
+
+.hours dl {
+  margin: 0;
+}
+
+.hoursRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.hoursRow dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-12) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photos img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Closing ---------- */
+.closing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-24) var(--space-4);
+  background: var(--surface-sunk);
+  text-align: center;
+}
+
+.closing h2,
+.closing p {
+  margin: 0;
+}
+
+.closingActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+@media (min-width: 720px) {
+  .shelf,
+  .salon {
+    padding-block: var(--space-40);
+    padding-inline: var(--space-8);
+  }
 }
