@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type MouseEvent } f
 import { useCart } from "@/components/cart/CartContext";
 import { Button } from "@/components/Button";
 import { WhatsAppIcon } from "@/components/icons";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, joinAnd } from "@/lib/format";
 import { buildOrderMessage, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp";
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
@@ -48,8 +48,13 @@ function forgetCheckoutKey() {
   } catch {}
 }
 
-const joinNames = (names: string[]) =>
-  names.length <= 1 ? names.join("") : `${names.slice(0, -1).join("، ")} و${names[names.length - 1]}`;
+/** «طاقية أسود، مقاس L» */
+const lineName = (l: CartLine | undefined) => l && (l.variant_name_ar ? `${l.name_ar} ${l.variant_name_ar}` : l.name_ar);
+
+/** Under the name: the variant, then the volume; the unit price when there is neither. */
+const lineMeta = (l: CartLine) =>
+  [l.variant_name_ar, l.volume_ml ? `${l.volume_ml} مل` : null].filter(Boolean).join("، ") || formatPrice(l.price_ils);
+
 
 export function OrderSheet({ open, onClose, prefill }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -111,7 +116,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
           name: trimmed,
           area: area.trim(),
           phone: phone.trim(),
-          items: lines.map((l) => ({ productId: l.id, qty: l.qty })),
+          items: lines.map((l) => ({ variantId: l.id, qty: l.qty })),
         }),
       });
     } catch {
@@ -136,11 +141,11 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
       case "unavailable": {
         setUnavailable(new Set(body.products.map((p) => p.id)));
         const names = body.products.map(
-          (p) => p.name_ar ?? lines.find((l) => l.id === p.id)?.name_ar ?? "منتج",
+          (p) => p.name_ar ?? lineName(lines.find((l) => l.id === p.id)) ?? "منتج",
         );
         setPhase({
           kind: "error",
-          message: `نفدت كمية ${joinNames(names)}، احذفه من السلة لتكمل الطلب.`,
+          message: `نفدت كمية ${joinAnd(names)}، احذفه من السلة لتكمل الطلب.`,
         });
         break;
       }
@@ -198,8 +203,8 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
         ) : lines.length === 0 ? (
           <div className="ad-sheet__empty">
             <p className="body">سلتك فارغة</p>
-            <Button variant="ghost" href="/?c=perfumes#shelf" onClick={close}>
-              تصفّح العطور
+            <Button variant="ghost" href="/#shelf" onClick={close}>
+              تصفّح المنتجات
             </Button>
           </div>
         ) : (
@@ -207,18 +212,19 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
             <ul className="ad-sheet__lines">
               {lines.map((l) => {
                 const out = unavailable.has(l.id);
+                const full = lineName(l);
                 return (
                   <li key={l.id} className={`ad-line${out ? " ad-line--out" : ""}`}>
                     <span className="ad-line__name">
                       {l.name_ar}
                       <span className="ad-line__meta">
-                        {out ? "نفدت الكمية، احذفه من السلة" : l.volume_ml ? `${l.volume_ml} مل` : formatPrice(l.price_ils)}
+                        {out ? "نفدت الكمية، احذفه من السلة" : lineMeta(l)}
                       </span>
                     </span>
                     <span className="ad-stepper">
                       <button
                         type="button"
-                        aria-label={`زيادة ${l.name_ar}`}
+                        aria-label={`زيادة ${full}`}
                         onClick={() => changeQty(l, l.qty + 1)}
                         disabled={out || l.qty >= 20}
                       >
@@ -227,7 +233,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
                       <span aria-label={`الكمية ${l.qty}`}>{l.qty}</span>
                       <button
                         type="button"
-                        aria-label={l.qty === 1 ? `احذف ${l.name_ar}` : `إنقاص ${l.name_ar}`}
+                        aria-label={l.qty === 1 ? `احذف ${full}` : `إنقاص ${full}`}
                         onClick={() => changeQty(l, out ? 0 : l.qty - 1)}
                       >
                         −

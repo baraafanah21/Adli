@@ -13,3 +13,10 @@ export function productImageSrc(path: string | null): string | null {
   if (path.startsWith("/")) return path;
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${path}`;
 }
+
+/** «أ، ب وج»: Arabic list joining, the last item with «و». Empty list: «النسخة». */
+export function joinAnd(items: string[]) {
+  if (items.length === 0) return "النسخة";
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join("، ")} و${items[items.length - 1]}`;
+}

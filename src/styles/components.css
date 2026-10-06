@@ -324,3 +324,70 @@
 .ad-sheet__empty, .ad-sheet__done { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-8) 0; text-align: center; }
 .ad-sheet__empty p, .ad-sheet__done p { margin: 0; }
 a.ad-btn { text-decoration: none; } /* links styled as buttons (Button with href) */
+
+/* ======================================================================
+   Phase D additions: variant picker and bundle contents.
+   Noted in VariantPicker/README.md and BundleContents/README.md.
+   ====================================================================== */
+
+/* ---------- Variant picker: one fieldset per option, native radios (visually hidden) ---------- */
+.ad-picker { display: grid; gap: var(--space-4); }
+.ad-picker__option { margin: 0; padding: 0; border: 0; min-width: 0; }
+.ad-picker__legend { padding: 0; margin-bottom: var(--space-2); font-size: 14px; font-weight: 500; }
+.ad-picker__chosen { color: var(--ink-muted); font-weight: 400; }
+.ad-picker__values { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Size and text values: the category chip, pressed = checked. */
+.ad-picker .ad-chip { display: inline-flex; align-items: center; }
+.ad-chip:has(input:checked) { background: var(--brass); border-color: var(--brass); color: var(--on-brass); }
+
+/* Colour values: a swatch dot with the colour's name beside it (never colour alone). */
+.ad-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding-inline: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--dur-press) var(--ease-out);
+}
+.ad-swatch:hover { border-color: var(--brass); }
+.ad-swatch__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-seal);
+  background: var(--swatch); /* the colour's own hex, from the data */
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.ad-swatch:has(input:checked) { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+
+/* Keyboard focus lands on the hidden radio; show it on the label. */
+.ad-chip:has(input:focus-visible), .ad-swatch:has(input:focus-visible) { outline: 2px solid var(--brass); outline-offset: 3px; }
+
+/* Out of stock with the current choices: struck through, not selectable. */
+.ad-chip.is-out, .ad-swatch.is-out { opacity: 0.45; cursor: not-allowed; }
+.ad-chip.is-out:hover, .ad-swatch.is-out:hover { border-color: var(--line-strong); }
+.ad-chip.is-out .ad-picker__label, .ad-swatch.is-out .ad-picker__label { text-decoration: line-through; }
+.ad-swatch.is-out .ad-swatch__dot { background: linear-gradient(to top left, var(--swatch) calc(50% - 1px), var(--ink-muted) 50%, var(--swatch) calc(50% + 1px)); }
+
+/* Availability line under the price row on the product page. */
+.ad-stock { margin: 0; min-height: 1.5em; font-size: 14px; font-weight: 500; color: var(--oud); }
+
+/* ---------- Bundle contents: the pieces, their separate value and the saving ---------- */
+.ad-bundle { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunk); }
+.ad-bundle__title { margin: 0; font-size: 15px; font-weight: 600; }
+.ad-bundle__lines { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ad-bundle__lines li { display: flex; justify-content: space-between; gap: var(--space-4); font-size: 15px; }
+.ad-bundle__lines a { color: inherit; text-decoration-color: var(--brass); text-underline-offset: 4px; }
+.ad-bundle__qty { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.ad-bundle__price { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ad-bundle__sum { display: flex; justify-content: space-between; margin: 0; padding-top: var(--space-2); border-top: 1px solid var(--line); font-size: 14px; color: var(--ink-muted); }
+.ad-bundle__saving { margin: 0; font-size: 15px; font-weight: 600; color: var(--brass); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-swatch { transition: none; }
+}

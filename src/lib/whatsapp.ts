@@ -1,5 +1,7 @@
 export type OrderLine = {
   name_ar: string;
+  /** «أسود، مقاس L»; null for a product without options. */
+  variant_name_ar: string | null;
   volume_ml: number | null;
   qty: number;
   line_total_ils: number;
@@ -16,8 +18,9 @@ const shekel = (n: number) => `₪ ${n}`;
 /** Message format agreed in the design system (docs/design-system/build-stack.md). */
 export function buildOrderMessage(order: PlacedOrder, customerName: string, area?: string) {
   const lines = order.items.map((i) => {
+    const variant = i.variant_name_ar ? ` ${i.variant_name_ar}` : "";
     const vol = i.volume_ml ? ` ${i.volume_ml} مل` : "";
-    return `• ${i.name_ar}${vol} × ${i.qty} — ${shekel(i.line_total_ils)}`;
+    return `• ${i.name_ar}${variant}${vol} × ${i.qty} — ${shekel(i.line_total_ils)}`;
   });
   const who = area?.trim() ? `الاسم: ${customerName.trim()} — المنطقة: ${area.trim()}` : `الاسم: ${customerName.trim()}`;
   return [

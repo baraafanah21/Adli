@@ -2,12 +2,18 @@
   The cart: a tiny external store read with useSyncExternalStore.
   Kept in localStorage for the visitor, synced across tabs. Prices here are for display only;
   place_order() recomputes them from the database.
+  v2: one line per variant (`id` is the variant id). v1 carts held product ids and are dropped on read.
 */
 
 export type CartLine = {
+  /** Variant id: what place_order() receives. */
   id: string;
+  /** Product slug and variant sku, for the link back to the product page (/p/slug?v=sku). */
   slug: string;
+  sku: string;
   name_ar: string;
+  /** «أسود، مقاس L»; null for a product without options. */
+  variant_name_ar: string | null;
   volume_ml: number | null;
   price_ils: number;
   image_path: string | null;
@@ -29,7 +35,9 @@ function isLine(x: unknown): x is CartLine {
   return (
     typeof l.id === "string" &&
     typeof l.slug === "string" &&
+    typeof l.sku === "string" &&
     typeof l.name_ar === "string" &&
+    (l.variant_name_ar === null || typeof l.variant_name_ar === "string") &&
     typeof l.price_ils === "number" &&
     typeof l.qty === "number" &&
     Number.isInteger(l.qty) &&
@@ -41,7 +49,7 @@ function isLine(x: unknown): x is CartLine {
 function read(): CartLine[] {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    if (raw?.v === 1 && Array.isArray(raw.lines)) return raw.lines.filter(isLine).slice(0, MAX_LINES);
+    if (raw?.v === 2 && Array.isArray(raw.lines)) return raw.lines.filter(isLine).slice(0, MAX_LINES);
   } catch {
     // Storage blocked or corrupt: start empty.
   }
@@ -51,7 +59,7 @@ function read(): CartLine[] {
 function write(next: CartLine[]) {
   lines = next;
   try {
-    localStorage.setItem(KEY, JSON.stringify({ v: 1, lines }));
+    localStorage.setItem(KEY, JSON.stringify({ v: 2, lines }));
   } catch {
     // Storage blocked (private mode): the cart lasts for this page only.
   }

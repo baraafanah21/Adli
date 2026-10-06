@@ -2,19 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AddToOrderButton } from "@/components/cart/AddToOrderButton";
-import { formatPrice, metaLine, productImageSrc } from "@/lib/format";
-import type { StockStatus } from "@/lib/catalog";
+import { formatPrice, joinAnd, metaLine, productImageSrc } from "@/lib/format";
+import type { ProductCard } from "@/lib/catalog";
 
-export type SealStageProduct = {
-  id: string;
-  slug: string;
-  name_ar: string;
-  family_ar: string | null;
-  price_ils: number;
-  volume_ml: number | null;
-  image_path: string | null;
-  stock_status: StockStatus;
-};
+export type SealStageProduct = Pick<
+  ProductCard,
+  "slug" | "name_ar" | "family_ar" | "volume_ml" | "image_path" | "price_ils" | "price_varies" | "stock_state" | "only_variant" | "option_names"
+>;
 
 type Props = {
   product: SealStageProduct;
@@ -25,21 +19,23 @@ type Props = {
   preload?: boolean;
   /** Extra content under the meta line (the description on the product page). */
   children?: ReactNode;
+  /** Product page: replaces the price row (the variant picker owns price, availability and the button). */
+  purchase?: ReactNode;
 };
 
 /**
  * The product card: the logo's double-ring seal as a turntable, then name, meta, price and «أضف للطلب».
- * The disc holds the fallback image now; Phase 3 puts the drei <View> in the same place.
+ * A product with options (size, colour) is chosen on its page, so the card links there instead.
  */
-export function SealStage({ product, categoryName, size = "md", preload, children }: Props) {
+export function SealStage({ product, categoryName, size = "md", preload, children, purchase }: Props) {
   const href = `/p/${product.slug}`;
   const src = productImageSrc(product.image_path);
-  const isOut = product.stock_status === "out";
+  const isOut = product.stock_state === "out";
   const lg = size === "lg";
 
   const disc = (
     <div className="ad-seal__disc">
-      {product.stock_status === "low" && <span className="ad-tag">كمية محدودة</span>}
+      {!lg && product.stock_state === "low" && <span className="ad-tag">كمية محدودة</span>}
       {src && (
         <div className="ad-seal__img">
           <Image
@@ -54,8 +50,9 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
     </div>
   );
 
-  const cls = ["ad-card", lg && "ad-card--lg", isOut && "ad-card--out"].filter(Boolean).join(" ");
+  const cls = ["ad-card", lg && "ad-card--lg", !purchase && isOut && "ad-card--out"].filter(Boolean).join(" ");
   const Root = lg ? "div" : "article";
+  const v = product.only_variant;
 
   return (
     <Root className={cls}>
@@ -79,20 +76,36 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
         )}
         <p className="ad-card__meta">{metaLine(product.family_ar, categoryName, product.volume_ml)}</p>
         {children}
-        <div className="ad-card__row">
-          <span className="ad-price">{formatPrice(product.price_ils)}</span>
-          <AddToOrderButton
-            outOfStock={isOut}
-            product={{
-              id: product.id,
-              slug: product.slug,
-              name_ar: product.name_ar,
-              volume_ml: product.volume_ml,
-              price_ils: product.price_ils,
-              image_path: product.image_path,
-            }}
-          />
-        </div>
+        {purchase ?? (
+          <div className="ad-card__row">
+            <span className="ad-price">
+              {product.price_varies ? `من ${formatPrice(product.price_ils)}` : formatPrice(product.price_ils)}
+            </span>
+            {v ? (
+              <AddToOrderButton
+                outOfStock={isOut}
+                product={{
+                  id: v.id,
+                  slug: product.slug,
+                  sku: v.sku,
+                  name_ar: product.name_ar,
+                  variant_name_ar: v.label_ar,
+                  volume_ml: product.volume_ml,
+                  price_ils: v.price_ils,
+                  image_path: product.image_path,
+                }}
+              />
+            ) : isOut ? (
+              <button type="button" className="ad-btn ad-btn--primary" disabled>
+                نفدت الكمية
+              </button>
+            ) : (
+              <Link className="ad-btn ad-btn--ghost" href={href}>
+                اختر {joinAnd(product.option_names)}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </Root>
   );

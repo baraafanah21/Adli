@@ -34,45 +34,162 @@
   border-radius: var(--radius-seal);
 }
 
-/* Category links: one row; scrolls sideways inside itself on narrow phones. */
-.nav {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  /* room for the focus ring inside the scroller */
-  padding: var(--space-2);
-  margin: calc(var(--space-2) * -1) 0;
-}
-
-.nav::-webkit-scrollbar {
+/* ---------- Categories, desktop: «الفئات» and its panel (CategoryNav) ---------- */
+.catMenu {
+  position: relative;
   display: none;
 }
 
-.nav ul {
-  display: flex;
+@media (min-width: 720px) {
+  .catMenu {
+    display: block;
+  }
+}
+
+.catButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.catButton:hover,
+.catButton[aria-expanded="true"] {
+  color: var(--brass);
+}
+
+.catButton svg {
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.catButton[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.catPanel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-2));
+  inset-inline-start: 0;
+  z-index: var(--z-header);
+  width: min(640px, calc(100vw - 2 * var(--space-8)));
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.catPanel[hidden] {
+  display: none;
+}
+
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.nav a {
+.catGrid a {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-2);
+  min-height: 96px;
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-hair);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.catGrid a svg {
+  color: var(--brass);
+}
+
+.catGrid a:hover,
+.catGrid a:focus-visible {
+  background: var(--surface-sunk);
+}
+
+.catGrid a[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+
+/* ---------- Categories, phones: a strip under the header that scrolls sideways (CategoryStrip) ---------- */
+.strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-top: 1px solid var(--line);
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .strip {
+    display: none;
+  }
+}
+
+.strip ul {
+  display: flex;
+  gap: var(--space-2);
+  width: max-content;
+  margin: 0;
+  /* room for the focus ring inside the scroller */
+  padding: var(--space-2) var(--space-4);
+  list-style: none;
+}
+
+.strip a {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-1);
   min-height: 44px;
   padding-inline: var(--space-3);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-pill);
+  color: var(--ink);
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
-  color: var(--ink-muted);
-  transition: color var(--dur-press) var(--ease-out);
 }
 
-.nav a:hover {
-  color: var(--ink);
+.strip a svg {
+  color: var(--brass);
+}
+
+.strip a[aria-current="page"] {
+  border-color: var(--brass);
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.strip a[aria-current="page"] svg {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catButton svg {
+    transition: none;
+  }
 }
 
 .actions {

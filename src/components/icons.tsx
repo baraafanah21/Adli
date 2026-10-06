@@ -65,6 +65,93 @@ export function WhatsAppIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function ChevronDownIcon({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+/*
+  Category icons. The names are the fixed set allowed by the categories.icon check constraint
+  (supabase/migrations/20261006000700_categories_ten.sql); add a drawing here before allowing a new name there.
+*/
+const CATEGORY_PATHS = {
+  perfume: (
+    <>
+      <path d="M10 3h4v3h-4z" />
+      <rect x="6" y="6" width="12" height="15" rx="2" />
+      <path d="M9 11h6" strokeWidth="1" />
+    </>
+  ),
+  shaver: (
+    <>
+      <rect x="8" y="9" width="8" height="12" rx="3" />
+      <path d="M7 3h10v3a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" />
+      <path d="M9 5h6M12 13v3" strokeWidth="1" />
+    </>
+  ),
+  cap: (
+    <>
+      <path d="M4 15a8 8 0 0 1 16 0z" />
+      <path d="M20 15c1.2 0 2 .6 2 1.4 0 .6-.6 1.1-1.6 1.1H11" />
+      <path d="M12 7V5.5" />
+    </>
+  ),
+  watch: (
+    <>
+      <circle cx="12" cy="12" r="5.5" />
+      <path d="M9 7l.7-4h4.6L15 7M9 17l.7 4h4.6L15 17M12 9.5V12l1.6 1.2" />
+    </>
+  ),
+  underwear: (
+    <>
+      <path d="M3.5 6h17v3.5c-3 0-5.6 2.4-6.4 7.5H9.9C9.1 11.9 6.5 9.5 3.5 9.5z" />
+      <path d="M3.5 8h17" strokeWidth="1" />
+    </>
+  ),
+  sports: (
+    <>
+      <path d="M3 12h2M19 12h2M5 8.5v7M19 8.5v7M7.5 7v10M16.5 7v10M7.5 12h9" />
+    </>
+  ),
+  sunglasses: (
+    <>
+      <path d="M2.5 9h19" />
+      <path d="M3.5 9l.6 4.2a2.5 2.5 0 0 0 2.5 2.1h1.6a2.5 2.5 0 0 0 2.4-1.9L11 9M13 9l.4 4.4a2.5 2.5 0 0 0 2.4 1.9h1.6a2.5 2.5 0 0 0 2.5-2.1L20.5 9" />
+    </>
+  ),
+  gift: (
+    <>
+      <rect x="4" y="9" width="16" height="12" rx="1" />
+      <path d="M3 9h18M12 9v12M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9c2 0 5.5 0 5.5-1.5S13.5 5.5 12 9" />
+    </>
+  ),
+  beard: (
+    <>
+      <path d="M5 5v5a7 7 0 0 0 14 0V5" />
+      <path d="M9 12.5c1.8-1 4.2-1 6 0M10 16.5h4" />
+    </>
+  ),
+  body: (
+    <>
+      <path d="M9 3h6v3.5H9z" />
+      <path d="M8 6.5h8l1 3.5v10a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V10z" />
+      <path d="M10 14h4" strokeWidth="1" />
+    </>
+  ),
+} as const;
+
+export type CategoryIconName = keyof typeof CATEGORY_PATHS;
+
+/** A category's icon by name; an unknown or missing name falls back to the bottle. */
+export function CategoryIcon({ name, size = 24 }: IconProps & { name: string | null }) {
+  const paths = name && name in CATEGORY_PATHS ? CATEGORY_PATHS[name as CategoryIconName] : null;
+  if (!paths) return <BottleIcon size={size} />;
+  return <svg {...base(size)}>{paths}</svg>;
+}
+
 /** Points back. In RTL "back" is to the right. */
 export function ArrowBackIcon({ size = 20 }: IconProps) {
   return (

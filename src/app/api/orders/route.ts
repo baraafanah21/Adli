@@ -19,13 +19,14 @@ const Body = z.object({
     .or(z.literal(""))
     .default(""),
   items: z
-    .array(z.object({ productId: z.uuid(), qty: z.number().int().min(1).max(20) }))
+    .array(z.object({ variantId: z.uuid(), qty: z.number().int().min(1).max(20) }))
     .min(1)
     .max(30),
 });
 
 export type OrderError =
   | { error: "invalid"; field?: "name" | "phone" | "items" }
+  /** `id` is the variant id; `name_ar` is the product with its variant («طاقية أسود، مقاس L»). */
   | { error: "unavailable"; products: { id: string; name_ar: string | null }[] }
   | { error: "rate_limited" }
   | { error: "failed" };
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     p_customer_name: b.name,
     p_area: b.area,
     p_phone: b.phone || null,
-    p_items: b.items.map((i) => ({ product_id: i.productId, qty: i.qty })),
+    p_items: b.items.map((i) => ({ variant_id: i.variantId, qty: i.qty })),
     p_client_ip: clientIp(request),
     p_gateway_secret: secret,
   });

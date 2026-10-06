@@ -1,0 +1,36 @@
+.soon {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  padding: var(--space-12) var(--space-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* The signature seal, empty: two brass rings around the category icon. */
+.seal {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  margin-bottom: var(--space-2);
+  border: 2px solid var(--brass);
+  border-radius: var(--radius-seal);
+  box-shadow: inset 0 0 0 var(--space-2) var(--ground), inset 0 0 0 calc(var(--space-2) + 1px) var(--brass);
+  background: var(--surface-sunk);
+  color: var(--brass);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.text {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink-muted);
+}

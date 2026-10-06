@@ -20,7 +20,14 @@ type Row = {
   status: string;
   total_ils: number;
   created_at: string;
-  order_items: { id: number; name_ar: string; volume_ml: number | null; qty: number; unit_price_ils: number }[];
+  order_items: {
+    id: number;
+    name_ar: string;
+    variant_name_ar: string | null;
+    volume_ml: number | null;
+    qty: number;
+    unit_price_ils: number;
+  }[];
 };
 
 const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "long", timeStyle: "short" });
@@ -31,7 +38,7 @@ export default async function MyOrdersPage() {
   // RLS returns only this user's orders (user_id = auth.uid()); the filter is for the index.
   const { data, error } = await supabase
     .from("orders")
-    .select("id, code, status, total_ils, created_at, order_items (id, name_ar, volume_ml, qty, unit_price_ils)")
+    .select("id, code, status, total_ils, created_at, order_items (id, name_ar, variant_name_ar, volume_ml, qty, unit_price_ils)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -73,6 +80,7 @@ export default async function MyOrdersPage() {
                   <li key={i.id}>
                     <span>
                       {i.name_ar}
+                      {i.variant_name_ar ? ` ${i.variant_name_ar}` : ""}
                       {i.volume_ml ? ` ${i.volume_ml} مل` : ""} × {i.qty}
                     </span>
                     <span>{formatPrice(i.unit_price_ils * i.qty)}</span>

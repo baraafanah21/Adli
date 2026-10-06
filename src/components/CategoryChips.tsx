@@ -10,7 +10,7 @@ type Props = {
   onChange: (slug: string | null) => void;
 };
 
-/** Toggle chips that filter the shelf. Exactly one is pressed; the parent keeps it in ?c=slug. */
+/** Toggle chips that filter the shelf. Exactly one is pressed; the parent keeps it in ?c=slug. Empty categories say «قريباً». */
 export function CategoryChips({ categories, total, active, onChange }: Props) {
   return (
     <div className="ad-chips" role="group" aria-label="الفئات">
@@ -26,7 +26,11 @@ export function CategoryChips({ categories, total, active, onChange }: Props) {
           onClick={() => onChange(c.slug)}
         >
           {c.name_ar}
-          <span className="ad-chip__count">{c.count}</span>
+          {c.count > 0 ? (
+            <span className="ad-chip__count">{c.count}</span>
+          ) : (
+            <span className="ad-chip__count">قريباً</span>
+          )}
         </button>
       ))}
     </div>

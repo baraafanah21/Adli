@@ -28,7 +28,13 @@
       "Bash(node --experimental-strip-types t.ts)",
       "mcp__claude_ai_Supabase__query_logs",
       "Bash(curl -s -o /dev/null -w 'local /signup %{http_code}\\\\n' http://localhost:3000/signup)",
-      "Bash(curl -s http://localhost:3000/signup)"
+      "Bash(curl -s http://localhost:3000/signup)",
+      "Bash(git checkout *)",
+      "Bash(mkdir -p \"src/app/c/[slug]\" && cat src/app/page.module.css | sed -n '/\\\\.shelf/,/^}/p'; grep -n \"display-lg\\\\|\\\\.title\\\\b\\\\|^\\\\.title\\\\|body-lg\" src/app/globals.css src/styles/*.css | head)",
+      "Bash(npx tsc *)"
+    ],
+    "additionalDirectories": [
+      "/home/bara-afanah/Desktop/Adli/src/app/c"
     ]
   }
 }

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { CategoryChips } from "@/components/CategoryChips";
+import { ComingSoon } from "@/components/ComingSoon";
 import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
 import { setCategoryParam } from "@/lib/category-param";
@@ -10,14 +11,14 @@ import styles from "./Shelf.module.css";
 
 type Props = { categories: Category[]; products: ProductCard[] };
 
+/** Every active category is a chip; one with no products yet says «قريباً» instead of disappearing. */
 export function Shelf({ categories, products }: Props) {
   const params = useSearchParams();
   const requested = params.get("c");
-  const active = categories.some((c) => c.slug === requested) ? requested : null;
-  const activeId = categories.find((c) => c.slug === active)?.id;
+  const activeCategory = categories.find((c) => c.slug === requested) ?? null;
 
   const nameById = new Map(categories.map((c) => [c.id, c.name_ar]));
-  const visible = activeId ? products.filter((p) => p.category_id === activeId) : products;
+  const visible = activeCategory ? products.filter((p) => p.category_id === activeCategory.id) : products;
   const chips = categories.map((c) => ({
     slug: c.slug,
     name_ar: c.name_ar,
@@ -26,7 +27,12 @@ export function Shelf({ categories, products }: Props) {
 
   return (
     <>
-      <CategoryChips categories={chips} total={products.length} active={active} onChange={(s) => setCategoryParam(s)} />
+      <CategoryChips
+        categories={chips}
+        total={products.length}
+        active={activeCategory?.slug ?? null}
+        onChange={(s) => setCategoryParam(s)}
+      />
       {visible.length > 0 ? (
         <ul className={`ad-shelf ${styles.grid}`}>
           {visible.map((p) => (
@@ -35,12 +41,15 @@ export function Shelf({ categories, products }: Props) {
             </li>
           ))}
         </ul>
+      ) : activeCategory ? (
+        <ComingSoon category={activeCategory}>
+          <Button variant="ghost" onClick={() => setCategoryParam(null)}>
+            تصفّح كل المنتجات
+          </Button>
+        </ComingSoon>
       ) : (
         <div className={styles.empty} role="status">
-          <p className="body">لا توجد منتجات في هذه الفئة حالياً.</p>
-          <Button variant="ghost" onClick={() => setCategoryParam(null)}>
-            الكل
-          </Button>
+          <p className="body">لا توجد منتجات حالياً.</p>
         </div>
       )}
     </>
