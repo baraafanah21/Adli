@@ -28,8 +28,17 @@ export function buildOrderMessage(order: PlacedOrder, customerName: string, area
   ].join("\n");
 }
 
-export function whatsappUrl(message: string) {
+function salonNumber() {
   const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
   if (!number) throw new Error("NEXT_PUBLIC_WHATSAPP_NUMBER is not set");
-  return `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+  return number.replace(/\D/g, "");
+}
+
+export function whatsappUrl(message: string) {
+  return `https://wa.me/${salonNumber()}?text=${encodeURIComponent(message)}`;
+}
+
+/** Plain chat with the salon, no prefilled order. */
+export function whatsappChatUrl() {
+  return `https://wa.me/${salonNumber()}`;
 }
