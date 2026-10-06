@@ -1,0 +1,57 @@
+/* 4:5, the same ratio as the Cycles poster, so the fade from image to canvas doesn't jump. */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--forest);
+  overflow: hidden;
+}
+
+.poster,
+.canvas {
+  transition: opacity var(--dur-panel) var(--ease-out);
+}
+
+.poster {
+  object-fit: cover;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.canvas canvas:active {
+  cursor: grabbing;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--space-4);
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--cream);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster,
+  .canvas {
+    transition: none;
+  }
+}
