@@ -29,9 +29,9 @@ export function Shelf({ categories, products }: Props) {
       <CategoryChips categories={chips} total={products.length} active={active} onChange={(s) => setCategoryParam(s)} />
       {visible.length > 0 ? (
         <ul className={`ad-shelf ${styles.grid}`}>
-          {visible.map((p, i) => (
+          {visible.map((p) => (
             <li key={p.id}>
-              <SealStage product={p} categoryName={nameById.get(p.category_id)} priority={i < 2} />
+              <SealStage product={p} categoryName={nameById.get(p.category_id)} />
             </li>
           ))}
         </ul>
