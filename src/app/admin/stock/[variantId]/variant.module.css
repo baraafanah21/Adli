@@ -1,0 +1,141 @@
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.page h1 {
+  margin: 0;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  min-height: 44px;
+  padding-inline-end: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--brass);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.facts div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.facts dt {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.big {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--brass);
+  font-variant-numeric: tabular-nums;
+}
+
+.small {
+  font-size: 13px;
+  color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+.history {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.muted {
+  display: block;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.moves {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.moves li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.delta {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.delta[data-sign="plus"] {
+  color: var(--brass);
+}
+
+.delta[data-sign="minus"] {
+  color: var(--oud);
+}
+
+.what {
+  display: grid;
+  gap: 2px;
+  font-weight: 500;
+}
+
+.what a {
+  color: var(--ink);
+  text-decoration-color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+.note {
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.balance {
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

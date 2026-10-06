@@ -55,6 +55,9 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_update_variant(variant_id, sku, label_ar, price_ils, low_stock_threshold, is_active, sort)` | owner, staff | F2 |
 | `admin_variant_stock(product_id)` | owner, staff | F2 |
 | `admin_set_bundle(product_id, price_ils, items)` | owner, staff | F2 |
+| `admin_stock_levels(filter, q, category_id)` | owner, staff | F3 |
+| `admin_adjust_stock(variant_id, reason, quantity, note)` | owner, staff | F3 |
+| `admin_stock_movements(variant_id, limit)` | owner, staff | F3 |
 
 Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 
