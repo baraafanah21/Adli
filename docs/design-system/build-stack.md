@@ -13,7 +13,7 @@
 | الجدول | الأعمدة الأساسية |
 |---|---|
 | `categories` | id، slug (`perfumes` / `creams` / `grooming`)، name_ar، sort |
-| `products` | id، category_id، slug، name_ar، description_ar، price_ils (integer)، volume_ml، model_path، image_path، is_active، stock_status |
+| `products` | id، category_id، slug، name_ar، family_ar، description_ar، price_ils (integer)، volume_ml، model_path، image_path، is_active، stock_status |
 | `orders` | id، code (مثل `AD-1042`)، idempotency_key، customer_name، area، items (jsonb)، total_ils، status، created_at |
 | `admins` | user_id |
 
