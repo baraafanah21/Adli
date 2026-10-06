@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Button } from "@/components/Button";
+import { AddToOrderButton } from "@/components/cart/AddToOrderButton";
 import { formatPrice, metaLine, productImageSrc } from "@/lib/format";
 import type { StockStatus } from "@/lib/catalog";
 
 export type SealStageProduct = {
+  id: string;
   slug: string;
   name_ar: string;
   family_ar: string | null;
@@ -20,8 +21,8 @@ type Props = {
   categoryName?: string;
   /** "lg" is the product page: h1 name, no link, room for a description. */
   size?: "md" | "lg";
-  /** Load the image eagerly (above the fold). */
-  priority?: boolean;
+  /** Preload the image (above the fold). */
+  preload?: boolean;
   /** Extra content under the meta line (the description on the product page). */
   children?: ReactNode;
 };
@@ -30,7 +31,7 @@ type Props = {
  * The product card: the logo's double-ring seal as a turntable, then name, meta, price and «أضف للطلب».
  * The disc holds the fallback image now; Phase 3 puts the drei <View> in the same place.
  */
-export function SealStage({ product, categoryName, size = "md", priority, children }: Props) {
+export function SealStage({ product, categoryName, size = "md", preload, children }: Props) {
   const href = `/p/${product.slug}`;
   const src = productImageSrc(product.image_path);
   const isOut = product.stock_status === "out";
@@ -46,7 +47,7 @@ export function SealStage({ product, categoryName, size = "md", priority, childr
             alt={lg ? product.name_ar : ""}
             fill
             sizes={lg ? "(max-width: 840px) 70vw, 300px" : "(max-width: 600px) 30vw, 164px"}
-            priority={priority}
+            preload={preload}
           />
         </div>
       )}
@@ -80,10 +81,17 @@ export function SealStage({ product, categoryName, size = "md", priority, childr
         {children}
         <div className="ad-card__row">
           <span className="ad-price">{formatPrice(product.price_ils)}</span>
-          {/* No-op until the cart lands in Phase 2. */}
-          <Button variant="primary" disabled={isOut}>
-            {isOut ? "نفدت الكمية" : "أضف للطلب"}
-          </Button>
+          <AddToOrderButton
+            outOfStock={isOut}
+            product={{
+              id: product.id,
+              slug: product.slug,
+              name_ar: product.name_ar,
+              volume_ml: product.volume_ml,
+              price_ils: product.price_ils,
+              image_path: product.image_path,
+            }}
+          />
         </div>
       </div>
     </Root>
