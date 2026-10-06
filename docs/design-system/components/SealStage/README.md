@@ -8,3 +8,9 @@ The product card: the logo's double-ring seal as a circular turntable holding th
 - The seal is always a perfect circle (`radius-seal`) with exactly two rings, as in the logo. Don't add a third ring or a card background around it.
 - Hover or keyboard focus turns the turntable 25° and lights `shadow-glow` on the ring; that is the card's only hover effect.
 - Grid: 248px cards, `space-6` gap; two per row on phones.
+- Shelf grid (`ul.ad-shelf`): 248px columns centered on desktop; under 600px, two fluid columns with a `space-4` gap so two cards fit at 360px. In a row, price and button line up at the bottom.
+- Under 480px `.ad-card__row` stacks: price above a full-width button (a 48px button and the price don't fit side by side in a ~156px card).
+- `.ad-card--lg` is the product page: a 440px seal, the name in `display-md` as the page's `h1`, start-aligned body, side by side from 840px.
+- Out of stock (`.ad-card--out`): only `.ad-seal__disc` is dimmed; name, meta and price stay at full contrast, and the button is disabled and says «نفدت الكمية». Low stock shows the «كمية محدودة» tag (kept on one line).
+- Until the 3D `<View>` lands, the disc holds `.ad-seal__img` (next/image, `object-fit: contain`), which turns 25° in perspective on hover or focus as the stand-in for the turntable; no turn under `prefers-reduced-motion`.
+- The meta line is `family_ar` (falling back to the category name), then the volume: «عطر شرقي، 100 مل».
