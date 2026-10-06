@@ -3,7 +3,6 @@
 ## الحزمة
 
 - Next.js (App Router) + TypeScript، منشور على Vercel.
-- `three` + `@react-three/fiber` + `@react-three/drei` + `@react-three/postprocessing`.
 - `gsap` (ScrollTrigger) + `lenis`.
 - `@supabase/supabase-js` و`@supabase/ssr`.
 - الألوان والمسافات من `tokens.css` لهذا النظام كمتغيرات CSS؛ Tailwind اختياري ويقرأ نفس المتغيرات.
@@ -17,7 +16,7 @@
 | `orders` | id، code (مثل `AD-1042`)، idempotency_key، customer_name، area، items (jsonb)، total_ils، status، created_at |
 | `admins` | user_id |
 
-- النماذج والصور في Supabase Storage (bucket عام `products`).
+- صور المنتجات (WebP) في Supabase Storage (bucket عام `products`).
 - RLS: القراءة العامة على `categories` و`products` النشطة فقط؛ `orders` لا تُقرأ للعامة. الطلب يُنشأ فقط عبر دالة `place_order` في القاعدة: تعيد حساب المجموع من أسعار القاعدة، وتمنع تكرار الطلب بمفتاح `idempotency_key`.
 - لوحة تحكم صاحب الصالون: Supabase Auth، والمدير هو من له صف في جدول `admins`.
 
