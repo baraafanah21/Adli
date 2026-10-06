@@ -1,0 +1,129 @@
+.page {
+  display: grid;
+  place-items: start center;
+  min-height: 70svh;
+  padding: var(--space-12) var(--space-4) var(--space-24);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card h1,
+.card p {
+  margin: 0;
+}
+
+.seal {
+  display: flex;
+  justify-content: center;
+}
+
+.seal > span {
+  --seal-size: 56px;
+}
+
+.card h1 {
+  text-align: center;
+}
+
+.lede {
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.form :global(.ad-field) {
+  margin-bottom: var(--space-3);
+}
+
+.row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(var(--space-2) * -1);
+  margin-bottom: var(--space-3);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block: var(--space-4);
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.notice {
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.error {
+  padding: var(--space-3);
+  border: 1px solid var(--oud);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-4);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brass);
+  text-underline-offset: 4px;
+}
+
+/* A form button that looks like the footer links («خروج»). */
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brass);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}

@@ -8,8 +8,10 @@ type CartUI = { sheetOpen: boolean; openSheet: () => void; closeSheet: () => voi
 
 const CartUIContext = createContext<CartUI | null>(null);
 
+type Prefill = { full_name: string | null; area: string | null; phone: string | null } | null;
+
 /** Holds the order sheet's open state and renders the sheet once for the whole page. */
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({ children, userId, prefill }: { children: ReactNode; userId: string | null; prefill: Prefill }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const ui = useMemo(
     () => ({ sheetOpen, openSheet: () => setSheetOpen(true), closeSheet: () => setSheetOpen(false) }),
@@ -18,7 +20,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartUIContext.Provider value={ui}>
       {children}
-      <OrderSheet open={sheetOpen} onClose={ui.closeSheet} />
+      {/* Re-mount on sign-in/out so the fields pick up the new profile. */}
+      <OrderSheet key={userId ?? "guest"} open={sheetOpen} onClose={ui.closeSheet} prefill={prefill} />
     </CartUIContext.Provider>
   );
 }

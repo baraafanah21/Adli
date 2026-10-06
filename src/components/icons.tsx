@@ -44,6 +44,15 @@ export function SunIcon({ size = 22 }: IconProps) {
   );
 }
 
+export function UserIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="12" cy="8.5" r="4" />
+      <path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5" />
+    </svg>
+  );
+}
+
 /** The official WhatsApp glyph (from the design-system Button preview). Only on the send-order button. */
 export function WhatsAppIcon({ size = 20 }: IconProps) {
   return (

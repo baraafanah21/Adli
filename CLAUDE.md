@@ -32,12 +32,18 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 ## Supabase
 
 - Project ref `hdkmrozwihaoqiqjlzld` (eu-central-1). Migrations in `supabase/migrations/`, applied in order. Add new migrations as new files; never edit an applied one.
-- Tables: `categories`, `products`, `orders`, `order_items`, `admins` (becomes `user_roles` in Phase C). RLS is on for all. The public reads categories and active products only. `private.*` holds server-only state (`app_secrets`, `order_rate_hits`) and is never exposed.
-- Orders are created ONLY through `POST /api/orders` (`src/app/api/orders/route.ts`), which calls `place_order(p_idempotency_key, p_customer_name, p_area, p_phone, p_items, p_client_ip, p_gateway_secret)` with the server-only `ORDER_GATEWAY_SECRET` (its SHA-256 is in `private.app_secrets`; a direct browser RPC call is refused). It recomputes prices, rate-limits 5 orders/minute per IP, and returns `{code, total_ils, items}`. Error codes: `P0001` unavailable (DETAIL = `[{id, name_ar}]`), `P0002` rate limited, `22023` invalid, `42501` bad secret.
+- Tables: `categories`, `products`, `orders` (optional `user_id`), `order_items`, `profiles` (one per auth user, created by the `on_auth_user_created` trigger; users update only `full_name`, `area`, `phone`), `user_roles` (`owner` / `staff` + `is_barber`; written from the SQL Editor until the Phase F staff screen). RLS is on for all. The public reads categories and active products only; customers read their own profile and orders, staff read all. `private.*` holds server-only state (`app_secrets`, `order_rate_hits`) and is never exposed.
+- Orders are created ONLY through `POST /api/orders` (`src/app/api/orders/route.ts`), which calls `place_order(p_idempotency_key, p_customer_name, p_area, p_phone, p_items, p_client_ip, p_gateway_secret)` with the server-only `ORDER_GATEWAY_SECRET` (its SHA-256 is in `private.app_secrets`; a direct browser RPC call is refused). It recomputes prices, rate-limits 5 orders/minute per IP, stores `auth.uid()` as `orders.user_id` when the caller is signed in (guests stay null), and returns `{code, total_ils, items}`. Error codes: `P0001` unavailable (DETAIL = `[{id, name_ar}]`), `P0002` rate limited, `22023` invalid, `42501` bad secret.
 - The cart is `src/lib/cart-store.ts` (localStorage) with `useCart()` / `useCartUI()` from `src/components/cart/CartContext.tsx`. The order sheet generates one idempotency key per checkout attempt (sessionStorage, rotated when the cart changes), then builds the message with `buildOrderMessage()` and opens `whatsappUrl()` from `src/lib/whatsapp.ts` in the same tab.
-- Admin = a row in `public.admins` (user_id). `private.is_admin()` backs the write policies.
+- Staff = any row in `public.user_roles`. `private.is_admin()` (any role) backs the staff policies; `private.has_role(app_role[])` checks a specific role. A trigger keeps at least one owner (`P0003 last_owner`).
+- `/admin` and `/account` are guarded in three layers: `src/proxy.ts` (signed in), `requireUser()` / `requireRole()` in `src/lib/auth/guards.ts` (roles read fresh from `user_roles`; wrong role = 404), then RLS.
+- Auth email templates (Arabic) live in `supabase/templates/`; they're pasted into the dashboard by hand (see its README).
 - After any schema change, run the Supabase security advisors and fix new findings.
 - Clients: `src/lib/supabase/client.ts` (browser) and `src/lib/supabase/server.ts` (server components / route handlers).
+
+## Salon data (temporary static files)
+
+Hours are `WEEK` in `src/lib/salon.ts` (salon time `Asia/Hebron`; `openStatus()` drives the client-only `OpenNow` badge). Services and prices are `src/lib/services.ts`. Both get replaced by the bookings tables (`working_hours`, `services`), see `docs/BOOKINGS-BRIEF.md`.
 
 ## Env
 

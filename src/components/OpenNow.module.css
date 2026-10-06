@@ -1,0 +1,25 @@
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 1.6em;
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+.status[data-open="true"] {
+  color: var(--ink);
+}
+
+.dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ink-muted);
+}
+
+.status[data-open="true"] .dot {
+  background: var(--brass);
+  border-color: var(--brass);
+}

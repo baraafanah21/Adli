@@ -112,18 +112,25 @@
   margin-top: var(--space-6);
 }
 
-.hours {
+.salonLists {
   display: grid;
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-12);
   margin-top: var(--space-12);
-  max-width: 420px;
+  max-width: 900px;
 }
 
-.hours dl {
+.list {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.list dl {
   margin: 0;
 }
 
-.hoursRow {
+.row {
   display: flex;
   justify-content: space-between;
   gap: var(--space-4);
@@ -131,8 +138,9 @@
   border-bottom: 1px solid var(--line);
 }
 
-.hoursRow dd {
+.row dd {
   margin: 0;
+  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 

@@ -9,7 +9,12 @@ import { buildOrderMessage, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
 
-type Props = { open: boolean; onClose: () => void };
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  /** The signed-in customer's profile; guests get empty fields. */
+  prefill?: { full_name: string | null; area: string | null; phone: string | null } | null;
+};
 
 type Phase =
   | { kind: "idle" }
@@ -46,13 +51,13 @@ function forgetCheckoutKey() {
 const joinNames = (names: string[]) =>
   names.length <= 1 ? names.join("") : `${names.slice(0, -1).join("، ")} و${names[names.length - 1]}`;
 
-export function OrderSheet({ open, onClose }: Props) {
+export function OrderSheet({ open, onClose, prefill }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const { lines, total, setQty, clear } = useCart();
-  const [name, setName] = useState("");
-  const [area, setArea] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(prefill?.full_name ?? "");
+  const [area, setArea] = useState(prefill?.area ?? "");
+  const [phone, setPhone] = useState(prefill?.phone ?? "");
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [unavailable, setUnavailable] = useState<Set<string>>(new Set());

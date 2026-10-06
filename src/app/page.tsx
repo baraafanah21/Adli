@@ -4,7 +4,10 @@ import { SealMark } from "@/components/SealMark";
 import { Shelf } from "@/components/Shelf";
 import { Button } from "@/components/Button";
 import { getCatalog } from "@/lib/catalog";
-import { SALON } from "@/lib/salon";
+import { OpenNow } from "@/components/OpenNow";
+import { formatPrice } from "@/lib/format";
+import { SALON, hoursRows } from "@/lib/salon";
+import { SERVICES } from "@/lib/services";
 import { whatsappChatUrl } from "@/lib/whatsapp";
 import styles from "./page.module.css";
 
@@ -54,20 +57,30 @@ export default async function Home() {
           صالون عدلي للحلاقة الرجالية. العطور والكريمات التي تراها هنا هي ما نستعمله ونثق به، وتطلبها برسالة واتساب
           وتستلمها من الصالون.
         </p>
-        <div className={styles.hours}>
-          <h3 className="title">المواعيد</h3>
-          {SALON.hours.length > 0 ? (
+        <div className={styles.salonLists}>
+          <div className={styles.list}>
+            <h3 className="title">ساعات الدوام</h3>
+            <OpenNow />
             <dl>
-              {SALON.hours.map((h) => (
-                <div key={h.days} className={styles.hoursRow}>
+              {hoursRows().map((h) => (
+                <div key={h.days} className={styles.row}>
                   <dt>{h.days}</dt>
                   <dd>{h.hours}</dd>
                 </div>
               ))}
             </dl>
-          ) : (
-            <p className="body">اسألنا عن المواعيد على واتساب.</p>
-          )}
+          </div>
+          <div className={styles.list}>
+            <h3 className="title">الخدمات والأسعار</h3>
+            <dl>
+              {SERVICES.map((s) => (
+                <div key={s.name} className={styles.row}>
+                  <dt>{s.name}</dt>
+                  <dd>{formatPrice(s.priceIls)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
         {SALON.photos.length > 0 && (
           <ul className={styles.photos}>

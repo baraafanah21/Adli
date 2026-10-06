@@ -3,6 +3,7 @@ import { Amiri, Readex_Pro } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CartProvider } from "@/components/cart/CartContext";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { getCurrentUser, getProfile } from "@/lib/auth/guards";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
@@ -39,7 +40,8 @@ export const viewport: Viewport = {
 // Before first paint: saved theme ("adli-theme", see src/lib/theme.ts), else prefers-color-scheme, else night.
 const themeScript = `(function(){var d=document.documentElement,t;try{t=localStorage.getItem("adli-theme")}catch(e){}if(t!=="day"&&t!=="night"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"day":"night"}d.dataset.theme=t})()`;
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const [user, profile] = await Promise.all([getCurrentUser(), getProfile()]);
   return (
     // suppressHydrationWarning: the script above may change data-theme before React hydrates.
     <html
@@ -54,7 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="ad-root">
         <SmoothScroll />
-        <CartProvider>
+        <CartProvider userId={user?.id ?? null} prefill={profile}>
           <SiteHeader />
           {children}
         </CartProvider>
