@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Amiri, Readex_Pro } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
+import { CartProvider } from "@/components/cart/CartContext";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
@@ -51,8 +53,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="ad-root">
-        <SiteHeader />
-        {children}
+        <SmoothScroll />
+        <CartProvider>
+          <SiteHeader />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
