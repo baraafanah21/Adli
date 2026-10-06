@@ -176,3 +176,77 @@
   .ad-pole { animation: none; }
   .ad-btn, .ad-btn:active { transition: none; transform: none; }
 }
+
+/* ======================================================================
+   Phase 1 additions (approved). Each one is noted in its component README.
+   ====================================================================== */
+
+/* ---------- Category chips: 44px touch target ---------- */
+.ad-chip { min-height: 44px; transition: border-color var(--dur-press) var(--ease-out), background-color var(--dur-press) var(--ease-out); }
+.ad-chip:active { transform: scale(0.97); }
+
+/* ---------- Seal stage: product image in the disc (2D fallback until the 3D <View>) ---------- */
+.ad-seal__img {
+  position: relative;
+  width: 66%;
+  height: 66%;
+  transition: transform var(--dur-panel) var(--ease-out);
+}
+.ad-seal__img img { object-fit: contain; }
+/* The 2D stand-in for "the turntable turns 25°". */
+.ad-card:hover .ad-seal__img,
+.ad-card:focus-within .ad-seal__img { transform: perspective(600px) rotateY(25deg); }
+.ad-card__name a { text-decoration: none; display: inline-block; padding-block: 11px; margin-block: -11px; } /* 44px hit area, same layout */
+.ad-card__name a:hover { text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 6px; }
+.ad-seal > a { display: block; width: 100%; height: 100%; border-radius: var(--radius-seal); }
+
+/* ---------- Seal stage: the tag stays on one line in narrow cards ---------- */
+.ad-tag { white-space: nowrap; top: 10%; }
+
+/* ---------- Seal stage: in a row of cards, price and button line up at the bottom ---------- */
+.ad-shelf > li { display: flex; }
+.ad-shelf .ad-card { flex: 1; }
+.ad-shelf .ad-card__body { flex: 1; display: flex; flex-direction: column; }
+.ad-shelf .ad-card__row { margin-top: auto; padding-top: var(--space-3); }
+
+/* ---------- Seal stage: out of stock (dim the seal only, text stays readable) ---------- */
+.ad-card--out .ad-seal__disc { opacity: 0.45; }
+
+/* ---------- Shelf grid: 248px cards, space-6 gap; two fluid columns on phones ---------- */
+.ad-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 248px);
+  justify-content: center;
+  gap: var(--space-12) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 599px) {
+  .ad-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-4); }
+  .ad-shelf .ad-card { width: 100%; }
+}
+
+/* ---------- Seal stage: stacked price and button under 480px ---------- */
+@media (max-width: 479px) {
+  .ad-card__name { font-size: 18px; }
+  .ad-card__row { flex-direction: column; align-items: stretch; gap: var(--space-2); }
+  .ad-card__row .ad-btn { padding-inline: var(--space-3); }
+}
+
+/* ---------- Seal stage: large, for the product page ---------- */
+.ad-card--lg { width: 100%; }
+.ad-card--lg .ad-seal { width: min(100%, 440px); margin-inline: auto; border-width: 3px; padding: var(--space-3); }
+.ad-card--lg .ad-card__body { text-align: start; gap: var(--space-3); padding-top: var(--space-8); }
+.ad-card--lg .ad-card__name { font-family: var(--font-amiri); font-size: 40px; line-height: 1.4; font-weight: 400; } /* display-md */
+.ad-card--lg .ad-card__meta { font-size: 16px; }
+.ad-card--lg .ad-card__row { justify-content: flex-start; gap: var(--space-6); flex-direction: row; align-items: center; }
+@media (min-width: 840px) {
+  .ad-card--lg { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: var(--space-12); align-items: center; }
+  .ad-card--lg .ad-card__body { padding-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-seal__img, .ad-chip, .ad-chip:active { transition: none; transform: none; }
+  .ad-card:hover .ad-seal__img, .ad-card:focus-within .ad-seal__img { transform: none; }
+}
