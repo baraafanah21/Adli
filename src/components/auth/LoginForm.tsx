@@ -11,6 +11,8 @@ import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure } from "@/lib/auth/errors";
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { EMAIL_ENABLED } from "@/lib/auth/email";
+import { whatsappUrl } from "@/lib/whatsapp";
 import styles from "./auth.module.css";
 
 type Status =
@@ -127,9 +129,21 @@ export function LoginForm({ next }: { next: string }) {
           />
         </div>
         <div className={styles.row}>
-          <Link className={styles.link} href={`/auth/forgot?next=${encodeURIComponent(next)}`}>
-            نسيت كلمة المرور؟
-          </Link>
+          {EMAIL_ENABLED ? (
+            <Link className={styles.link} href={`/auth/forgot?next=${encodeURIComponent(next)}`}>
+              نسيت كلمة المرور؟
+            </Link>
+          ) : (
+            // No reset email can arrive yet: the salon resets it by hand.
+            <a
+              className={styles.link}
+              href={whatsappUrl("مرحباً صالون عدلي، نسيت كلمة المرور لحسابي في الموقع.")}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              نسيت كلمة المرور؟ تواصل مع الصالون
+            </a>
+          )}
         </div>
         {status.kind === "error" && <AuthAlert error={status} />}
         {status.kind === "sent" && (
@@ -137,7 +151,7 @@ export function LoginForm({ next }: { next: string }) {
             {status.message}
           </p>
         )}
-        {status.kind === "error" && status.canResend && (
+        {status.kind === "error" && status.canResend && EMAIL_ENABLED && (
           <button type="button" className="ad-btn ad-btn--ghost ad-btn--block" onClick={resendConfirmation}>
             أرسل رسالة التأكيد من جديد
           </button>
@@ -147,21 +161,25 @@ export function LoginForm({ next }: { next: string }) {
         </button>
       </form>
 
-      <p className={styles.divider}>أو بدون كلمة مرور</p>
+      {EMAIL_ENABLED && (
+        <>
+          <p className={styles.divider}>أو بدون كلمة مرور</p>
 
-      <form className={styles.form} onSubmit={sendLink} noValidate>
-        <p className={styles.lede}>نرسل لك رابطاً على بريدك، تضغطه فتدخل مباشرة.</p>
-        {linkStatus.kind === "error" && <AuthAlert error={linkStatus} />}
-        {linkStatus.kind === "sent" ? (
-          <p className={styles.notice} role="status">
-            {linkStatus.message}
-          </p>
-        ) : (
-          <button type="submit" className="ad-btn ad-btn--ghost ad-btn--block" disabled={linkStatus.kind === "busy"}>
-            {linkStatus.kind === "busy" ? "جارٍ الإرسال…" : "أرسل لي رابط دخول"}
-          </button>
-        )}
-      </form>
+          <form className={styles.form} onSubmit={sendLink} noValidate>
+            <p className={styles.lede}>نرسل لك رابطاً على بريدك، تضغطه فتدخل مباشرة.</p>
+            {linkStatus.kind === "error" && <AuthAlert error={linkStatus} />}
+            {linkStatus.kind === "sent" ? (
+              <p className={styles.notice} role="status">
+                {linkStatus.message}
+              </p>
+            ) : (
+              <button type="submit" className="ad-btn ad-btn--ghost ad-btn--block" disabled={linkStatus.kind === "busy"}>
+                {linkStatus.kind === "busy" ? "جارٍ الإرسال…" : "أرسل لي رابط دخول"}
+              </button>
+            )}
+          </form>
+        </>
+      )}
     </>
   );
 }

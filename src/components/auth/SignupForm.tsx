@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD } from "@/lib/auth/errors";
@@ -14,6 +15,7 @@ type Status =
   | { kind: "sent"; email: string };
 
 export function SignupForm({ next }: { next: string }) {
+  const router = useRouter();
   const ids = { name: useId(), email: useId(), password: useId() };
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +33,7 @@ export function SignupForm({ next }: { next: string }) {
       return setStatus({ kind: "error", message: `كلمة المرور قصيرة. اكتب ${MIN_PASSWORD} أحرف على الأقل.` });
 
     setStatus({ kind: "busy" });
-    const { error } = await createClient().auth.signUp({
+    const { data, error } = await createClient().auth.signUp({
       email: em,
       password,
       options: { data: { full_name: n.slice(0, 80) }, emailRedirectTo: confirmUrl(next) },
@@ -41,7 +43,14 @@ export function SignupForm({ next }: { next: string }) {
         isEmailSendFailure(error) ? { kind: "error", ...emailSendFailure("confirm") } : { kind: "error", message: authMessage(error) },
       );
     }
-    // Same answer whether or not the email already had an account (Supabase hides it too).
+    // «Confirm email» off in Supabase: the account is ready and signed in. Back to where they came from
+    // (e.g. the confirm step of /booking, which keeps its choice in the URL).
+    if (data.session) {
+      router.replace(next);
+      router.refresh();
+      return;
+    }
+    // Confirmation on: the email carries the link. Same answer whether or not the email already had an account.
     setStatus({ kind: "sent", email: em });
   }
 

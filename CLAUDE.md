@@ -67,9 +67,18 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 
 Opening hours, services and barbers live in the database (`salon_hours`, `services`, `barbers`), read on the server by `src/lib/salon-data.ts` (`getWeek()`, `getServices()`, `getBarbers()`). `src/lib/salon.ts` only formats (`hoursRows(week)`, `openStatus(at, week)`, salon time `Asia/Hebron`) and is safe in the browser; `OpenNow` gets the week as a prop. Add-ons (`bookable_online = false`) show «تُطلب في الصالون مع خدمتك».
 
+## Email (off for now)
+
+Customers can't receive auth email yet (Resend has no verified sending domain; only the project owner's address gets mail). Temporary decision:
+- **Supabase → Authentication → Sign In / Providers → «Confirm email» is OFF.** `signUp()` returns a session, and `SignupForm` signs the customer in and goes back to `next` (e.g. the confirm step of `/booking`). With confirmation on it returns no session and the form shows «افحص بريدك» as before; no code change either way.
+- **`NEXT_PUBLIC_EMAIL_ENABLED` is unset / `false`** (`src/lib/auth/email.ts`): the login page hides «أرسل لي رابط دخول» and the resend-confirmation button, and «نسيت كلمة المرور؟» becomes «تواصل مع الصالون» on WhatsApp (also on `/auth/forgot`). The salon resets a password by hand in the Supabase dashboard.
+- **E4 (booking emails) is postponed.**
+
+To turn email on: verify the sending domain in Resend and set the SMTP sender in Supabase (`supabase/templates/README.md`); switch «Confirm email» back on; set `NEXT_PUBLIC_EMAIL_ENABLED=true` on Vercel (all environments) and redeploy; then build E4.
+
 ## Env
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER` (digits only, international, no +), and server-only `ORDER_GATEWAY_SECRET` (`openssl rand -hex 32`, Sensitive on Vercel; never `NEXT_PUBLIC_`). See `.env.example`. No service-role key is used anywhere.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER` (digits only, international, no +), `NEXT_PUBLIC_EMAIL_ENABLED` (`true` only once auth email reaches customers, see «Email»), and server-only `ORDER_GATEWAY_SECRET` (`openssl rand -hex 32`, Sensitive on Vercel; never `NEXT_PUBLIC_`). See `.env.example`. No service-role key is used anywhere.
 
 ## Commands
 

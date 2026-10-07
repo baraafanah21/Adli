@@ -1,6 +1,8 @@
+import { EMAIL_ENABLED } from "@/lib/auth/email";
+
 /*
   Supabase Auth errors → Arabic that says what to do next.
-  Never reveals whether an email has an account.
+  Never reveals whether an email has an account (except sign-up while «Confirm email» is off: Supabase says so itself).
 */
 
 type AuthErrorLike = { code?: string; status?: number; message?: string } | null | undefined;
@@ -8,7 +10,12 @@ type AuthErrorLike = { code?: string; status?: number; message?: string } | null
 export function authMessage(error: AuthErrorLike): string {
   switch (error?.code) {
     case "invalid_credentials":
-      return "البريد أو كلمة المرور غير صحيحة. تأكد منهما، أو ادخل برابط يصلك على بريدك.";
+      return EMAIL_ENABLED
+        ? "البريد أو كلمة المرور غير صحيحة. تأكد منهما، أو ادخل برابط يصلك على بريدك."
+        : "البريد أو كلمة المرور غير صحيحة. تأكد منهما، أو تواصل مع الصالون إذا نسيت كلمة المرور.";
+    case "user_already_exists":
+    case "email_exists":
+      return "لهذا البريد حساب من قبل. ادخل به من صفحة الدخول.";
     case "email_not_confirmed":
       return "لم تؤكد بريدك بعد. افتح رسالة التأكيد التي أرسلناها، أو اطلب رسالة جديدة.";
     case "weak_password":
