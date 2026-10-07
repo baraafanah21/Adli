@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireCatalog } from "@/lib/catalog-cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
@@ -15,10 +16,9 @@ import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib
 
 const staff = () => requireRole(["owner", "staff"], "/admin/products");
 
-function revalidateCatalog(productId?: string) {
-  revalidatePath("/");
-  revalidatePath("/c/[slug]", "page");
-  revalidatePath("/p/[slug]", "page");
+/** After a successful RPC: the cached shop catalog expires at once (src/lib/catalog-cache.ts), the admin re-renders. */
+function revalidateCatalog(productId?: string, ...tags: string[]) {
+  expireCatalog(...tags);
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
 }
@@ -106,7 +106,7 @@ export async function updateProduct(_prev: ActionState, form: FormData): Promise
     p_is_active: p.active,
   });
   if (error) return fail(error, "admin_update_product");
-  revalidateCatalog(p.id);
+  revalidateCatalog(p.id, `product:${p.slug}`);
   return { ok: true, message: "حُفظ المنتج." };
 }
 

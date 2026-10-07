@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireCatalog } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +18,7 @@ const Input = z.object({
   active: z.preprocess((v) => v === "on", z.boolean()),
 });
 
-/** Owner only: add or edit a category. The header, the shelf and the category pages read categories, so all revalidate. */
+/** Owner only: add or edit a category. The header, the shelf and the category pages read categories: the catalog expires. */
 export async function saveCategory(_prev: ActionState, form: FormData): Promise<ActionState> {
   await requireRole(["owner"], "/admin/categories");
   const parsed = Input.safeParse({ ...Object.fromEntries(form), active: form.get("active") });
@@ -44,6 +45,7 @@ export async function saveCategory(_prev: ActionState, form: FormData): Promise<
     if (!isExpectedAdminError(error.code)) console.error("admin_save_category", error.code, error.message);
     return { ok: false, message: adminErrorMessage(error) };
   }
-  revalidatePath("/", "layout");
+  expireCatalog(`category:${c.slug}`);
+  revalidatePath("/admin/categories");
   return { ok: true, message: c.id ? "حُفظت الفئة." : "أُضيفت الفئة." };
 }

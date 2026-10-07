@@ -109,10 +109,11 @@
 - [x] G1: القياس «قبل» على الموقع الحي؛ `supabase/public.ts` (anon بلا جلسة) للكتالوج وبيانات الصالون؛ الجلسة تُقرأ فقط في `SessionIsland` داخل `Suspense` (القائمة والسلة والحجز من `session-store` على العميل)؛ `?v=` و`?c=` و`?service=&barber=&at=` على العميل؛ `private, no-store` للمسارات الخاصة في `proxy.ts`؛ قاعدة ESLint `adli/no-session-in-cache`؛ حذف `gsap`
 - [x] G2: `cacheComponents`، وبيانات الصالون (`getWeek` و`getServices` و`getBarbers`) بـ `"use cache"` ووسم `salon` وملف `salon` في `next.config.ts`، و`updateTag("salon")` بعد نجاح حفظ الخدمة والحلاق والساعات؛ `instant = false` للإدارة والحساب والدخول والتسجيل، ومؤقتاً على الجذر حتى G3؛ 404 حقيقي لـ `/p/` و`/c/` من `proxy.ts`
 - [ ] G2: الفحص على رابط Preview
-- [ ] G3: كاش الكتالوج وجدول الإبطال، معاينة المنتج المخفي في `/admin/products/[id]/preview`، الصور، three.js وlenis والخطوط، القياس «بعد»
-- [ ] الكتالوج بـ Cache Components (`"use cache"` + `cacheTag`)، و`revalidateTag` من كل تعديل في اللوحة
-- [ ] `next/image` مع `remotePatterns` لـ Storage، وAVIF/WebP، و`sizes` صحيحة
-- [ ] لقطات `public/hero/v*`: `Cache-Control` immutable؛ `cacheControl` طويل عند الرفع إلى Storage
+- [x] G3: كاش الكتالوج (`catalog` و`category:<slug>` و`product:<slug>`) و`expireCatalog()` بعد نجاح كل كتابة تغيّر المتجر (منها الحذف والأرشفة والاسترجاع وحركات المخزون)؛ `getProduct` بالعميل العام، ومعاينة `/admin/products/[id]/preview` مع رابط في المحرر؛ 404 البروكسي للجميع مع حفظ الغائب 60 ثانية وحد 2000؛ حذف `instant = false` المؤقت؛ الصور (sm وposter بلا تحويل، أحجام قليلة، preload لصورة LCP فقط)؛ القنينة بـ IntersectionObserver وSave-Data والجهاز الضعيف، lenis متأخر لـ `pointer: fine`، supabase-js متأخر في `/booking`؛ الخطوط (Readex متغير، Amiri بلا preload)
+- [ ] G3: القياس «بعد» على رابط Preview، والفحص الكامل
+- [x] الكتالوج بـ Cache Components (`"use cache"` + `cacheTag`)، و`updateTag` من كل تعديل في اللوحة
+- [x] `next/image` مع `remotePatterns` لـ Storage، وWebP (المصدر WebP أصلاً)، و`sizes` صحيحة
+- [x] لقطات `public/hero/v*`: `Cache-Control` immutable؛ `cacheControl` طويل عند الرفع إلى Storage (F6: سنة)
 - [ ] Lighthouse على الجوال: LCP < 2.5s، CLS < 0.1
 
 ## الإطلاق

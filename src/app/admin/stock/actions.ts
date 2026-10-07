@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireCatalog } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -46,7 +47,8 @@ export async function adjustStock(_prev: ActionState, form: FormData): Promise<A
   }
 
   // The shop shows availability (in / low / out), the admin shows the numbers: both are stale now.
-  revalidatePath("/", "layout");
+  expireCatalog();
+  revalidatePath("/admin", "layout");
   const done = MANUAL_REASONS.find((r) => r.reason === a.reason)!.done;
   return { ok: true, message: `${done}. المخزون الآن ${data as number}.` };
 }

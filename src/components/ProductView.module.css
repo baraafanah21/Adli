@@ -47,7 +47,7 @@
   margin: 0;
 }
 
-/* Staff preview of an inactive product. */
+/* Admin preview of a hidden product (/admin/products/[id]/preview). */
 .hidden {
   margin: 0 0 var(--space-6);
   padding: var(--space-3) var(--space-4);

@@ -1,12 +1,22 @@
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { CategoryIconName } from "@/components/icons";
 
 /*
   Reads the catalog with named columns only: product_variants.stock_quantity is not granted to the API roles,
   so select("*") on it is refused. Availability comes from the variant_availability view (in / low / out).
+
+  Cached for every visitor ("use cache", profile `catalog` in next.config.ts), read as anon through the public
+  client, so only active categories, active products and their active variants are ever in the cache (archived
+  products are always hidden: products_archived_hidden). Tags:
+    catalog            everything here (the shelf, the header's categories, every category and product page)
+    category:<slug>    one category page
+    product:<slug>     one product page
+  Every admin write that changes what the shop shows calls updateTag("catalog") after its RPC succeeds (see
+  src/lib/catalog-cache.ts); the profile's 5 minutes are the safety net for changes made elsewhere (SQL Editor).
+  A read error is thrown inside the cached function, so it is never cached; the exported getters turn it into
+  { error } for the page.
 */
 
 export type StockState = "in" | "low" | "out";
@@ -123,8 +133,15 @@ async function availabilityFor(supabase: SupabaseClient, productIds: string[]) {
   return { data: new Map((data as Availability[]).map((a) => [a.variant_id, a])), error: null };
 }
 
+class CatalogReadError extends Error {}
+
+type Catalog = { categories: Category[]; products: ProductCard[] };
+
 /** Active categories and products, as anon: the same for every visitor (staff included). */
-export const getCatalog = cache(async (): Promise<Result<{ categories: Category[]; products: ProductCard[] }>> => {
+async function catalogData(): Promise<Catalog> {
+  "use cache";
+  cacheTag("catalog");
+  cacheLife("catalog");
   const supabase = createPublicClient();
   const [categories, products] = await Promise.all([
     supabase.from("categories").select("id, slug, name_ar, icon, description_ar").eq("is_active", true).order("sort"),
@@ -136,7 +153,7 @@ export const getCatalog = cache(async (): Promise<Result<{ categories: Category[
   ]);
   if (categories.error || products.error) {
     console.error("getCatalog", categories.error ?? products.error);
-    return { data: null, error: "catalog_unavailable" };
+    throw new CatalogReadError("catalog");
   }
 
   type Row = {
@@ -148,7 +165,7 @@ export const getCatalog = cache(async (): Promise<Result<{ categories: Category[
   const availability = await availabilityFor(supabase, rows.map((p) => p.id));
   if (availability.error) {
     console.error("getCatalog availability", availability.error);
-    return { data: null, error: "catalog_unavailable" };
+    throw new CatalogReadError("catalog availability");
   }
 
   // Only products in an active category; grouped by category order, then product sort.
@@ -175,29 +192,58 @@ export const getCatalog = cache(async (): Promise<Result<{ categories: Category[
       };
     });
 
-  return { data: { categories: categories.data as Category[], products: cards }, error: null };
-});
+  return { categories: categories.data as Category[], products: cards };
+}
+
+export async function getCatalog(): Promise<Result<Catalog>> {
+  try {
+    return { data: await catalogData(), error: null };
+  } catch (e) {
+    // CatalogReadError is already logged; anything else (e.g. wrapped by the cache) is logged here.
+    if (!(e instanceof CatalogReadError)) console.error("catalog read", e);
+    return { data: null, error: "catalog_unavailable" };
+  }
+}
+
+/** One active category and its products (the category page); null for an unknown or hidden slug. */
+async function categoryData(slug: string): Promise<{ category: Category; products: ProductCard[] } | null> {
+  "use cache";
+  cacheTag("catalog", `category:${slug}`);
+  cacheLife("catalog");
+  const { categories, products } = await catalogData();
+  const category = categories.find((c) => c.slug === slug);
+  return category ? { category, products: products.filter((p) => p.category_id === category.id) } : null;
+}
+
+export async function getCategoryShelf(slug: string): Promise<Result<{ category: Category; products: ProductCard[] } | null>> {
+  try {
+    return { data: await categoryData(slug), error: null };
+  } catch (e) {
+    // CatalogReadError is already logged; anything else (e.g. wrapped by the cache) is logged here.
+    if (!(e instanceof CatalogReadError)) console.error("catalog read", e);
+    return { data: null, error: "catalog_unavailable" };
+  }
+}
 
 /**
- * One product with its options, variants and (for a bundle) contents. No is_active filter here:
- * RLS hides inactive products from the public, and staff can preview them (the page marks them hidden).
+ * One product with its options, variants and (for a bundle) contents, through the given client: the public one for
+ * the shop (RLS: active products only), the staff session for the admin preview (hidden products too). Throws on a
+ * read error; null when there is no such product for this client.
  */
-export const getProduct = cache(async (slug: string): Promise<Result<ProductDetail | null>> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+export async function loadProduct(supabase: SupabaseClient, by: { slug: string } | { id: string }): Promise<ProductDetail | null> {
+  const query = supabase
     .from("products")
     .select(
       `${PRODUCT_COLUMNS}, description_ar, is_active, category:categories (slug, name_ar),
        product_variants!product_variants_product_id_fkey (${VARIANT_COLUMNS}),
        product_options (id, name_ar, kind, sort, product_option_values (id, label_ar, hex, sort))`,
-    )
-    .eq("slug", slug)
-    .maybeSingle();
+    );
+  const { data, error } = await ("slug" in by ? query.eq("slug", by.slug) : query.eq("id", by.id)).maybeSingle();
   if (error) {
-    console.error("getProduct", error);
-    return { data: null, error: "product_unavailable" };
+    console.error("loadProduct", error);
+    throw new CatalogReadError("product");
   }
-  if (!data) return { data: null, error: null };
+  if (!data) return null;
 
   type Row = {
     id: string; slug: string; name_ar: string; family_ar: string | null; price_ils: number; volume_ml: number | null;
@@ -213,8 +259,8 @@ export const getProduct = cache(async (slug: string): Promise<Result<ProductDeta
     p.kind === "bundle" ? getBundleLines(supabase, p.id) : Promise.resolve({ data: null, error: null }),
   ]);
   if (availability.error || bundle.error) {
-    console.error("getProduct details", availability.error ?? bundle.error);
-    return { data: null, error: "product_unavailable" };
+    console.error("loadProduct details", availability.error ?? bundle.error);
+    throw new CatalogReadError("product details");
   }
 
   const variants = orderable(p.product_variants, p.price_ils, availability.data);
@@ -226,26 +272,46 @@ export const getProduct = cache(async (slug: string): Promise<Result<ProductDeta
   }));
 
   return {
-    data: {
-      id: p.id,
-      slug: p.slug,
-      name_ar: p.name_ar,
-      family_ar: p.family_ar,
-      volume_ml: p.volume_ml,
-      image_path: p.image_path,
-      category_id: p.category_id,
-      kind: p.kind,
-      description_ar: p.description_ar,
-      is_active: p.is_active,
-      category: p.category,
-      ...summarize(variants, p.price_ils),
-      options,
-      variants,
-      bundle: bundle.data,
-    },
-    error: null,
+    id: p.id,
+    slug: p.slug,
+    name_ar: p.name_ar,
+    family_ar: p.family_ar,
+    volume_ml: p.volume_ml,
+    image_path: p.image_path,
+    category_id: p.category_id,
+    kind: p.kind,
+    description_ar: p.description_ar,
+    is_active: p.is_active,
+    category: p.category,
+    ...summarize(variants, p.price_ils),
+    options,
+    variants,
+    bundle: bundle.data,
   };
-});
+}
+
+/** The shop's product page: active products only, cached per slug. */
+async function productData(slug: string): Promise<ProductDetail | null> {
+  "use cache";
+  cacheTag("catalog", `product:${slug}`);
+  cacheLife("catalog");
+  return loadProduct(createPublicClient(), { slug });
+}
+
+export async function getProduct(slug: string): Promise<Result<ProductDetail | null>> {
+  try {
+    return { data: await productData(slug), error: null };
+  } catch (e) {
+    if (!(e instanceof CatalogReadError)) console.error("product read", e);
+    return { data: null, error: "product_unavailable" };
+  }
+}
+
+/** Every live product and category slug, for generateStaticParams (prerendered at build). */
+export async function getCatalogSlugs(): Promise<{ products: string[]; categories: string[] }> {
+  const { data } = await getCatalog();
+  return { products: (data?.products ?? []).map((p) => p.slug), categories: (data?.categories ?? []).map((c) => c.slug) };
+}
 
 async function getBundleLines(supabase: SupabaseClient, bundleId: string) {
   const { data, error } = await supabase

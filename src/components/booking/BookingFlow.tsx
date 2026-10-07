@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useSiteSession } from "@/components/session/session-store";
 import { formatPrice } from "@/lib/format";
 import { normalizeMobile } from "@/lib/phone";
@@ -104,8 +103,9 @@ export function BookingFlow({ services, barbers, initial }: Props) {
     if (!serviceId || !barberId) return;
     const key = `${serviceId}|${barberId}|${reloads}`;
     let live = true;
-    createClient()
-      .rpc("booking_availability", { p_service_id: serviceId, p_barber_id: barberId })
+    // Free times are never cached: asked on every choice. supabase-js loads here, not with the page.
+    import("@/lib/supabase/client")
+      .then(({ createClient }) => createClient().rpc("booking_availability", { p_service_id: serviceId, p_barber_id: barberId }))
       .then(({ data, error }) => {
         if (!live) return;
         if (error) {
@@ -128,6 +128,10 @@ export function BookingFlow({ services, barbers, initial }: Props) {
           if (atDay && at) return at;
           return cur && loaded.some((d) => d.slots.includes(cur)) ? cur : null;
         });
+      })
+      .catch(() => {
+        // The client chunk didn't load (connection): same message as a failed read, with «أعد المحاولة».
+        if (live) setSlots({ key, kind: "error" });
       });
     return () => {
       live = false;

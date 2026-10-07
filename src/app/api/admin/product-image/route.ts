@@ -5,6 +5,7 @@ import { getCurrentUser, getRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { adminErrorMessage, isExpectedAdminError } from "@/lib/admin/errors";
 import { productImagePaths } from "@/lib/format";
+import { expireCatalogNow } from "@/lib/catalog-cache";
 
 /*
   A product photo, from the admin's image picker. The browser has already decoded the photo (HEIC included on an
@@ -109,9 +110,8 @@ export async function POST(request: Request) {
     if (removeError) console.error("product-image: old files kept", removeError.message);
   }
 
-  revalidatePath("/");
-  revalidatePath("/c/[slug]", "page");
-  revalidatePath("/p/[slug]", "page");
+  // A Route Handler can't use updateTag; revalidateTag with expire 0 has the same effect (no stale copy served).
+  expireCatalogNow();
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${productId}`);
   return reply({ ok: true, path });

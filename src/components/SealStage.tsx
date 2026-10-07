@@ -42,6 +42,9 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
         alt={lg ? product.name_ar : ""}
         fill
         sizes={lg ? "(max-width: 840px) calc(100vw - 32px), 440px" : "(max-width: 599px) 46vw, 248px"}
+        // Cards load the 480×600 .sm.webp as it is (no Vercel transformation); the product page's large photo is
+        // resized by next/image to the frame. `preload` only for the page's LCP photo (the product page).
+        unoptimized={!lg}
         preload={preload}
       />
       <span className="ad-photo__seal">

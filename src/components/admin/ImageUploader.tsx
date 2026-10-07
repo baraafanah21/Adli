@@ -148,7 +148,7 @@ export function ImageUploader({ productId, current, name }: { productId: string;
             // eslint-disable-next-line @next/next/no-img-element
             <img src={prepared.url} alt={`معاينة صورة ${name}`} className={styles.blob} />
           ) : saved ? (
-            <Image src={saved} alt={`صورة ${name}`} fill sizes="200px" />
+            <Image src={saved} alt={`صورة ${name}`} fill sizes="200px" unoptimized />
           ) : (
             <span className="ad-photo__empty">
               <span className={styles.none}>بلا صورة</span>

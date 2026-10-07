@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireCatalog } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -63,10 +64,11 @@ export async function setOrderStatus(_prev: StatusState, form: FormData): Promis
     return { ok: false, message: errorMessage(error) };
   }
 
-  // Stock moved: the shop's pages (availability) and the admin (badge, lists) are stale.
-  revalidatePath("/", "layout");
-
   const row = (Array.isArray(data) ? data[0] : data) as { status: string; changed: boolean } | undefined;
+  // Confirming takes stock and cancelling gives it back: the shop's availability is stale. «done» moves nothing.
+  if (row?.changed !== false && status !== "done") expireCatalog();
+  revalidatePath("/admin", "layout");
+
   if (row && !row.changed) return { ok: true, message: `لم يتغير شيء: الطلب «${STATUS_LABEL[status]}» من قبل.` };
   const done = Object.values(ORDER_ACTIONS)
     .flat()

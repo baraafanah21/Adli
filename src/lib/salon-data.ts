@@ -27,7 +27,7 @@ export type Barber = { id: string; name_ar: string };
 /** "12:00:00" → "12:00" */
 const hhmm = (t: string) => t.slice(0, 5);
 
-export async function getWeek(): Promise<Week | null> {
+async function weekData(): Promise<Week> {
   "use cache";
   cacheTag("salon");
   cacheLife("salon");
@@ -35,7 +35,7 @@ export async function getWeek(): Promise<Week | null> {
   const { data, error } = await supabase.from("salon_hours").select("weekday, open_time, close_time");
   if (error) {
     console.error("salon_hours", error.code, error.message);
-    return null;
+    throw new Error("salon_hours");
   }
   const week = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null } as Record<Weekday, DayHours>;
   for (const row of data as { weekday: Weekday; open_time: string; close_time: string }[]) {
@@ -44,7 +44,7 @@ export async function getWeek(): Promise<Week | null> {
   return week;
 }
 
-export async function getServices(): Promise<SalonService[] | null> {
+async function servicesData(): Promise<SalonService[]> {
   "use cache";
   cacheTag("salon");
   cacheLife("salon");
@@ -56,12 +56,12 @@ export async function getServices(): Promise<SalonService[] | null> {
     .order("sort");
   if (error) {
     console.error("services", error.code, error.message);
-    return null;
+    throw new Error("services");
   }
   return data as SalonService[];
 }
 
-export async function getBarbers(): Promise<Barber[] | null> {
+async function barbersData(): Promise<Barber[]> {
   "use cache";
   cacheTag("salon");
   cacheLife("salon");
@@ -69,7 +69,20 @@ export async function getBarbers(): Promise<Barber[] | null> {
   const { data, error } = await supabase.from("barbers").select("id, name_ar").eq("is_active", true).order("sort");
   if (error) {
     console.error("barbers", error.code, error.message);
-    return null;
+    throw new Error("barbers");
   }
   return data as Barber[];
 }
+
+/** A read error is thrown inside the cached function (so it is never cached) and becomes null here. */
+const orNull = async <T>(read: () => Promise<T>): Promise<T | null> => {
+  try {
+    return await read();
+  } catch {
+    return null;
+  }
+};
+
+export const getWeek = () => orNull(weekData);
+export const getServices = () => orNull(servicesData);
+export const getBarbers = () => orNull(barbersData);

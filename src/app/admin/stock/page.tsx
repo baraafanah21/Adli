@@ -182,7 +182,7 @@ function Thumb({ path }: { path: string | null }) {
   const src = productImageSrc(path, "sm");
   return (
     <span className={styles.thumb} aria-hidden="true">
-      {src && <Image src={src} alt="" fill sizes="40px" />}
+      {src && <Image src={src} alt="" fill sizes="40px" unoptimized />}
     </span>
   );
 }

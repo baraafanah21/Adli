@@ -158,9 +158,16 @@ export default async function EditProductPage({ params, searchParams }: PageProp
         <RestoreProduct id={p.id} canRestore={isOwner} />
       ) : (
         <>
-          <Link className={styles.siteLink} href={`/p/${p.slug}`} target="_blank">
-            عرض في الموقع
-          </Link>
+          <div className={styles.previewBar}>
+            <Link className={styles.siteLink} href={`/admin/products/${p.id}/preview`}>
+              معاينة كما يراها الزبون
+            </Link>
+            {p.is_active && (
+              <Link className={styles.siteLink} href={`/p/${p.slug}`} target="_blank">
+                افتح في الموقع
+              </Link>
+            )}
+          </div>
 
           <section className={formStyles.section} aria-labelledby="img-title">
             <h2 id="img-title">الصورة</h2>

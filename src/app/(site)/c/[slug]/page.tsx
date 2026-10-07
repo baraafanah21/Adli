@@ -5,23 +5,32 @@ import { Button } from "@/components/Button";
 import { ComingSoon } from "@/components/ComingSoon";
 import { SealStage } from "@/components/SealStage";
 import { ArrowBackIcon, CategoryIcon } from "@/components/icons";
-import { getCatalog } from "@/lib/catalog";
+import { getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
 import styles from "./page.module.css";
+
+/** Every active category is prerendered; one added later is built on its first visit (cached the same way). */
+export async function generateStaticParams() {
+  const { categories } = await getCatalogSlugs();
+  return categories.length ? categories.map((slug) => ({ slug })) : [{ slug: "perfumes" }];
+}
 
 export async function generateMetadata({ params }: PageProps<"/c/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await getCatalog();
-  const category = data?.categories.find((c) => c.slug === slug);
+  const { data } = await getCategoryShelf(slug);
+  const category = data?.category;
   if (!category) return {};
   return { title: category.name_ar, description: category.description_ar ?? undefined };
 }
 
-/** One category's shelf. Inactive or unknown slugs are a 404; an active category with no products says «قريباً». */
+/**
+ * One category's shelf. Inactive or unknown slugs are a 404 (a real one from src/proxy.ts; notFound() here is the
+ * fallback); an active category with no products says «قريباً».
+ */
 export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
   const { slug } = await params;
-  const { data } = await getCatalog();
+  const { data, error } = await getCategoryShelf(slug);
 
-  if (!data) {
+  if (error) {
     return (
       <main className={styles.page}>
         <div className={styles.error} role="alert">
@@ -34,9 +43,8 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
     );
   }
 
-  const category = data.categories.find((c) => c.slug === slug);
-  if (!category) notFound();
-  const products = data.products.filter((p) => p.category_id === category.id);
+  if (!data) notFound();
+  const { category, products } = data;
 
   return (
     <main className={styles.page}>
@@ -54,9 +62,10 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
 
       {products.length > 0 ? (
         <ul className="ad-shelf">
-          {products.map((p) => (
+          {/* The first card's photo is the page's LCP on a phone: preload it, and only it. */}
+          {products.map((p, i) => (
             <li key={p.id}>
-              <SealStage product={p} categoryName={category.name_ar} />
+              <SealStage product={p} categoryName={category.name_ar} preload={i === 0} />
             </li>
           ))}
         </ul>

@@ -157,7 +157,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
               <li key={p.id}>
                 <Link href={`/admin/products/${p.id}`} className={styles.row}>
                   <span className={styles.thumb} aria-hidden="true">
-                    {src && <Image src={src} alt="" fill sizes="48px" />}
+                    {src && <Image src={src} alt="" fill sizes="48px" unoptimized />}
                   </span>
                   <span className={styles.main}>
                     <span className={styles.name}>{p.name_ar}</span>

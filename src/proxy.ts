@@ -11,9 +11,10 @@ import { NextResponse, type NextRequest } from "next/server";
   Real 404s for /p/<slug> and /c/<slug>. With cacheComponents a page streams its prerendered shell first, so a
   notFound() inside it can only give a 200 with noindex (a "soft 404"). The status has to be decided here, before
   rendering: a slug that isn't a live product / category (read as anon, so hidden and archived ones count as
-  missing) is rewritten to the not-found page with 404. Slugs found are remembered per instance for 5 minutes; an
-  unknown one is always asked again, so a product shown a second ago never 404s. Signed-in visitors skip the check
-  (staff open hidden products from the admin); for them the page's own notFound() still renders the 404 page.
+  missing) is rewritten to the not-found page with 404, for everyone (staff preview hidden products in
+  /admin/products/[id]/preview). Answers are remembered per instance: a slug found for 5 minutes, a missing one for
+  60 seconds (so a bot trying random links doesn't reach the database on every request, and a product just shown
+  is found within a minute). At most 2000 answers are kept; the oldest go first.
 */
 
 const PROTECTED = ["/account", "/admin"];
@@ -24,8 +25,17 @@ const under = (pathname: string, prefixes: string[]) => prefixes.some((p) => pat
 
 const CATALOG_PAGE = /^\/(p|c)\/([^/]+)\/?$/;
 const SLUG = /^[a-z0-9-]{2,80}$/;
-const KNOWN_FOR_MS = 5 * 60 * 1000;
-const known = new Map<string, number>(); // "p:oud-malaki" → when it was last found
+const FOUND_FOR_MS = 5 * 60 * 1000;
+const MISSING_FOR_MS = 60 * 1000;
+const MAX_ANSWERS = 2000;
+// "p:oud-malaki" → { exists, until }. A Map keeps insertion order, so the first key is the oldest answer.
+const answers = new Map<string, { exists: boolean; until: number }>();
+
+function remember(key: string, exists: boolean) {
+  answers.delete(key);
+  while (answers.size >= MAX_ANSWERS) answers.delete(answers.keys().next().value!);
+  answers.set(key, { exists, until: Date.now() + (exists ? FOUND_FOR_MS : MISSING_FOR_MS) });
+}
 
 /** A malformed %-escape is just a missing page. */
 const safeDecode = (part: string) => {
@@ -40,8 +50,8 @@ const safeDecode = (part: string) => {
 async function catalogSlugExists(kind: "p" | "c", slug: string): Promise<boolean> {
   if (!SLUG.test(slug)) return false;
   const key = `${kind}:${slug}`;
-  const seen = known.get(key);
-  if (seen && Date.now() - seen < KNOWN_FOR_MS) return true;
+  const cached = answers.get(key);
+  if (cached && cached.until > Date.now()) return cached.exists;
   const table = kind === "p" ? "products" : "categories";
   // RLS gives anon only active rows; categories also carry is_active for the staff policy, so filter it here.
   const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}?select=slug&slug=eq.${slug}${kind === "c" ? "&is_active=eq.true" : ""}&limit=1`;
@@ -52,11 +62,9 @@ async function catalogSlugExists(kind: "p" | "c", slug: string): Promise<boolean
       signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) return true;
-    const rows = (await res.json()) as unknown[];
-    if (rows.length === 0) return false;
-    if (known.size > 2000) known.clear();
-    known.set(key, Date.now());
-    return true;
+    const exists = ((await res.json()) as unknown[]).length > 0;
+    remember(key, exists);
+    return exists;
   } catch {
     return true;
   }
@@ -102,7 +110,7 @@ export async function proxy(request: NextRequest) {
 
   if (isPrivate) response.headers.set("Cache-Control", NO_STORE);
 
-  const catalog = !signedIn && CATALOG_PAGE.exec(pathname);
+  const catalog = CATALOG_PAGE.exec(pathname);
   if (catalog && !(await catalogSlugExists(catalog[1] as "p" | "c", safeDecode(catalog[2])))) {
     // An unmatched path renders the site's not-found page (app/not-found.tsx) with a real 404 status.
     const missing = NextResponse.rewrite(new URL("/_missing", request.url), { status: 404 });

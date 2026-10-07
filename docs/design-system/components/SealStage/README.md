@@ -7,6 +7,7 @@ The product card: the product's photo filling a 4:5 frame, with the logo seal as
 - The frame's ratio is fixed (`aspect-ratio: 4 / 5`), so the card has its final size before the photo loads (no layout shift). The photo fills the whole frame; whatever falls outside 4:5 is cropped equally from both sides, so the product must sit in the middle of the photo.
 - The badge is `SealMark size="sm"` (36px, cream and forest as in the logo) at the photo's bottom inline-end corner. It is decorative (`aria-hidden`) and never covers the tag.
 - No photo yet: the frame shows the seal alone, centred.
+- Loading: cards use the `.sm.webp` as it is (`unoptimized`, no Vercel transformation) and load lazily, except the first card of a category page (its LCP on a phone), which is preloaded; the product page preloads its large photo, resized by next/image.
 - The consumer provides: `name_ar`, one meta line (family or key ingredient, then volume), `price_ils`, and the photo path. Cards load the small file (`<uuid>.sm.webp`, covers 480×600), the product page the large one (`<uuid>.webp`, 1600px); see «الصور» in the brand book.
 - Optional `.ad-tag` at the frame's top inline-start corner for «جديد» or «كمية محدودة», in `oud` on a solid `surface-sunk` pill, so it reads over any photo. One tag at most, on one line.
 - Hover or keyboard focus scales the photo to 1.03 inside the frame and lights `shadow-glow` around it; that is the card's only hover effect. None under `prefers-reduced-motion`.

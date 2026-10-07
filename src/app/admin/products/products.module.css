@@ -180,3 +180,12 @@
   color: var(--brass);
   text-underline-offset: 4px;
 }
+
+/* The preview page's top row: back to the editor, and the shop link when the product is shown. */
+.previewBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}

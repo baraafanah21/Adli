@@ -4,17 +4,21 @@ import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
 
+// Fonts (Phase G, measured in docs/PERFORMANCE.md): Arabic and Latin only, swap.
+// Amiri is for display text only and its Arabic files are ~100 KB each, so it isn't preloaded: it loads where a
+// display style is used, with next/font's size-adjusted fallback until then (no layout shift).
 const amiri = Amiri({
   variable: "--font-amiri-loaded",
   subsets: ["arabic", "latin"],
   weight: ["400", "700"],
   display: "swap",
+  preload: false,
 });
 
+// Readex Pro is a variable font: no `weight` → one file per subset for every weight (300–600 are used).
 const readex = Readex_Pro({
   variable: "--font-readex-loaded",
   subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
@@ -25,10 +29,6 @@ export const metadata: Metadata = {
   },
   description: "صالون عدلي: حلاقة رجالية، عطور وكريمات. اختر منتجك وثبّت طلبك على واتساب.",
 };
-
-// TEMPORARY (Phase G2): the catalog (header categories, shelf, product pages) is not cached until G3, so the public
-// pages may still block on it. G3 caches it and removes this line; the session routes keep their own `instant = false`.
-export const instant = false;
 
 export const viewport: Viewport = {
   themeColor: [
