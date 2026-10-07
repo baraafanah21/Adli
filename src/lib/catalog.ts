@@ -1,5 +1,7 @@
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { CategoryIconName } from "@/components/icons";
 
 /*
@@ -111,7 +113,7 @@ function summarize(variants: Variant[], productPrice: number) {
   };
 }
 
-async function availabilityFor(supabase: Awaited<ReturnType<typeof createClient>>, productIds: string[]) {
+async function availabilityFor(supabase: SupabaseClient, productIds: string[]) {
   if (productIds.length === 0) return { data: new Map<string, Availability>(), error: null };
   const { data, error } = await supabase
     .from("variant_availability")
@@ -121,8 +123,9 @@ async function availabilityFor(supabase: Awaited<ReturnType<typeof createClient>
   return { data: new Map((data as Availability[]).map((a) => [a.variant_id, a])), error: null };
 }
 
+/** Active categories and products, as anon: the same for every visitor (staff included). */
 export const getCatalog = cache(async (): Promise<Result<{ categories: Category[]; products: ProductCard[] }>> => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [categories, products] = await Promise.all([
     supabase.from("categories").select("id, slug, name_ar, icon, description_ar").eq("is_active", true).order("sort"),
     supabase
@@ -244,7 +247,7 @@ export const getProduct = cache(async (slug: string): Promise<Result<ProductDeta
   };
 });
 
-async function getBundleLines(supabase: Awaited<ReturnType<typeof createClient>>, bundleId: string) {
+async function getBundleLines(supabase: SupabaseClient, bundleId: string) {
   const { data, error } = await supabase
     .from("bundle_items")
     .select("qty, sort, variant_id, variant:product_variants!bundle_items_variant_id_fkey (price_ils, product:products!product_variants_product_id_fkey (slug, name_ar, price_ils))")

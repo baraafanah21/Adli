@@ -1,7 +1,8 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { HeroStage } from "@/components/HeroStage";
 import { SealMark } from "@/components/SealMark";
-import { Shelf } from "@/components/Shelf";
+import { Shelf, ShelfFromUrl } from "@/components/Shelf";
 import { Button } from "@/components/Button";
 import { getCatalog } from "@/lib/catalog";
 import { OpenNow } from "@/components/OpenNow";
@@ -38,7 +39,9 @@ export default async function Home() {
           منتجات الصالون
         </h2>
         {catalog.data ? (
-          <Shelf categories={catalog.data.categories} products={catalog.data.products} />
+          <Suspense fallback={<Shelf categories={catalog.data.categories} products={catalog.data.products} />}>
+            <ShelfFromUrl categories={catalog.data.categories} products={catalog.data.products} />
+          </Suspense>
         ) : (
           <div className={styles.error} role="alert">
             <p className="body">تعذّر تحميل المنتجات الآن. حاول مرة أخرى بعد قليل.</p>

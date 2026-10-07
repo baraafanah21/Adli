@@ -3,7 +3,7 @@
 ## الحزمة
 
 - Next.js (App Router) + TypeScript، منشور على Vercel.
-- `gsap` (ScrollTrigger) + `lenis`.
+- `lenis` (smooth scroll). `gsap` was removed in Phase G: nothing used it; motion is CSS.
 - `@supabase/supabase-js` و`@supabase/ssr`.
 - الألوان والمسافات من `tokens.css` لهذا النظام كمتغيرات CSS؛ Tailwind اختياري ويقرأ نفس المتغيرات.
 

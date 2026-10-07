@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AddToOrderButton } from "@/components/cart/AddToOrderButton";
 import { VariantPicker } from "@/components/VariantPicker";
 import { formatPrice } from "@/lib/format";
@@ -10,7 +11,7 @@ type Props = {
   product: { slug: string; name_ar: string; volume_ml: number | null; image_path: string | null };
   options: ProductOption[];
   variants: Variant[];
-  /** Chosen on the server from ?v=sku (or the first in-stock variant), so the first paint matches the URL. */
+  /** The first in-stock variant (from the server); ProductPurchaseFromUrl swaps in ?v=sku on the client. */
   initialSku: string;
 };
 
@@ -61,4 +62,15 @@ export function ProductPurchase({ product, options, variants, initialSku }: Prop
       </p>
     </>
   );
+}
+
+/**
+ * ProductPurchase starting from ?v=sku when it names an active variant. Search params are only known per request,
+ * so the product page renders this inside <Suspense> with a plain <ProductPurchase> (the default variant) as the
+ * fallback, and the page itself stays the same for every URL.
+ */
+export function ProductPurchaseFromUrl(props: Props) {
+  const v = useSearchParams().get("v");
+  const sku = props.variants.some((x) => x.sku === v) ? v! : props.initialSku;
+  return <ProductPurchase {...props} initialSku={sku} />;
 }

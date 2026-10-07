@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useSiteSession } from "@/components/session/session-store";
 import { formatPrice } from "@/lib/format";
 import { normalizeMobile } from "@/lib/phone";
 import { BOOKING_STATUS, dayChip, formatSlot, formatWhen, type AvailabilityDay, type PlacedBooking } from "@/lib/bookings";
@@ -15,8 +17,7 @@ type Barber = { id: string; name_ar: string };
 type Props = {
   services: Service[];
   barbers: Barber[];
-  signedIn: boolean;
-  prefill: { name: string; phone: string };
+  /** From ?service=&barber=&at= (the sign-in detour); read on the client, see BookingFromUrl. */
   initial: { service?: string; barber?: string; at?: string };
 };
 
@@ -65,15 +66,22 @@ const durationLabel = (min: number) => `${min} دقيقة`;
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function BookingFlow({ services, barbers, signedIn, prefill, initial }: Props) {
+export function BookingFlow({ services, barbers, initial }: Props) {
+  // The session comes from the client store (the page is the same for everyone); null while it loads.
+  const session = useSiteSession();
+  const known = session.status === "ready" ? session : null;
+  const signedIn = Boolean(known?.user);
   const [serviceId, setServiceId] = useState(() => services.find((s) => s.id === initial.service)?.id ?? null);
   const [barberId, setBarberId] = useState(() => barbers.find((b) => b.id === initial.barber)?.id ?? null);
   const [day, setDay] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [slots, setSlots] = useState<Slots | null>(null);
   const [reloads, setReloads] = useState(0);
-  const [name, setName] = useState(prefill.name);
-  const [phone, setPhone] = useState(prefill.phone);
+  // null = not typed yet: show the profile's value, which may arrive after the first render.
+  const [nameInput, setName] = useState<string | null>(null);
+  const [phoneInput, setPhone] = useState<string | null>(null);
+  const name = nameInput ?? known?.profile?.full_name ?? known?.user?.name ?? "";
+  const phone = phoneInput ?? known?.profile?.phone ?? "";
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -401,7 +409,7 @@ export function BookingFlow({ services, barbers, signedIn, prefill, initial }: P
             </div>
           </dl>
 
-          {!signedIn ? (
+          {!known ? null : !signedIn ? (
             <div className={styles.signIn}>
               <p>الحجز يحتاج حساباً، حتى ترى موعدك وتلغيه إذا احتجت. سجّل الدخول وارجع لنفس الاختيار.</p>
               <Link className="ad-btn ad-btn--primary ad-btn--block" href={signInHref}>
@@ -485,4 +493,16 @@ export function BookingFlow({ services, barbers, signedIn, prefill, initial }: P
       )}
     </div>
   );
+}
+
+const one = (v: string | null) => v ?? undefined;
+
+/**
+ * BookingFlow with the choice carried through the sign-in detour (?service=&barber=&at=). Search params are only
+ * known per request, so the page renders this inside <Suspense> with a plain <BookingFlow> as the fallback:
+ * the prerendered page shows the flow at once, and the URL's choice applies on the client.
+ */
+export function BookingFromUrl(props: Omit<Props, "initial">) {
+  const sp = useSearchParams();
+  return <BookingFlow {...props} initial={{ service: one(sp.get("service")), barber: one(sp.get("barber")), at: one(sp.get("at")) }} />;
 }

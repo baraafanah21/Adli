@@ -4,7 +4,7 @@
 
 Showcase site for a men's barbershop that also sells perfumes and creams. Products are shown with their real photos, full-bleed in a 4:5 frame; the one 3D element is the Adli bottle in the hero, a live three.js scene (`src/components/HeroBottle.tsx`, reference `docs/prototypes/hero-bottle-prototype.html`). Buying means sending a pre-filled WhatsApp message. No online payment. Accounts are optional (guests can always order); signed-in customers see their orders and review products they received. Roles: owner and staff, see `docs/design-system/accounts-and-roles.md`.
 
-Stack: Next.js (App Router, TypeScript) on Vercel · Supabase (Postgres, Storage, Auth) · three (pinned, hero bottle only; no R3F/drei) · gsap + lenis.
+Stack: Next.js (App Router, TypeScript) on Vercel · Supabase (Postgres, Storage, Auth) · three (pinned, hero bottle only; no R3F/drei) · lenis (gsap was never used and is removed; animations are CSS).
 
 ## Work in order
 
@@ -50,7 +50,8 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - New custom error codes: never `P0000`–`P0004` (Postgres's own; `P0004` is `assert_failure`, which `exception when others` can't catch). Admin codes so far: `P0001` stock / unavailable, `P0006` not found, `P0010` status change not allowed, `P0011` still in use, `P0013` option without values, `P0014` product in a shown bundle, `P0015` product archived, `P0005` no account with this email, `P0012` already staff (`P0003` last owner predates the rule and stays).
 - Admin figures (`admin_owner_dashboard`, `admin_sales_daily`, owner only; `admin_staff_summary`, staff) are aggregated in Postgres: sales = orders `confirmed` or `done`, by placement day in `Asia/Hebron`; the week starts on Saturday. Charts are plain SVG with tokens (no chart library).
 - After any schema change, run the Supabase security advisors and fix new findings. Tests for each phase live in `supabase/tests/` (one DO block that ends in a deliberate exception, so it rolls back).
-- Clients: `src/lib/supabase/client.ts` (browser) and `src/lib/supabase/server.ts` (server components / route handlers).
+- Clients: `src/lib/supabase/client.ts` (browser), `src/lib/supabase/server.ts` (server components / route handlers; reads the cookies) and `src/lib/supabase/public.ts` (anon, no session: the catalog and salon data, the only client allowed in cached code). ESLint `adli/no-session-in-cache` refuses `next/headers`, the cookie clients and the auth guards in any file with `"use cache"`.
+- The public pages never read the session. `SessionIsland` (inside `<Suspense>` in `SiteChrome`) reads it and fills `src/components/session/session-store.ts`; `AccountMenu`, the order sheet and `BookingFlow` read `useSiteSession()` (`loading` until it arrives). URL state on public pages (`?c=`, `?v=`, `?service=&barber=&at=`) is read on the client inside `<Suspense>`, with the plain component as the fallback. `proxy.ts` marks `/account`, `/admin`, `/auth`, `/login`, `/signup`, `/api` `private, no-store`.
 
 ## Bookings (Phase E, `docs/BOOKINGS-BRIEF.md`)
 

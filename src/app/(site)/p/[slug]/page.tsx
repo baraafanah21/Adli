@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
 import { BundleContents } from "@/components/BundleContents";
-import { ProductPurchase } from "@/components/ProductPurchase";
+import { ProductPurchase, ProductPurchaseFromUrl } from "@/components/ProductPurchase";
 import { ArrowBackIcon } from "@/components/icons";
 import { getProduct } from "@/lib/catalog";
 import styles from "./page.module.css";
@@ -22,8 +23,8 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
   };
 }
 
-export default async function ProductPage({ params, searchParams }: PageProps<"/p/[slug]">) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
+export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
+  const { slug } = await params;
   const { data: product, error } = await getProduct(slug);
 
   if (error) {
@@ -41,12 +42,14 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   if (!product) notFound();
 
   const category = product.category;
-  // ?v=sku when it names an active variant; otherwise the first in stock, otherwise the first.
-  const requested = typeof query.v === "string" ? query.v : null;
-  const initial =
-    product.variants.find((v) => v.sku === requested) ??
-    product.variants.find((v) => v.stock_state !== "out") ??
-    product.variants[0];
+  // The first in stock, otherwise the first; ?v=sku is applied on the client (ProductPurchaseFromUrl).
+  const initial = product.variants.find((v) => v.stock_state !== "out") ?? product.variants[0];
+  const purchase = {
+    product,
+    options: product.options,
+    variants: product.variants,
+    initialSku: initial?.sku ?? "",
+  };
 
   return (
     <main className={styles.page}>
@@ -65,12 +68,9 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
         size="lg"
         preload
         purchase={
-          <ProductPurchase
-            product={product}
-            options={product.options}
-            variants={product.variants}
-            initialSku={initial?.sku ?? ""}
-          />
+          <Suspense fallback={<ProductPurchase {...purchase} />}>
+            <ProductPurchaseFromUrl {...purchase} />
+          </Suspense>
         }
       >
         {product.description_ar && <p className={`body-lg ${styles.description}`}>{product.description_ar}</p>}

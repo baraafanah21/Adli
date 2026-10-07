@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { BookingFlow } from "@/components/booking/BookingFlow";
+import { Suspense } from "react";
+import { BookingFlow, BookingFromUrl } from "@/components/booking/BookingFlow";
 import { Button } from "@/components/Button";
-import { getCurrentUser, getProfile } from "@/lib/auth/guards";
 import { getBarbers, getServices } from "@/lib/salon-data";
 import styles from "@/components/booking/booking.module.css";
 
@@ -10,21 +10,18 @@ export const metadata: Metadata = {
   description: "احجز موعدك في صالون عدلي: اختر الخدمة والحلاق والوقت.",
 };
 
-const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
-
 /*
   Anyone can look at free times; booking itself needs an account (create_booking checks it again).
-  ?service=&barber=&at= keep the choice across the sign-in detour.
+  The page is the same for everyone: the session and ?service=&barber=&at= (the sign-in detour) are read on the
+  client. Free times are never cached: BookingFlow asks booking_availability from the browser on every choice.
 */
-export default async function BookingPage({ searchParams }: PageProps<"/booking">) {
-  const [services, barbers, user, profile, sp] = await Promise.all([
-    getServices(),
-    getBarbers(),
-    getCurrentUser(),
-    getProfile(),
-    searchParams,
-  ]);
+export default async function BookingPage() {
+  const [services, barbers] = await Promise.all([getServices(), getBarbers()]);
   const bookable = services?.filter((s) => s.bookable_online && s.duration_min) ?? null;
+  const flow = {
+    services: (bookable ?? []).map((s) => ({ id: s.id, name_ar: s.name_ar, price_ils: s.price_ils, duration_min: s.duration_min! })),
+    barbers: barbers ?? [],
+  };
 
   return (
     <main className={styles.page}>
@@ -43,13 +40,9 @@ export default async function BookingPage({ searchParams }: PageProps<"/booking"
           <p>الحجز من الموقع غير متاح الآن. تواصل مع الصالون لتحجز.</p>
         </div>
       ) : (
-        <BookingFlow
-          services={bookable.map((s) => ({ id: s.id, name_ar: s.name_ar, price_ils: s.price_ils, duration_min: s.duration_min! }))}
-          barbers={barbers}
-          signedIn={Boolean(user)}
-          prefill={{ name: profile?.full_name ?? user?.name ?? "", phone: profile?.phone ?? "" }}
-          initial={{ service: one(sp.service), barber: one(sp.barber), at: one(sp.at) }}
-        />
+        <Suspense fallback={<BookingFlow {...flow} initial={{}} />}>
+          <BookingFromUrl {...flow} />
+        </Suspense>
       )}
     </main>
   );

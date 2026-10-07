@@ -5,12 +5,19 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { UserIcon } from "@/components/icons";
 import { signOut } from "@/app/(site)/auth/actions";
+import { useSiteSession } from "@/components/session/session-store";
 import styles from "@/components/SiteHeader.module.css";
 
-type Props = { user: { name: string | null; email: string | null } | null };
-
-/** Signed out: «دخول». Signed in: a small menu (مواعيدي، طلباتي، بياناتي، خروج). Esc and outside clicks close it. */
-export function AccountMenu({ user }: Props) {
+/**
+ * Signed out: «دخول». Signed in: a small menu (مواعيدي، طلباتي، بياناتي، خروج). Esc and outside clicks close it.
+ * Until the session arrives it shows «دخول», the look most visitors keep, so the header doesn't shift for them.
+ */
+export function AccountMenu() {
+  const session = useSiteSession();
+  const user =
+    session.status === "ready" && session.user
+      ? { name: session.profile?.full_name ?? session.user.name, email: session.user.email }
+      : null;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);

@@ -11,10 +11,12 @@ import styles from "./Shelf.module.css";
 
 type Props = { categories: Category[]; products: ProductCard[] };
 
-/** Every active category is a chip; one with no products yet says «قريباً» instead of disappearing. */
-export function Shelf({ categories, products }: Props) {
-  const params = useSearchParams();
-  const requested = params.get("c");
+/**
+ * Every active category is a chip; one with no products yet says «قريباً» instead of disappearing.
+ * `requested` is the ?c= slug; the home page renders <ShelfFromUrl> inside <Suspense> with this as the fallback,
+ * so the prerendered page shows the whole shelf and ?c= applies on the client.
+ */
+export function Shelf({ categories, products, requested = null }: Props & { requested?: string | null }) {
   const activeCategory = categories.find((c) => c.slug === requested) ?? null;
 
   const nameById = new Map(categories.map((c) => [c.id, c.name_ar]));
@@ -54,4 +56,9 @@ export function Shelf({ categories, products }: Props) {
       )}
     </>
   );
+}
+
+/** The shelf filtered by ?c= (search params are only known per request, so this sits inside <Suspense>). */
+export function ShelfFromUrl(props: Props) {
+  return <Shelf {...props} requested={useSearchParams().get("c")} />;
 }

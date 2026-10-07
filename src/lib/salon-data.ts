@@ -1,10 +1,11 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { DayHours, Week, Weekday } from "@/lib/salon";
 
 /*
-  Salon data from the database (Phase E): opening hours, services, barbers. Named columns only; RLS returns the
-  active rows to everyone. On a read error each function returns null, and the page says it couldn't load.
+  Salon data from the database (Phase E): opening hours, services, barbers. Named columns only. Read as anon
+  (createPublicClient), so RLS returns the active rows, the same for every visitor. On a read error each function
+  returns null, and the page says it couldn't load.
 */
 
 export type SalonService = {
@@ -22,7 +23,7 @@ export type Barber = { id: string; name_ar: string };
 const hhmm = (t: string) => t.slice(0, 5);
 
 export const getWeek = cache(async (): Promise<Week | null> => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase.from("salon_hours").select("weekday, open_time, close_time");
   if (error) {
     console.error("salon_hours", error.code, error.message);
@@ -36,7 +37,7 @@ export const getWeek = cache(async (): Promise<Week | null> => {
 });
 
 export const getServices = cache(async (): Promise<SalonService[] | null> => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("services")
     .select("id, name_ar, price_ils, duration_min, bookable_online")
@@ -50,7 +51,7 @@ export const getServices = cache(async (): Promise<SalonService[] | null> => {
 });
 
 export const getBarbers = cache(async (): Promise<Barber[] | null> => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase.from("barbers").select("id, name_ar").eq("is_active", true).order("sort");
   if (error) {
     console.error("barbers", error.code, error.message);

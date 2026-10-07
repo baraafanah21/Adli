@@ -4,12 +4,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { SealMark } from "@/components/SealMark";
 import { CartButton } from "@/components/cart/CartButton";
 import { AccountMenu } from "@/components/account/AccountMenu";
-import { getCurrentUser, getProfile } from "@/lib/auth/guards";
 import { getCatalog } from "@/lib/catalog";
 import styles from "./SiteHeader.module.css";
 
+/** Same for every visitor: the account menu reads the session on the client (see SiteChrome). */
 export async function SiteHeader() {
-  const [catalog, user, profile] = await Promise.all([getCatalog(), getCurrentUser(), getProfile()]);
+  const catalog = await getCatalog();
   const categories = (catalog.data?.categories ?? []).map(({ slug, name_ar, icon }) => ({ slug, name_ar, icon }));
   return (
     <header className={styles.header}>
@@ -20,7 +20,7 @@ export async function SiteHeader() {
         {categories.length > 0 && <CategoryNav categories={categories} />}
         <div className={styles.actions}>
           <ThemeToggle />
-          <AccountMenu user={user ? { name: profile?.full_name ?? user.name, email: user.email } : null} />
+          <AccountMenu />
           <CartButton />
           <Link href="/booking" className={styles.bookButton}>
             احجز موعد

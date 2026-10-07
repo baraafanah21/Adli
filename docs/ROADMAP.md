@@ -104,6 +104,11 @@
 
 ## المرحلة G: الكاش والأداء
 
+على الفرع `perf-g`، ثلاث دفعات، ورابط Preview قبل الدمج. القياس في `docs/PERFORMANCE.md`.
+
+- [x] G1: القياس «قبل» على الموقع الحي؛ `supabase/public.ts` (anon بلا جلسة) للكتالوج وبيانات الصالون؛ الجلسة تُقرأ فقط في `SessionIsland` داخل `Suspense` (القائمة والسلة والحجز من `session-store` على العميل)؛ `?v=` و`?c=` و`?service=&barber=&at=` على العميل؛ `private, no-store` للمسارات الخاصة في `proxy.ts`؛ قاعدة ESLint `adli/no-session-in-cache`؛ حذف `gsap`
+- [ ] G2: `cacheComponents`، وبيانات الصالون بوسم `salon` و`updateTag` من حفظ الخدمة والحلاق والساعات
+- [ ] G3: كاش الكتالوج وجدول الإبطال، معاينة المنتج المخفي في `/admin/products/[id]/preview`، الصور، three.js وlenis والخطوط، القياس «بعد»
 - [ ] الكتالوج بـ Cache Components (`"use cache"` + `cacheTag`)، و`revalidateTag` من كل تعديل في اللوحة
 - [ ] `next/image` مع `remotePatterns` لـ Storage، وAVIF/WebP، و`sizes` صحيحة
 - [ ] لقطات `public/hero/v*`: `Cache-Control` immutable؛ `cacheControl` طويل عند الرفع إلى Storage
