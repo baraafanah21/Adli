@@ -51,6 +51,15 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - After any schema change, run the Supabase security advisors and fix new findings. Tests for each phase live in `supabase/tests/` (one DO block that ends in a deliberate exception, so it rolls back).
 - Clients: `src/lib/supabase/client.ts` (browser) and `src/lib/supabase/server.ts` (server components / route handlers).
 
+## Bookings (Phase E, `docs/BOOKINGS-BRIEF.md`)
+
+- Tables: `barbers` (`user_id` optional link to a `user_roles` row; not granted to anon / authenticated), `services` (`bookable_online`; add-ons have no duration), `salon_hours` (one row per open weekday, 0 = Sunday; no row = closed), `closures` (one barber or the whole salon, once via `during` or weekly via `weekday` + times), `bookings` (snapshots of service name, price, duration; `salon_date` generated in `Asia/Hebron`), `booking_events`, `account_flags` (no-show flag; one open per account). Read only; every write goes through functions.
+- Rules live in `private.booking_rule()`: 15-minute grid from opening time, ≥ 60 minutes ahead, ≤ 7 salon days ahead, customer cancels online until 120 minutes before, 5 bookings created per account per hour.
+- Double booking is impossible in the database: `bookings_no_overlap` (exclusion on barber + `during` for `pending` / `confirmed` / `completed`). Every function that writes a salon day's times takes `pg_advisory_xact_lock(hashtextextended('booking_day:' || salon_date, 0))` first, so closures and bookings never race. One booking per account per salon day: `bookings_one_per_day` (any status except `cancelled` / `rejected`).
+- Created only through `create_booking(p_idempotency_key, p_service_id, p_barber_id, p_starts_at, p_customer_name, p_phone, p_gateway_secret)` with `ORDER_GATEWAY_SECRET`, signed in. Phones are mobiles only (`private.normalize_mobile`: 05x, +970, +972 → `+9705…` / `+9725…`) and are saved to the profile with the name.
+- Statuses: `confirmed` (or `pending` while the account has an open no-show flag) → `completed` / `no_show` (from the start time) / `cancelled`; `pending` → `confirmed` / `rejected`; `no_show` → `completed` (correction, clears the flag it raised). Pending bookings are rejected at their start time by the pg_cron job `bookings-expire-pending` (`private.expire_pending_bookings()`).
+- Error codes: `P0020` time not available, `P0021` outside the window, `P0022` one booking per day, `P0023` too many bookings, `P0024` too late to cancel online, `P0025` barber has upcoming bookings, `P0026` change conflicts with bookings, `P0027` not bookable, `P0028` status change not allowed.
+
 ## Salon data (temporary static files)
 
 Hours are `WEEK` in `src/lib/salon.ts` (salon time `Asia/Hebron`; `openStatus()` drives the client-only `OpenNow` badge). Services and prices are `src/lib/services.ts`. Both get replaced by the bookings tables (`working_hours`, `services`), see `docs/BOOKINGS-BRIEF.md`.

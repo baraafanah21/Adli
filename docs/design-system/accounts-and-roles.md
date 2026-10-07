@@ -66,14 +66,22 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_owner_dashboard(period)` | owner | F5 |
 | `admin_sales_daily(days)` | owner | F5 |
 | `admin_staff_summary()` | owner, staff | F5 |
+| `admin_set_booking_status(booking_id, status, note)` | owner, staff | E1 |
+| `admin_clear_flag(user_id, note)` | owner, staff | E1 |
 
-Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
+Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `P0020`–`P0028` bookings (see `CLAUDE.md`, «Bookings»), `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 
 ## Orders
 
 - Created only through `/api/orders` → `place_order()`. The function requires a server-held gateway secret (so the browser can't call it directly), recomputes prices from the database, rate-limits per IP (5/min) and per user, and is idempotent on `idempotency_key`.
 - Lines live in `order_items` (with name and price snapshots).
 - Status machine: `new → confirmed | cancelled`, `confirmed → done | cancelled`, only through `admin_set_order_status()`; the same status again changes nothing. Confirming takes stock (a bundle's pieces); cancelling a confirmed order returns exactly what it took (one transaction, logged in `stock_movements`). Each change is a row in `order_events` (from, to, who, when, note). A confirmed order's lines are never edited: cancel it and place a new one.
+
+## Bookings
+
+- An account is required. Created only through `/api/bookings` → `create_booking()` (gateway secret, signed in, idempotent on `idempotency_key`, 5 per account per hour). Free times come from `booking_availability(service_id, barber_id)`, which anyone may call: it returns free start times only, never who booked or why a time is taken.
+- The customer reads their own bookings and their own no-show flag, and cancels with `cancel_my_booking()` until 2 hours before. Staff read all bookings, events, closures and flags, and change statuses with `admin_set_booking_status()`; only staff or the owner clear a flag (`admin_clear_flag()`, who and when are kept). Each change is a row in `booking_events`.
+- `booking_availability` is reported by the advisor for `anon` (`anon_security_definer_function_executable`); expected, it exposes free times only.
 
 ## Reviews
 
