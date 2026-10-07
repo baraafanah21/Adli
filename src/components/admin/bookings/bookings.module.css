@@ -55,6 +55,80 @@
   font: inherit;
 }
 
+/* The next 7 days (E3.1): one tap per day, its bookings count on it; a closed day is muted and says «مغلق». */
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.weekDay {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--space-1) 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  text-decoration: none;
+  text-align: center;
+}
+
+.weekDay:hover {
+  border-color: var(--brass);
+}
+
+.weekDay[aria-current="page"] {
+  border-color: var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+
+.weekDay[data-closed] {
+  color: var(--ink-muted);
+  background: var(--surface-sunk);
+}
+
+.weekName {
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weekDate {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekClosed {
+  font-size: 11px;
+}
+
+.weekCount {
+  min-width: 20px;
+  height: 20px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A day with something new to me: the count in brass. */
+.weekCount[data-new] {
+  background: var(--brass);
+  color: var(--on-brass);
+  box-shadow: none;
+}
+
 .dayTitle {
   margin: 0;
   font-size: 15px;
@@ -212,6 +286,17 @@ span.closure {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
+}
+
+/* «جديد» on a booking created since my last visit. */
+.bNew {
+  margin-inline-start: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--brass);
+  color: var(--on-brass);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .bName {

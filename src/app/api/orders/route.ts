@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { PlacedOrder } from "@/lib/whatsapp";
+import { normalizeMobile } from "@/lib/phone";
 
 /*
   The only way an order is created. Calls place_order() with the server-held gateway secret,
@@ -12,12 +13,8 @@ const Body = z.object({
   idempotencyKey: z.uuid(),
   name: z.string().trim().min(1).max(80),
   area: z.string().trim().max(80).default(""),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[0-9+ ]{7,20}$/)
-    .or(z.literal(""))
-    .default(""),
+  // Optional; when given, the full number with the prefix the customer chose (+9705… / +9725…), see src/lib/phone.ts.
+  phone: z.string().trim().max(30).default(""),
   items: z
     .array(z.object({ variantId: z.uuid(), qty: z.number().int().min(1).max(20) }))
     .min(1)
@@ -72,13 +69,15 @@ export async function POST(request: Request) {
     return fail({ error: "invalid", field: field === "name" || field === "phone" || field === "items" ? field : undefined }, 400);
   }
   const b = parsed.data;
+  const phone = b.phone ? normalizeMobile(b.phone) : null;
+  if (b.phone && !phone) return fail({ error: "invalid", field: "phone" }, 400);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("place_order", {
     p_idempotency_key: b.idempotencyKey,
     p_customer_name: b.name,
     p_area: b.area,
-    p_phone: b.phone || null,
+    p_phone: phone,
     p_items: b.items.map((i) => ({ variant_id: i.variantId, qty: i.qty })),
     p_client_ip: clientIp(request),
     p_gateway_secret: secret,
@@ -96,6 +95,9 @@ export async function POST(request: Request) {
       case "P0002":
         return fail({ error: "rate_limited" }, 429);
       case "22023":
+        // The orders trigger (private.phone_normalize) has the last word on the phone.
+        if (error.message === "phone_invalid") return fail({ error: "invalid", field: "phone" }, 400);
+        return fail({ error: "invalid" }, 400);
       case "22P02":
       case "23514":
         return fail({ error: "invalid" }, 400);

@@ -62,7 +62,7 @@ begin
   r := r || 'calendar shows the phone to staff: ' || coalesce((select b ->> 'phone' from jsonb_array_elements(j -> 'bookings') b where (b ->> 'id')::uuid = bk), 'null') || E'\n';
 
   -- walk-ins: any staff, any barber
-  v_code := public.admin_add_walk_in(bb, v_cut, (dd + time '13:00') at time zone tz, 'ماشي', '0599000002');
+  v_code := public.admin_add_walk_in(bb, v_cut, (dd + time '13:00') at time zone tz, 'ماشي', '+970599000002');
   r := r || 'staff walk-in on barber B 13:00: ' || v_code || ' ' || (select b.status || ' ' || b.kind || ' ' || b.phone from public.bookings b where b.code = v_code)
         || ' (expect confirmed walk_in +970599000002)' || E'\n';
   begin perform public.admin_add_walk_in(ba, v_cut, (dd + time '13:15') at time zone tz); r := r || 'FAIL walk-in over a booking' || E'\n';

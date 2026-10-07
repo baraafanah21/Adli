@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { DAY_NAMES, type Weekday } from "@/lib/salon";
 import { addDays, dayChip, formatSlot, formatWhen, minutesToHHMM, salonDate, salonMinutes } from "@/lib/bookings";
-import { ADMIN_STATUS_LABEL, ON_CALENDAR, reminderUrl, type BookingDay, type DayBooking, type DayClosure } from "@/lib/admin/bookings";
+import { ADMIN_STATUS_LABEL, ON_CALENDAR, reminderUrl, type BookingDay, type DayBooking, type DayClosure, type UpcomingDay } from "@/lib/admin/bookings";
 import { formatTime } from "@/lib/salon";
 import { BookingSheet, type SheetState } from "./BookingSheet";
 import styles from "./bookings.module.css";
@@ -44,6 +44,10 @@ export type Service = { id: string; name_ar: string; duration_min: number };
 type Props = {
   data: BookingDay;
   today: string;
+  /** The 7 days from today, each with its count and whether the salon is closed (admin_upcoming_bookings). */
+  week: UpcomingDay[];
+  /** Bookings new to me since my last visit: they carry «جديد». */
+  newIds: string[];
   isOwner: boolean;
   pending: PendingBooking[];
   services: Service[];
@@ -69,7 +73,8 @@ const flagDate = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/He
  * The day for the whole salon: one column per barber, bookings and closed times on a timeline. Built for a phone in
  * one hand: tap an empty quarter-hour to seat someone or close it, tap a booking to act on it.
  */
-export function BookingsBoard({ data, today, isOwner, pending, services, weekly, flags }: Props) {
+export function BookingsBoard({ data, today, week, newIds, isOwner, pending, services, weekly, flags }: Props) {
+  const isNew = new Set(newIds);
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const minute = useSyncExternalStore(subscribe, currentMinute, noMinute);
@@ -118,16 +123,6 @@ export function BookingsBoard({ data, today, isOwner, pending, services, weekly,
           <Link className={styles.navArrow} href={`/admin/bookings?day=${addDays(data.day, -1)}`} aria-label="اليوم السابق">
             ‹
           </Link>
-          <Link className="ad-chip" href="/admin/bookings" aria-current={isToday ? "page" : undefined}>
-            اليوم
-          </Link>
-          <Link
-            className="ad-chip"
-            href={`/admin/bookings?day=${addDays(today, 1)}`}
-            aria-current={data.day === addDays(today, 1) ? "page" : undefined}
-          >
-            بكرا
-          </Link>
           <Link className={styles.navArrow} href={`/admin/bookings?day=${addDays(data.day, 1)}`} aria-label="اليوم التالي">
             ›
           </Link>
@@ -140,6 +135,33 @@ export function BookingsBoard({ data, today, isOwner, pending, services, weekly,
               اذهب
             </button>
           </form>
+        </nav>
+        {/* The next 7 days: each with its bookings count; a day the salon is closed says so. */}
+        <nav className={styles.week} aria-label="الأيام السبعة القادمة">
+          {week.map((d) => {
+            const chip = dayChip(d.day, new Date(`${today}T12:00:00Z`));
+            const count = d.count > 0 ? `${d.count} ${d.count === 1 ? "موعد" : d.count === 2 ? "موعدان" : "مواعيد"}` : "";
+            return (
+              <Link
+                key={d.day}
+                className={styles.weekDay}
+                href={`/admin/bookings?day=${d.day}`}
+                aria-current={d.day === data.day ? "page" : undefined}
+                data-closed={d.closed || undefined}
+                aria-label={[chip.name, chip.date, d.closed ? "مغلق" : count || "لا مواعيد", d.new ? `${d.new} جديد` : ""].filter(Boolean).join("، ")}
+              >
+                <span className={styles.weekName}>{chip.name}</span>
+                <span className={styles.weekDate}>{chip.date.split(" ")[0]}</span>
+                {d.closed ? (
+                  <span className={styles.weekClosed}>مغلق</span>
+                ) : d.count > 0 ? (
+                  <span className={styles.weekCount} data-new={d.new > 0 || undefined}>
+                    {d.count}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
         </nav>
         <p className={styles.dayTitle}>
           {label.name === "اليوم" || label.name === "بكرا" ? `${label.name}، ` : ""}
@@ -245,7 +267,7 @@ export function BookingsBoard({ data, today, isOwner, pending, services, weekly,
                 {onCalendar
                   .filter((x) => x.barber_id === b.id)
                   .map((x) => (
-                    <BookingBlock key={x.id} booking={x} start={start} onOpen={() => setSheet({ kind: "booking", booking: x })} />
+                    <BookingBlock key={x.id} booking={x} start={start} isNew={isNew.has(x.id)} onOpen={() => setSheet({ kind: "booking", booking: x })} />
                   ))}
                 {nowMin !== null && nowMin >= start && nowMin <= end && (
                   <span className={styles.now} style={{ insetBlockStart: (nowMin - start) * PX }} aria-hidden="true" />
@@ -385,7 +407,7 @@ function toMin(hhmm: string) {
   return h * 60 + m;
 }
 
-function BookingBlock({ booking: b, start, onOpen }: { booking: DayBooking; start: number; onOpen: () => void }) {
+function BookingBlock({ booking: b, start, isNew, onOpen }: { booking: DayBooking; start: number; isNew: boolean; onOpen: () => void }) {
   const from = salonMinutes(b.starts_at);
   const to = salonMinutes(b.ends_at) || 24 * 60;
   return (
@@ -396,7 +418,10 @@ function BookingBlock({ booking: b, start, onOpen }: { booking: DayBooking; star
       style={{ insetBlockStart: (from - start) * PX, blockSize: Math.max((to - from) * PX - 2, 20) }}
       onClick={onOpen}
     >
-      <span className={styles.bTime}>{formatSlot(b.starts_at)}</span>
+      <span className={styles.bTime}>
+        {formatSlot(b.starts_at)}
+        {isNew && <span className={styles.bNew}>جديد</span>}
+      </span>
       <span className={styles.bName}>{b.customer_name ?? (b.kind === "walk_in" ? "بدون موعد" : "زبون")}</span>
       <span className={styles.bMeta}>
         {b.service_name_ar}

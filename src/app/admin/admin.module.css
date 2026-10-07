@@ -116,6 +116,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A second count beside the first (pending bookings): outlined, so the brass one («جديد») reads first. */
+.badgeMuted {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.badge + .badgeMuted {
+  margin-inline-start: var(--space-1);
+}
+
 .textButton {
   min-height: 44px;
   padding-inline: var(--space-3);
@@ -183,6 +194,12 @@
   top: 4px;
   inset-inline-start: calc(50% + 6px);
   margin: 0;
+}
+
+/* On the bottom bar the second count sits on the icon's other side. */
+.barLink .badgeMuted {
+  inset-inline-start: auto;
+  inset-inline-end: calc(50% + 6px);
 }
 
 .moreRoot {

@@ -7,6 +7,7 @@ import { formatSlot, minutesToHHMM, type BookingStatus } from "@/lib/bookings";
 import { reminderUrl, type DayBarber, type DayBooking, type DayClosure } from "@/lib/admin/bookings";
 import { formatTime } from "@/lib/salon";
 import type { ActionState } from "@/lib/admin/errors";
+import { PhoneField } from "@/components/PhoneField";
 import type { Service } from "./BookingsBoard";
 import styles from "./bookings.module.css";
 
@@ -179,7 +180,8 @@ function WalkInForm({ day, barbers, services, barberId, start, onDone }: Props &
       </Field>
       <Field label="الاسم (اختياري)">{(id) => <input id={id} name="name" maxLength={80} autoComplete="off" />}</Field>
       <Field label="الجوال (اختياري)">
-        {(id) => <input id={id} name="phone" type="tel" inputMode="tel" maxLength={30} dir="ltr" placeholder="0599123456" autoComplete="off" />}
+        {/* The prefix this device used last (most walk-ins share one), +970 the first time. */}
+        {(id) => <PhoneField id={id} name="phone" rememberKey="adli-walkin-prefix" />}
       </Field>
       <Result state={state} />
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={pending}>

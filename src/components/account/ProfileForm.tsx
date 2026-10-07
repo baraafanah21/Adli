@@ -2,6 +2,7 @@
 
 import { useActionState, useId } from "react";
 import { updateProfile, type ProfileState } from "@/app/(site)/account/actions";
+import { PhoneField } from "@/components/PhoneField";
 import styles from "@/components/auth/auth.module.css";
 
 type Props = { email: string | null; profile: { full_name: string | null; area: string | null; phone: string | null } };
@@ -27,8 +28,9 @@ export function ProfileForm({ email, profile }: Props) {
         <input id={ids.area} name="area" autoComplete="address-level2" maxLength={80} placeholder="مثلاً: رفيديا" defaultValue={profile.area ?? ""} aria-invalid={err("area") || undefined} />
       </div>
       <div className="ad-field">
-        <label htmlFor={ids.phone}>رقم الهاتف (اختياري)</label>
-        <input id={ids.phone} name="phone" type="tel" inputMode="tel" autoComplete="tel" dir="ltr" maxLength={20} placeholder="0599123456" defaultValue={profile.phone ?? ""} aria-invalid={err("phone") || undefined} />
+        <label htmlFor={ids.phone}>رقم الجوال (اختياري)</label>
+        {/* The saved number's prefix is this person's choice; it fills the booking and order forms too. */}
+        <PhoneField id={ids.phone} name="phone" defaultPhone={profile.phone} invalid={err("phone")} describedBy={err("phone") ? ids.err : undefined} />
       </div>
       {state.error && (
         <p className={styles.error} role="alert" id={ids.err}>

@@ -4,7 +4,8 @@ import { SalesChart, type DailySales } from "@/components/admin/SalesChart";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
-import { formatSlot } from "@/lib/bookings";
+import { dayChip, formatSlot } from "@/lib/bookings";
+import type { Upcoming } from "@/lib/admin/bookings";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = { title: "الرئيسية" };
@@ -67,9 +68,10 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const period: Period = sp.period === "day" || sp.period === "week" ? sp.period : "month";
 
   const supabase = await createClient();
-  const [summaryRes, bookingsRes, dashRes, dailyRes] = await Promise.all([
+  const [summaryRes, bookingsRes, upcomingRes, dashRes, dailyRes] = await Promise.all([
     supabase.rpc("admin_staff_summary"),
     supabase.rpc("admin_bookings_summary"),
+    supabase.rpc("admin_upcoming_bookings"),
     // Owner-only figures: not even requested for staff (the database would refuse anyway).
     isOwner ? supabase.rpc("admin_owner_dashboard", { p_period: period }) : Promise.resolve({ data: null, error: null }),
     isOwner ? supabase.rpc("admin_sales_daily", { p_days: 30 }) : Promise.resolve({ data: null, error: null }),
@@ -77,6 +79,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   for (const [name, res] of [
     ["staff_summary", summaryRes],
     ["bookings_summary", bookingsRes],
+    ["upcoming_bookings", upcomingRes],
     ["owner_dashboard", dashRes],
     ["sales_daily", dailyRes],
   ] as const) {
@@ -84,6 +87,8 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   }
   const s = summaryRes.data as StaffSummary | null;
   const bk = bookingsRes.data as BookingsSummary | null;
+  const upcoming = upcomingRes.data as Upcoming | null;
+  const upcomingTotal = upcoming?.days.reduce((n, d) => n + d.count, 0) ?? 0;
   const d = dashRes.data as Dashboard | null;
   const daily = (dailyRes.data ?? []) as DailySales[];
   const who = user.name ?? user.email ?? "";
@@ -166,46 +171,58 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         )}
       </section>
 
-      {/* Today's bookings: everyone */}
+      {/* The coming 7 days, by day (E3.1): a Saturday booking shows even when tomorrow is a closed Friday. */}
       <section aria-labelledby="bookings-title" className={styles.section}>
         <div className={styles.sectionHead}>
           <h2 id="bookings-title" className={styles.h2}>
-            مواعيد اليوم
+            المواعيد القادمة
           </h2>
           <Link className="ad-btn ad-btn--ghost" href="/admin/bookings">
             افتح التقويم
           </Link>
         </div>
-        {!bk ? (
+        {!upcoming ? (
           <p className="ad-notice ad-notice--error" role="alert">
             تعذّر تحميل المواعيد. حدّث الصفحة بعد قليل.
           </p>
         ) : (
           <div className={styles.panel}>
             <p className={styles.muted}>
-              {bk.today_total === 0
-                ? "لا مواعيد اليوم بعد."
-                : `${bk.today_total} مواعيد اليوم، بقي منها ${bk.today_left}.`}
-              {bk.open_flags > 0 ? ` · ${bk.open_flags} حسابات عليها وسم تخلّف.` : ""}
+              {upcomingTotal === 0 ? "لا مواعيد في الأيام السبعة القادمة." : `${upcomingTotal} في الأيام السبعة القادمة.`}
+              {bk && bk.open_flags > 0 ? ` · ${bk.open_flags} حسابات عليها وسم تخلّف.` : ""}
             </p>
-            {bk.next.length > 0 && (
-              <ul className={styles.next}>
-                {bk.next.map((b) => (
-                  <li key={b.id}>
-                    <Link href={`/admin/bookings#b-${b.id}`}>
-                      <span className={styles.nextTime}>{formatSlot(b.starts_at)}</span>
-                      <span className={styles.nextWho}>
-                        <span>{b.customer_name ?? "بدون اسم"}</span>
-                        <span>
-                          {b.service_name_ar} · {b.barber_name_ar}
-                          {b.status === "pending" ? " · بانتظار التأكيد" : ""}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {upcoming.days
+              .filter((d) => d.count > 0)
+              .map((d) => {
+                const chip = dayChip(d.day, new Date());
+                return (
+                  <div key={d.day} className={styles.upDay}>
+                    <h3 className={styles.upDayTitle}>
+                      {chip.name === "اليوم" || chip.name === "بكرا" ? `${chip.name}، ${chip.date}` : `${chip.name} ${chip.date}`}
+                      <span className={styles.upCount}>{d.count}</span>
+                    </h3>
+                    <ul className={styles.next}>
+                      {d.bookings.map((b) => (
+                        <li key={b.id}>
+                          <Link href={`/admin/bookings?day=${d.day}#b-${b.id}`}>
+                            <span className={styles.nextTime}>{formatSlot(b.starts_at)}</span>
+                            <span className={styles.nextWho}>
+                              <span>
+                                {b.customer_name ?? "بدون اسم"}
+                                {b.is_new && <span className={styles.upNew}>جديد</span>}
+                              </span>
+                              <span>
+                                {b.service_name_ar} · {b.barber_name_ar}
+                                {b.status === "pending" ? " · بانتظار التأكيد" : ""}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
           </div>
         )}
       </section>

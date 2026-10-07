@@ -79,6 +79,7 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_save_service(id, slug, name_ar, price_ils, duration_min, bookable_online, sort, is_active)` | owner | E3 |
 | `admin_save_salon_hours(weekday, open, close)` | owner | E3 |
 | `admin_delete_product(id)` / `admin_restore_product(id)` | owner | F6 |
+| `admin_upcoming_bookings()` / `admin_bookings_badges()` / `admin_mark_bookings_seen()` | owner, staff | E3.1 |
 
 Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `P0014` product in a shown bundle (DETAIL = bundle names), `P0015` product archived (frozen until restored), `P0020`–`P0028` bookings (see `CLAUDE.md`, «Bookings»), `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 

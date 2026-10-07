@@ -8,6 +8,7 @@ import { formatPrice, joinAnd } from "@/lib/format";
 import { buildOrderMessage, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp";
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
+import { PhoneField, initialPhoneValue } from "@/components/PhoneField";
 
 type Props = {
   open: boolean;
@@ -62,7 +63,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
   const { lines, total, setQty, clear } = useCart();
   const [name, setName] = useState(prefill?.full_name ?? "");
   const [area, setArea] = useState(prefill?.area ?? "");
-  const [phone, setPhone] = useState(prefill?.phone ?? "");
+  const [phone, setPhone] = useState(() => initialPhoneValue(prefill?.phone));
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [unavailable, setUnavailable] = useState<Set<string>>(new Set());
@@ -99,7 +100,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
     if (sending || blocked.length > 0 || lines.length === 0) return;
 
     const trimmed = name.trim();
-    const phoneOk = phone.trim() === "" || /^[0-9+ ]{7,20}$/.test(phone.trim());
+    const phoneOk = phone.empty || phone.valid;
     setNameError(!trimmed);
     setPhoneError(!phoneOk);
     if (!trimmed) return nameRef.current?.focus();
@@ -115,7 +116,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
           idempotencyKey: checkoutKey(lines),
           name: trimmed,
           area: area.trim(),
-          phone: phone.trim(),
+          phone: phone.value,
           items: lines.map((l) => ({ variantId: l.id, qty: l.qty })),
         }),
       });
@@ -286,27 +287,20 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
               />
             </div>
             <div className="ad-field">
-              <label htmlFor={ids.phone}>رقم الهاتف (اختياري)</label>
-              <input
+              <label htmlFor={ids.phone}>رقم الجوال (اختياري)</label>
+              <PhoneField
                 id={ids.phone}
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                dir="ltr"
-                maxLength={20}
-                placeholder="0599123456"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
+                defaultPhone={prefill?.phone}
+                onChange={(v) => {
+                  setPhone(v);
                   if (phoneError) setPhoneError(false);
                 }}
-                aria-invalid={phoneError || undefined}
-                aria-describedby={phoneError ? ids.phoneErr : undefined}
+                invalid={phoneError}
+                describedBy={phoneError ? ids.phoneErr : undefined}
               />
               {phoneError && (
                 <span className="ad-field__error" id={ids.phoneErr}>
-                  اكتب رقم الهاتف بالأرقام فقط، مثل 0599123456
+                  اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة +970 أو +972
                 </span>
               )}
             </div>

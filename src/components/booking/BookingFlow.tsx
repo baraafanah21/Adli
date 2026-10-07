@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSiteSession } from "@/components/session/session-store";
 import { formatPrice } from "@/lib/format";
-import { normalizeMobile } from "@/lib/phone";
+import { PhoneField, initialPhoneValue, type PhoneValue } from "@/components/PhoneField";
 import { BOOKING_STATUS, dayChip, formatSlot, formatWhen, type AvailabilityDay, type PlacedBooking } from "@/lib/bookings";
 import type { BookingError } from "@/app/api/bookings/route";
 import styles from "./booking.module.css";
@@ -78,9 +78,9 @@ export function BookingFlow({ services, barbers, initial }: Props) {
   const [reloads, setReloads] = useState(0);
   // null = not typed yet: show the profile's value, which may arrive after the first render.
   const [nameInput, setName] = useState<string | null>(null);
-  const [phoneInput, setPhone] = useState<string | null>(null);
+  const [phoneInput, setPhone] = useState<PhoneValue | null>(null);
   const name = nameInput ?? known?.profile?.full_name ?? known?.user?.name ?? "";
-  const phone = phoneInput ?? known?.profile?.phone ?? "";
+  const phone = phoneInput ?? initialPhoneValue(known?.profile?.phone);
   const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -181,7 +181,7 @@ export function BookingFlow({ services, barbers, initial }: Props) {
     if (phase.kind === "sending" || !service || !barber || !slot) return;
 
     const trimmed = name.trim();
-    const mobile = normalizeMobile(phone);
+    const mobile = phone.valid ? phone.value : null;
     setNameError(!trimmed);
     setPhoneError(!mobile);
     if (!trimmed) return document.getElementById(ids.name)?.focus();
@@ -445,26 +445,22 @@ export function BookingFlow({ services, barbers, initial }: Props) {
               </div>
               <div className="ad-field">
                 <label htmlFor={ids.phone}>رقم الجوال</label>
-                <input
+                {/* key: the saved number fills the field once the session arrives (it can come after the first render). */}
+                <PhoneField
+                  key={known?.profile?.phone ?? ""}
                   id={ids.phone}
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  dir="ltr"
-                  maxLength={30}
-                  placeholder="0599123456"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
+                  defaultPhone={known?.profile?.phone}
+                  onChange={(v) => {
+                    setPhone(v);
                     if (phoneError) setPhoneError(false);
                   }}
-                  aria-invalid={phoneError || undefined}
-                  aria-describedby={phoneError ? ids.phoneErr : undefined}
+                  invalid={phoneError}
+                  describedBy={phoneError ? ids.phoneErr : undefined}
                   required
                 />
                 {phoneError && (
                   <span className="ad-field__error" id={ids.phoneErr}>
-                    اكتب رقم جوال، مثل 0599123456 أو 970599123456+
+                    اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة +970 أو +972
                   </span>
                 )}
               </div>

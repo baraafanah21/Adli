@@ -9,9 +9,13 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottleIcon, BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, ScissorsIcon, UsersIcon } from "@/components/icons";
 import styles from "@/app/admin/admin.module.css";
 
-/** `bar`: on the phone's bottom bar; the rest go into «المزيد». */
-type Item = { href: string; label: string; icon: ComponentType<{ size?: number }>; badge?: number; bar?: boolean };
-type Props = { role: "owner" | "staff"; newOrders: number; pendingBookings: number };
+/**
+ * `bar`: on the phone's bottom bar; the rest go into «المزيد».
+ * `badges`: counts beside the label, each with what it counts (read out in the link's label); `muted` is outlined.
+ */
+type Badge = { n: number; what: string; muted?: boolean };
+type Item = { href: string; label: string; icon: ComponentType<{ size?: number }>; badges?: Badge[]; bar?: boolean };
+type Props = { role: "owner" | "staff"; newOrders: number; newBookings: number; pendingBookings: number };
 
 /**
  * Desktop (≥ 900px): a sidebar at the inline start with every section, «عرض الموقع», the theme and «خروج».
@@ -19,12 +23,22 @@ type Props = { role: "owner" | "staff"; newOrders: number; pendingBookings: numb
  * sections, the site, the theme, sign out).
  * The owner-only sections are hidden from staff here, and refused by requireRole() and the database anyway.
  */
-export function AdminNav({ role, newOrders, pendingBookings }: Props) {
+export function AdminNav({ role, newOrders, newBookings, pendingBookings }: Props) {
   const pathname = usePathname();
   const main: Item[] = [
     { href: "/admin", label: "الرئيسية", icon: HomeIcon, bar: true },
-    { href: "/admin/bookings", label: "المواعيد", icon: CalendarIcon, badge: pendingBookings, bar: true },
-    { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badge: newOrders, bar: true },
+    {
+      href: "/admin/bookings",
+      label: "المواعيد",
+      icon: CalendarIcon,
+      // New since this person last opened «المواعيد» (brass), and waiting for the salon to confirm (outlined).
+      badges: [
+        { n: newBookings, what: "جديد" },
+        { n: pendingBookings, what: "بانتظار التأكيد", muted: true },
+      ],
+      bar: true,
+    },
+    { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badges: [{ n: newOrders, what: "جديد" }], bar: true },
     { href: "/admin/products", label: "المنتجات", icon: BottleIcon },
     { href: "/admin/stock", label: "المخزون", icon: BoxIcon, bar: true },
   ];
@@ -39,24 +53,27 @@ export function AdminNav({ role, newOrders, pendingBookings }: Props) {
 
   const isCurrent = (href: string) => (href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
 
-  const link = (item: Item, cls: string, onClick?: () => void) => (
+  const link = (item: Item, cls: string, onClick?: () => void) => {
+    const shown = (item.badges ?? []).filter((b) => b.n > 0);
+    return (
     <Link
       key={item.href}
       href={item.href}
       className={cls}
       aria-current={isCurrent(item.href) ? "page" : undefined}
       onClick={onClick}
-      aria-label={item.badge ? `${item.label}، ${item.badge} ${item.href === "/admin/bookings" ? "بانتظار التأكيد" : "جديد"}` : undefined}
+      aria-label={shown.length ? [item.label, ...shown.map((b) => `${b.n} ${b.what}`)].join("، ") : undefined}
     >
       <item.icon />
       <span>{item.label}</span>
-      {item.badge ? (
-        <span className={styles.badge} aria-hidden="true">
-          {item.badge}
+      {shown.map((b) => (
+        <span key={b.what} className={b.muted ? `${styles.badge} ${styles.badgeMuted}` : styles.badge} aria-hidden="true">
+          {b.n}
         </span>
-      ) : null}
+      ))}
     </Link>
-  );
+    );
+  };
 
   return (
     <>

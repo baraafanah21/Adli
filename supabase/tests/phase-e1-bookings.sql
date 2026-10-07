@@ -58,13 +58,15 @@ begin
   insert into public.salon_hours (weekday, open_time, close_time) select d, '00:00', '24:00' from generate_series(0, 6) d;
 
   -- Phone numbers ---------------------------------------------------------------------------------------------
-  r := r || 'phone 059 912 3456 → ' || coalesce(private.normalize_mobile('059 912 3456'), 'null') || ' (expect +970599123456)' || E'\n';
-  r := r || 'phone 054-123-4567 → ' || coalesce(private.normalize_mobile('054-123-4567'), 'null') || ' (expect +972541234567)' || E'\n';
+  -- E3.1: the full number only, the prefix the person chose; a local number is refused (nothing is guessed).
+  r := r || 'phone 059 912 3456 (local) → ' || coalesce(private.normalize_mobile('059 912 3456'), 'null') || ' (expect null)' || E'\n';
+  r := r || 'phone 054-123-4567 (local) → ' || coalesce(private.normalize_mobile('054-123-4567'), 'null') || ' (expect null)' || E'\n';
   r := r || 'phone +970 56 123 4567 → ' || coalesce(private.normalize_mobile('+970 56 123 4567'), 'null') || ' (expect +970561234567)' || E'\n';
-  r := r || 'phone 00972 052 1234567 → ' || coalesce(private.normalize_mobile('00972 052 1234567'), 'null') || ' (expect +972521234567)' || E'\n';
-  r := r || 'phone ٠٥٩٩١٢٣٤٥٦ → ' || coalesce(private.normalize_mobile('٠٥٩٩١٢٣٤٥٦'), 'null') || ' (expect +970599123456)' || E'\n';
+  r := r || 'phone +972-52-123-4567 → ' || coalesce(private.normalize_mobile('+972-52-123-4567'), 'null') || ' (expect +972521234567)' || E'\n';
+  r := r || 'phone 00972 052 1234567 → ' || coalesce(private.normalize_mobile('00972 052 1234567'), 'null') || ' (expect null: the site sends +)' || E'\n';
+  r := r || 'phone +٩٧٠٥٩٩١٢٣٤٥٦ → ' || coalesce(private.normalize_mobile('+٩٧٠٥٩٩١٢٣٤٥٦'), 'null') || ' (expect +970599123456)' || E'\n';
   r := r || 'phone 02 2345678 (landline) → ' || coalesce(private.normalize_mobile('02 2345678'), 'null') || ' (expect null)' || E'\n';
-  r := r || 'phone 0599a123456 → ' || coalesce(private.normalize_mobile('0599a123456'), 'null') || ' (expect null)' || E'\n';
+  r := r || 'phone +970599a12345 → ' || coalesce(private.normalize_mobile('+970599a12345'), 'null') || ' (expect null)' || E'\n';
 
   -- Availability as anon ---------------------------------------------------------------------------------------
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -81,7 +83,7 @@ begin
     perform * from public.booking_availability(v_cut, tb_off); r := r || 'FAIL inactive barber offered' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'inactive barber availability: ' || st || ' (expect P0027)' || E'\n'; end;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'زائر', '0599123456', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'زائر', '+970599123456', secret);
     r := r || 'FAIL anon booked' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'anon create_booking: ' || st || ' (expect 42501)' || E'\n'; end;
   begin
@@ -98,7 +100,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c1, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل', '0599123456', 'wrong');
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل', '+970599123456', 'wrong');
     r := r || 'FAIL wrong secret accepted' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'wrong secret: ' || st || ' (expect 42501)' || E'\n'; end;
   begin
@@ -107,15 +109,15 @@ begin
   exception when others then get stacked diagnostics st = returned_sqlstate, msg = message_text;
     r := r || 'landline: ' || st || ' ' || msg || ' (expect 22023 phone_invalid)' || E'\n'; end;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_wax, tb, (dd + time '13:00') at time zone tz, 'عميل', '0599123456', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_wax, tb, (dd + time '13:00') at time zone tz, 'عميل', '+970599123456', secret);
     r := r || 'FAIL add-on booked' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'add-on booked: ' || st || ' (expect P0027)' || E'\n'; end;
 
   select c.code, c.status into code1, st1
-  from public.create_booking(k1, v_cut, tb, (dd + time '13:00') at time zone tz, ' عميل أول ', '059 912 3456', secret) c;
+  from public.create_booking(k1, v_cut, tb, (dd + time '13:00') at time zone tz, ' عميل أول ', '+970 59 912 3456', secret) c;
   r := r || 'c1 booked: ' || code1 || ' ' || st1 || ' (expect confirmed)' || E'\n';
   select c.code into code1b
-  from public.create_booking(k1, v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل أول', '0599123456', secret) c;
+  from public.create_booking(k1, v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل أول', '+970599123456', secret) c;
   r := r || 'same key, same booking: ' || (code1b = code1)::text || E'\n';
   select count(*) into n from public.bookings where user_id = c1;
   r := r || 'c1 bookings after the double press: ' || n || ' (expect 1)' || E'\n';
@@ -127,7 +129,7 @@ begin
 
   -- daily limit
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '18:00') at time zone tz, 'عميل أول', '0599123456', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '18:00') at time zone tz, 'عميل أول', '+970599123456', secret);
     r := r || 'FAIL second booking the same day' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'second booking same day: ' || st || ' (expect P0022)' || E'\n'; end;
   reset role;
@@ -136,14 +138,14 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c2, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل ثان', '0541234567', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:00') at time zone tz, 'عميل ثان', '+972541234567', secret);
     r := r || 'FAIL same time booked twice' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'same time, second customer: ' || st || ' (expect P0020)' || E'\n'; end;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:15') at time zone tz, 'عميل ثان', '0541234567', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:15') at time zone tz, 'عميل ثان', '+972541234567', secret);
     r := r || 'FAIL overlapping time booked' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'overlapping 13:15: ' || st || ' (expect P0020)' || E'\n'; end;
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:30') at time zone tz, 'عميل ثان', '0541234567', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '13:30') at time zone tz, 'عميل ثان', '+972541234567', secret) c;
   r := r || 'right after it, 13:30 (no gap needed): ' || st1 || ' (expect confirmed)' || E'\n';
   select id into bk2 from public.bookings where user_id = c2;
   select a.slots into sl from public.booking_availability(v_cut, tb) a where a.day = dd;
@@ -182,7 +184,7 @@ begin
   r := r || 'c1 cancels days ahead: ' || st1 || E'\n';
   select c.changed::text into st1 from public.cancel_my_booking(bk1) c;
   r := r || 'cancel again changes nothing: changed=' || st1 || E'\n';
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '18:00') at time zone tz, 'عميل أول', '0599123456', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '18:00') at time zone tz, 'عميل أول', '+970599123456', secret) c;
   r := r || 'c1 books again that day after cancelling: ' || st1 || ' (expect confirmed)' || E'\n';
   reset role;
 
@@ -192,22 +194,22 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c4, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, t_soon, 'عميل رابع', '0599000004', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, t_soon, 'عميل رابع', '+970599000004', secret);
     r := r || 'FAIL booked less than an hour ahead' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate;
     r := r || 'start in ' || round(extract(epoch from t_soon - now()) / 60) || ' min: ' || st || ' (expect P0021)' || E'\n'; end;
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, t_ok, 'عميل رابع', '0599000004', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, t_ok, 'عميل رابع', '+970599000004', secret) c;
   r := r || 'start in ' || round(extract(epoch from t_ok - now()) / 60) || ' min: ' || st1 || ' (expect confirmed)' || E'\n';
   select id into bk4 from public.bookings where user_id = c4;
   begin
     perform * from public.cancel_my_booking(bk4); r := r || 'FAIL cancelled less than 2 hours before' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'cancel less than 2 h before: ' || st || ' (expect P0024)' || E'\n'; end;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, ((today + 8) + time '13:00') at time zone tz, 'عميل رابع', '0599000004', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, ((today + 8) + time '13:00') at time zone tz, 'عميل رابع', '+970599000004', secret);
     r := r || 'FAIL booked 8 days ahead' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'today + 8: ' || st || ' (expect P0021)' || E'\n'; end;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '13:07') at time zone tz, 'عميل رابع', '0599000004', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '13:07') at time zone tz, 'عميل رابع', '+970599000004', secret);
     r := r || 'FAIL off-grid start accepted' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate, msg = message_text; r := r || '13:07: ' || st || ' ' || msg || ' (expect 22023 start_off_grid)' || E'\n'; end;
 
@@ -216,12 +218,12 @@ begin
   for i in 1..7 loop
     exit when n = 4;
     continue when today + i = (t_ok at time zone tz)::date or today + i = dd;
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, ((today + i) + time '10:00') at time zone tz, 'عميل رابع', '0599000004', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, ((today + i) + time '10:00') at time zone tz, 'عميل رابع', '+970599000004', secret);
     n := n + 1;
   end loop;
   r := r || 'c4 bookings this hour: ' || (select count(*) from public.bookings where user_id = c4) || ' (expect 5)' || E'\n';
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '10:00') at time zone tz, 'عميل رابع', '0599000004', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_short, tb, (dd + time '10:00') at time zone tz, 'عميل رابع', '+970599000004', secret);
     r := r || 'FAIL 6th booking within the hour' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || '6th booking in an hour: ' || st || ' (expect P0023)' || E'\n'; end;
   reset role;
@@ -231,12 +233,12 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c5, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '19:45') at time zone tz, 'عميل خامس', '0599000005', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '19:45') at time zone tz, 'عميل خامس', '+970599000005', secret);
     r := r || 'FAIL booking runs past closing' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || '19:45 + 30 min with closing 20:00: ' || st || ' (expect P0020)' || E'\n'; end;
   select a.slots into sl from public.booking_availability(v_cut, tb) a where a.day = dd;
   r := r || 'last slot offered on D: ' || to_char(sl[array_upper(sl, 1)] at time zone tz, 'HH24:MI') || ' (expect 19:30)' || E'\n';
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '19:30') at time zone tz, 'عميل خامس', '0599000005', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '19:30') at time zone tz, 'عميل خامس', '+970599000005', secret) c;
   r := r || '19:30 + 30 min: ' || st1 || ' (expect confirmed)' || E'\n';
   reset role;
 
@@ -259,7 +261,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c6, 'role', 'authenticated')::text, true);
   set local role authenticated;
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '16:15') at time zone tz, 'عميل سادس', '0599000006', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (dd + time '16:15') at time zone tz, 'عميل سادس', '+970599000006', secret);
     r := r || 'FAIL booked inside a break' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'booking inside the break: ' || st || ' (expect P0020)' || E'\n'; end;
   select count(*) into n from public.closures;
@@ -305,7 +307,7 @@ begin
   set local role authenticated;
   select count(*) into n from public.account_flags where cleared_at is null;
   r := r || 'c3 sees own flag: ' || n || ' (expect 1)' || E'\n';
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, ((dd + 2) + time '13:00') at time zone tz, 'عميل ثالث', '0599000003', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_cut, tb, ((dd + 2) + time '13:00') at time zone tz, 'عميل ثالث', '+970599000003', secret) c;
   r := r || 'c3 books with the flag: ' || st1 || ' (expect pending)' || E'\n';
   select id into bk3_new from public.bookings where user_id = c3 and status = 'pending';
   select a.slots into sl from public.booking_availability(v_cut, tb) a where a.day = dd + 2;
@@ -332,7 +334,7 @@ begin
   insert into public.account_flags (user_id, flagged_by) values (c6, s1);
   perform set_config('request.jwt.claims', json_build_object('sub', c6, 'role', 'authenticated')::text, true);
   set local role authenticated;
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, ((dd + 2) + time '15:00') at time zone tz, 'عميل سادس', '0599000006', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, ((dd + 2) + time '15:00') at time zone tz, 'عميل سادس', '+970599000006', secret) c;
   r := r || 'c6 with a flag: ' || st1 || ' (expect pending)' || E'\n';
   select id into bk6 from public.bookings where user_id = c6;
   reset role;
@@ -343,7 +345,7 @@ begin
   r := r || 'c6 flag cleared: ' || (select (cleared_by = s1)::text || ' «' || clear_note || '»' from public.account_flags where user_id = c6) || E'\n';
   perform set_config('request.jwt.claims', json_build_object('sub', c6, 'role', 'authenticated')::text, true);
   set local role authenticated;
-  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, ((dd + 3) + time '15:00') at time zone tz, 'عميل سادس', '0599000006', secret) c;
+  select c.status into st1 from public.create_booking(gen_random_uuid(), v_short, tb, ((dd + 3) + time '15:00') at time zone tz, 'عميل سادس', '+970599000006', secret) c;
   r := r || 'c6 after the flag is cleared: ' || st1 || ' (expect confirmed)' || E'\n';
   reset role;
 
@@ -365,7 +367,7 @@ begin
   select a.closed, cardinality(a.slots) into b, n from public.booking_availability(v_cut, tb) a where a.day = fri;
   r := r || 'Friday: closed=' || b::text || ', slots=' || n || ' (expect true, 0)' || E'\n';
   begin
-    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (fri + time '13:00') at time zone tz, 'عميل خامس', '0599000005', secret);
+    perform * from public.create_booking(gen_random_uuid(), v_cut, tb, (fri + time '13:00') at time zone tz, 'عميل خامس', '+970599000005', secret);
     r := r || 'FAIL booked on a closed day' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate, dt = pg_exception_detail; r := r || 'Friday booking: ' || st || ' ' || coalesce(dt, '') || ' (expect P0020 closed)' || E'\n'; end;
   reset role;

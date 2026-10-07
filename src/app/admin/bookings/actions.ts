@@ -159,3 +159,11 @@ export async function clearFlag(_prev: ActionState, form: FormData): Promise<Act
   if (error) return fail(error, "admin_clear_flag");
   return done("رُفع الوسم. مواعيده الجديدة تُثبَّت فوراً.");
 }
+
+/** The bookings page was opened (called from the browser, see MarkBookingsSeen). Nothing to show on failure. */
+export async function markBookingsSeen(): Promise<void> {
+  await staff();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_mark_bookings_seen");
+  if (error) console.error("admin_mark_bookings_seen", error.code, error.message);
+}

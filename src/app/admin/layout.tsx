@@ -20,18 +20,20 @@ export const instant = false;
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { role } = await requireRole(["owner", "staff"]);
   const supabase = await createClient();
-  const [{ data: newOrders }, { count: pendingBookings }] = await Promise.all([
+  const [{ data: newOrders }, { data: bookingBadges }] = await Promise.all([
     supabase.rpc("admin_new_orders_count"),
-    // Staff read every booking (RLS); a head count, no rows.
-    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    // New since my last visit to «المواعيد», and pending (admin_bookings_badges, E3.1).
+    supabase.rpc("admin_bookings_badges"),
   ]);
+  const badges = (bookingBadges ?? { new: 0, pending: 0 }) as { new: number; pending: number };
 
   return (
     <div className={styles.shell}>
       <AdminNav
         role={role.role}
         newOrders={typeof newOrders === "number" ? newOrders : 0}
-        pendingBookings={pendingBookings ?? 0}
+        newBookings={badges.new}
+        pendingBookings={badges.pending}
       />
       <div className={styles.main}>{children}</div>
     </div>

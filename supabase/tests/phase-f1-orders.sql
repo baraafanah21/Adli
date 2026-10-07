@@ -36,7 +36,7 @@ begin
   -- Three guest orders (as anon, like the site).
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   set local role anon;
-  select o.code into c1 from public.place_order(gen_random_uuid(), 'سامي اختبار', 'رفيديا', '0599123456',
+  select o.code into c1 from public.place_order(gen_random_uuid(), 'سامي اختبار', 'رفيديا', '+970599123456',
     jsonb_build_array(jsonb_build_object('variant_id', v_oud, 'qty', 2), jsonb_build_object('variant_id', v_anbar, 'qty', 1)),
     'f1-ip-1', secret) o;
   perform public.place_order(gen_random_uuid(), 'رامي اختبار', null, null,

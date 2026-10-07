@@ -3,21 +3,29 @@ import { BookingsBoard, type PendingBooking, type WeeklyClosure, type OpenFlag }
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { salonDate } from "@/lib/bookings";
-import type { BookingDay } from "@/lib/admin/bookings";
+import { MarkBookingsSeen } from "@/components/admin/bookings/MarkBookingsSeen";
+import { startDay, type BookingDay, type Upcoming } from "@/lib/admin/bookings";
 import styles from "@/components/admin/bookings/bookings.module.css";
 
 export const metadata: Metadata = { title: "المواعيد" };
 
 type Summary = { pending: PendingBooking[] };
 
-/** ?day=YYYY-MM-DD (salon date); today by default. */
+/**
+ * ?day=YYYY-MM-DD (salon date). Without it: today if the salon is open today and has bookings left, else the first
+ * coming day with bookings (startDay). The strip above the board shows the 7 days with their counts.
+ */
 export default async function AdminBookingsPage({ searchParams }: PageProps<"/admin/bookings">) {
   const { role } = await requireRole(["owner", "staff"], "/admin/bookings");
   const sp = await searchParams;
   const today = salonDate(new Date());
-  const day = typeof sp.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.day) ? sp.day : today;
-
   const supabase = await createClient();
+  // Read before this visit is recorded (MarkBookingsSeen, after load), so «جديد» shows what is new to me now.
+  const upcomingRes = await supabase.rpc("admin_upcoming_bookings");
+  if (upcomingRes.error) console.error("admin bookings upcoming", upcomingRes.error.code, upcomingRes.error.message);
+  const upcoming = upcomingRes.data as Upcoming | null;
+  const day = typeof sp.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.day) ? sp.day : startDay(upcoming, today);
+
   const [dayRes, summaryRes, servicesRes, weeklyRes, flagsRes] = await Promise.all([
     supabase.rpc("admin_bookings_day", { p_day: day }),
     supabase.rpc("admin_bookings_summary"),
@@ -53,14 +61,19 @@ export default async function AdminBookingsPage({ searchParams }: PageProps<"/ad
   }
 
   return (
-    <BookingsBoard
+    <>
+      <MarkBookingsSeen />
+      <BookingsBoard
       data={data}
       today={today}
+      week={upcoming?.days ?? []}
+      newIds={(upcoming?.days ?? []).flatMap((d) => d.bookings.filter((b) => b.is_new).map((b) => b.id))}
       isOwner={role.role === "owner"}
       pending={(summaryRes.data as Summary | null)?.pending ?? []}
       services={(servicesRes.data ?? []) as { id: string; name_ar: string; duration_min: number }[]}
       weekly={(weeklyRes.data ?? []) as unknown as WeeklyClosure[]}
       flags={(flagsRes.data ?? []) as OpenFlag[]}
-    />
+      />
+    </>
   );
 }

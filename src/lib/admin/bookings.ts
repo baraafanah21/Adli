@@ -68,3 +68,29 @@ export function reminderUrl(b: Pick<DayBooking, "phone" | "customer_name" | "sta
   ].join("\n");
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 }
+
+/** admin_upcoming_bookings() (E3.1): pending and confirmed bookings, today and the 6 salon days after it. */
+export type UpcomingBooking = {
+  id: string;
+  code: string;
+  starts_at: string;
+  status: "pending" | "confirmed";
+  customer_name: string | null;
+  service_name_ar: string;
+  barber_name_ar: string;
+  /** Created after my last visit to «المواعيد», and not by me. */
+  is_new: boolean;
+};
+export type UpcomingDay = { day: string; closed: boolean; count: number; new: number; bookings: UpcomingBooking[] };
+export type Upcoming = { seen_at: string | null; days: UpcomingDay[] };
+
+/**
+ * The day the calendar opens on without ?day=: today when the salon is open today and has bookings left; otherwise
+ * the first coming day with bookings (so a Saturday booking isn't hidden behind a closed Friday); otherwise today.
+ */
+export function startDay(upcoming: Upcoming | null, today: string): string {
+  const days = upcoming?.days ?? [];
+  const first = days[0];
+  if (first && first.day === today && !first.closed && first.count > 0) return today;
+  return days.find((d) => d.count > 0)?.day ?? today;
+}
