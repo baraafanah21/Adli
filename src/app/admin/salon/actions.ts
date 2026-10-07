@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -18,9 +18,14 @@ const fail = (error: { code?: string; message?: string; details?: string | null 
   return { ok: false, message: adminErrorMessage(error) };
 };
 
-/** The home page and /booking read these tables, so every page revalidates. */
+/**
+ * Called only after the admin_save_* RPC succeeded. updateTag expires the cached hours / services / barbers
+ * (src/lib/salon-data.ts) at once: the next visit to the home page or /booking waits for fresh data instead of
+ * being served the old copy. The admin page itself is dynamic and just re-renders.
+ */
 const saved = (message: string): ActionState => {
-  revalidatePath("/", "layout");
+  updateTag("salon");
+  revalidatePath("/admin/salon");
   return { ok: true, message };
 };
 

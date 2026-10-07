@@ -10,6 +10,9 @@ import styles from "@/components/auth/auth.module.css";
 
 export const metadata: Metadata = { title: "حسابي", robots: { index: false } };
 
+// Depends on who is signed in: rendered per request (private, no-store), allowed to block on the session.
+export const instant = false;
+
 export default async function AccountPage({ searchParams }: PageProps<"/account">) {
   const user = await requireUser("/account");
   const supabase = await createClient();

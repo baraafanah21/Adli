@@ -7,8 +7,8 @@ export function metaLine(family: string | null, categoryName: string | undefined
   return parts.join("، ");
 }
 
-/** Local paths ("/products/x.svg") are served from public/; anything else lives in the `products` Storage bucket. */
 /**
+ * Local paths ("/products/x.svg") are served from public/; anything else lives in the `products` Storage bucket.
  * A Storage photo's two files: <uuid>.webp (1600px) and <uuid>.sm.webp beside it (covers the 4:5 card at 2×).
  * Only the large one is recorded in products.image_path. Null for no photo or a file in public/ (demo SVGs).
  */

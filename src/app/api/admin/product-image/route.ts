@@ -19,7 +19,7 @@ import { productImagePaths } from "@/lib/format";
       previous photo's files. Nothing is recorded if an upload fails, and the new files go if recording fails.
 */
 
-export const runtime = "nodejs";
+// Runs on Node (the default; segment config like `runtime` isn't allowed with cacheComponents), which sharp needs.
 
 const MAX_BYTES = 4.4 * 1024 * 1024;
 const MAX_PIXELS = 40_000_000;

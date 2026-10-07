@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   description: "صالون عدلي: حلاقة رجالية، عطور وكريمات. اختر منتجك وثبّت طلبك على واتساب.",
 };
 
+// TEMPORARY (Phase G2): the catalog (header categories, shelf, product pages) is not cached until G3, so the public
+// pages may still block on it. G3 caches it and removes this line; the session routes keep their own `instant = false`.
+export const instant = false;
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0B300F" },

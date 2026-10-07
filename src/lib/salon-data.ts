@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { DayHours, Week, Weekday } from "@/lib/salon";
 
@@ -6,6 +6,11 @@ import type { DayHours, Week, Weekday } from "@/lib/salon";
   Salon data from the database (Phase E): opening hours, services, barbers. Named columns only. Read as anon
   (createPublicClient), so RLS returns the active rows, the same for every visitor. On a read error each function
   returns null, and the page says it couldn't load.
+
+  Cached ("use cache", tag `salon`, profile `salon` in next.config.ts) and shared by every visitor, so the pages that
+  read them are prerendered. «الصالون» in the admin calls updateTag("salon") after a successful save, so a change
+  shows at once. Never cached: free times (booking_availability, read by the browser on every choice) and «مفتوح
+  الآن», which OpenNow works out on the client from the week.
 */
 
 export type SalonService = {
@@ -22,7 +27,10 @@ export type Barber = { id: string; name_ar: string };
 /** "12:00:00" → "12:00" */
 const hhmm = (t: string) => t.slice(0, 5);
 
-export const getWeek = cache(async (): Promise<Week | null> => {
+export async function getWeek(): Promise<Week | null> {
+  "use cache";
+  cacheTag("salon");
+  cacheLife("salon");
   const supabase = createPublicClient();
   const { data, error } = await supabase.from("salon_hours").select("weekday, open_time, close_time");
   if (error) {
@@ -34,9 +42,12 @@ export const getWeek = cache(async (): Promise<Week | null> => {
     week[row.weekday] = { open: hhmm(row.open_time), close: hhmm(row.close_time) };
   }
   return week;
-});
+}
 
-export const getServices = cache(async (): Promise<SalonService[] | null> => {
+export async function getServices(): Promise<SalonService[] | null> {
+  "use cache";
+  cacheTag("salon");
+  cacheLife("salon");
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("services")
@@ -48,9 +59,12 @@ export const getServices = cache(async (): Promise<SalonService[] | null> => {
     return null;
   }
   return data as SalonService[];
-});
+}
 
-export const getBarbers = cache(async (): Promise<Barber[] | null> => {
+export async function getBarbers(): Promise<Barber[] | null> {
+  "use cache";
+  cacheTag("salon");
+  cacheLife("salon");
   const supabase = createPublicClient();
   const { data, error } = await supabase.from("barbers").select("id, name_ar").eq("is_active", true).order("sort");
   if (error) {
@@ -58,4 +72,4 @@ export const getBarbers = cache(async (): Promise<Barber[] | null> => {
     return null;
   }
   return data as Barber[];
-});
+}

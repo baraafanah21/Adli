@@ -107,7 +107,8 @@
 على الفرع `perf-g`، ثلاث دفعات، ورابط Preview قبل الدمج. القياس في `docs/PERFORMANCE.md`.
 
 - [x] G1: القياس «قبل» على الموقع الحي؛ `supabase/public.ts` (anon بلا جلسة) للكتالوج وبيانات الصالون؛ الجلسة تُقرأ فقط في `SessionIsland` داخل `Suspense` (القائمة والسلة والحجز من `session-store` على العميل)؛ `?v=` و`?c=` و`?service=&barber=&at=` على العميل؛ `private, no-store` للمسارات الخاصة في `proxy.ts`؛ قاعدة ESLint `adli/no-session-in-cache`؛ حذف `gsap`
-- [ ] G2: `cacheComponents`، وبيانات الصالون بوسم `salon` و`updateTag` من حفظ الخدمة والحلاق والساعات
+- [x] G2: `cacheComponents`، وبيانات الصالون (`getWeek` و`getServices` و`getBarbers`) بـ `"use cache"` ووسم `salon` وملف `salon` في `next.config.ts`، و`updateTag("salon")` بعد نجاح حفظ الخدمة والحلاق والساعات؛ `instant = false` للإدارة والحساب والدخول والتسجيل، ومؤقتاً على الجذر حتى G3؛ 404 حقيقي لـ `/p/` و`/c/` من `proxy.ts`
+- [ ] G2: الفحص على رابط Preview
 - [ ] G3: كاش الكتالوج وجدول الإبطال، معاينة المنتج المخفي في `/admin/products/[id]/preview`، الصور، three.js وlenis والخطوط، القياس «بعد»
 - [ ] الكتالوج بـ Cache Components (`"use cache"` + `cacheTag`)، و`revalidateTag` من كل تعديل في اللوحة
 - [ ] `next/image` مع `remotePatterns` لـ Storage، وAVIF/WebP، و`sizes` صحيحة

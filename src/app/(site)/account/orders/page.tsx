@@ -7,6 +7,9 @@ import styles from "./orders.module.css";
 
 export const metadata: Metadata = { title: "طلباتي", robots: { index: false } };
 
+// Depends on who is signed in: rendered per request (private, no-store), allowed to block on the session.
+export const instant = false;
+
 const STATUS: Record<string, string> = {
   new: "وصل الطلب",
   confirmed: "مؤكد",

@@ -8,6 +8,9 @@ import { safeNext } from "@/lib/auth/next";
 
 export const metadata: Metadata = { title: "دخول", robots: { index: false } };
 
+// Depends on who is signed in: rendered per request (private, no-store), allowed to block on the session.
+export const instant = false;
+
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const next = safeNext((await searchParams).next as string | undefined);
   if (await getCurrentUser()) redirect(next);
