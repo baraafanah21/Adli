@@ -1,23 +1,21 @@
-<!-- @dsCard group="Products" height=480 subtitle="Product card: the logo's seal as a turntable for the 3D model" -->
+<!-- @dsCard group="Products" height=560 subtitle="Product card: a full-bleed photo in a 4:5 brass frame, the seal as a corner badge" -->
 <style>
-  .bottle-glass { fill: var(--ink); fill-opacity: .1; stroke: var(--ink); stroke-opacity: .55; stroke-width: 1.5; }
-  .bottle-juice { fill: var(--oud); fill-opacity: .85; }
-  .bottle-cap { fill: var(--brass); }
-  .jar-body { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
-  .jar-lid { fill: var(--brass); }
+  /* Stand-ins for real photos: a full-bleed scene, edge to edge, as a phone photo would be. */
+  .photo { position: absolute; inset: 0; }
+  .photo--perfume { background: radial-gradient(circle at 50% 38%, var(--brass) 0 14%, transparent 15%), linear-gradient(160deg, var(--oud), var(--forest)); }
+  .photo--watch { background: radial-gradient(circle at 50% 50%, var(--surface) 0 22%, var(--ink) 23% 26%, transparent 27%), linear-gradient(200deg, var(--line-strong), var(--surface-sunk)); }
+  /* The SealMark component (src/components/SealMark.tsx, size sm) drawn with the same tokens. */
+  .seal { display: grid; place-items: center; width: 36px; aspect-ratio: 1; border-radius: var(--radius-seal); background: var(--cream); padding: 2px; }
+  .seal span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: var(--radius-seal); background: var(--forest); color: var(--cream); font-family: var(--font-amiri); font-size: 18px; box-shadow: inset 0 0 0 2px var(--forest), inset 0 0 0 3px var(--cream); }
 </style>
 <div class="ad-root" style="padding:32px 24px;display:flex;flex-wrap:wrap;gap:32px">
   <article class="ad-card">
-    <div class="ad-seal">
-      <div class="ad-seal__disc">
-        <span class="ad-tag">كمية محدودة</span>
-        <svg width="92" height="150" viewBox="0 0 92 150" aria-hidden="true" style="margin-top:28px">
-          <ellipse class="bottle-cap" cx="46" cy="16" rx="18" ry="14"/>
-          <rect class="bottle-cap" x="38" y="28" width="16" height="12"/>
-          <rect class="bottle-glass" x="6" y="40" width="80" height="106" rx="6"/>
-          <rect class="bottle-juice" x="14" y="72" width="64" height="66" rx="4"/>
-        </svg>
+    <div class="ad-photo">
+      <div class="ad-photo__frame">
+        <span class="photo photo--perfume" role="img" aria-label="صورة المنتج"></span>
+        <span class="ad-photo__seal"><span class="seal"><span>ع</span></span></span>
       </div>
+      <span class="ad-tag">كمية محدودة</span>
     </div>
     <div class="ad-card__body">
       <h3 class="ad-card__name">عود ملكي</h3>
@@ -29,19 +27,17 @@
     </div>
   </article>
   <article class="ad-card">
-    <div class="ad-seal">
-      <div class="ad-seal__disc">
-        <svg width="120" height="96" viewBox="0 0 120 96" aria-hidden="true">
-          <rect class="jar-lid" x="8" y="6" width="104" height="26" rx="6"/>
-          <rect class="jar-body" x="12" y="32" width="96" height="58" rx="10"/>
-        </svg>
+    <div class="ad-photo">
+      <div class="ad-photo__frame">
+        <span class="photo photo--watch" role="img" aria-label="صورة المنتج"></span>
+        <span class="ad-photo__seal"><span class="seal"><span>ع</span></span></span>
       </div>
     </div>
     <div class="ad-card__body">
-      <h3 class="ad-card__name">كريم ترطيب اللحية</h3>
-      <p class="ad-card__meta">زبدة الشيا والأرغان، 50 مل</p>
+      <h3 class="ad-card__name">ساعة جلد بني</h3>
+      <p class="ad-card__meta">ساعات وإكسسوارات</p>
       <div class="ad-card__row">
-        <span class="ad-price">₪ 45</span>
+        <span class="ad-price">₪ 220</span>
         <button class="ad-btn ad-btn--primary" type="button">أضف للطلب</button>
       </div>
     </div>

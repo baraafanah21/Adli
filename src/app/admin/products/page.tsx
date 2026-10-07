@@ -15,17 +15,23 @@ type Row = {
   kind: "simple" | "bundle";
   price_ils: number;
   is_active: boolean;
+  archived_at: string | null;
   image_path: string | null;
   category_id: string;
   product_variants: { id: string; is_active: boolean; price_ils: number | null }[];
 };
 
 export default async function AdminProductsPage({ searchParams }: PageProps<"/admin/products">) {
-  await requireRole(["owner", "staff"], "/admin/products");
+  const { role } = await requireRole(["owner", "staff"], "/admin/products");
+  const isOwner = role.role === "owner";
   const sp = await searchParams;
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const category = one("category") ?? null;
-  const status = one("status") === "active" || one("status") === "hidden" ? one("status")! : null;
+  const wanted = one("status");
+  // «المؤرشفة» is the owner's (they restore); everyone else only ever sees live products.
+  const status = wanted === "active" || wanted === "hidden" || (wanted === "archived" && isOwner) ? wanted : null;
+  const deleted = one("deleted")?.slice(0, 120);
+  const archived = one("archived")?.slice(0, 120);
   const q = (one("q") ?? "").trim().slice(0, 80);
 
   const supabase = await createClient();
@@ -33,12 +39,16 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
   let query = supabase
     .from("products")
     .select(
-      "id, slug, name_ar, kind, price_ils, is_active, image_path, category_id, product_variants!product_variants_product_id_fkey (id, is_active, price_ils)",
+      "id, slug, name_ar, kind, price_ils, is_active, archived_at, image_path, category_id, product_variants!product_variants_product_id_fkey (id, is_active, price_ils)",
     )
     .order("name_ar")
     .limit(300);
   if (category) query = query.eq("category_id", category);
-  if (status) query = query.eq("is_active", status === "active");
+  if (status === "archived") query = query.not("archived_at", "is", null);
+  else {
+    query = query.is("archived_at", null);
+    if (status) query = query.eq("is_active", status === "active");
+  }
   if (q) query = query.or(`name_ar.ilike.%${q.replace(/[%,()*]/g, "")}%,slug.ilike.%${q.replace(/[%,()*]/g, "")}%`);
 
   const [{ data, error }, { data: categories }] = await Promise.all([
@@ -76,7 +86,23 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
         <Link className="ad-chip" href={href({ status: "hidden" })} aria-current={status === "hidden" ? "page" : undefined}>
           مخفي
         </Link>
+        {isOwner && (
+          <Link className="ad-chip" href={href({ status: "archived" })} aria-current={status === "archived" ? "page" : undefined}>
+            المؤرشفة
+          </Link>
+        )}
       </nav>
+
+      {deleted && (
+        <p className="ad-notice ad-notice--ok" role="status">
+          حُذف «{deleted}» مع صوره.
+        </p>
+      )}
+      {archived && (
+        <p className="ad-notice ad-notice--ok" role="status">
+          أُرشف «{archived}»: له طلبات أو حركات مخزون، فبقي في السجلات. تجده في «المؤرشفة».
+        </p>
+      )}
 
       <form className={styles.filters} action="/admin/products" role="search">
         {status && <input type="hidden" name="status" value={status} />}
@@ -113,7 +139,11 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
         </p>
       ) : rows.length === 0 ? (
         <p className={styles.empty} role="status">
-          {filtered ? "لا منتجات بهذه الشروط. غيّر البحث أو اضغط «مسح»." : "لا منتجات بعد. ابدأ بـ «منتج جديد»."}
+          {status === "archived"
+            ? "لا منتجات مؤرشفة."
+            : filtered
+              ? "لا منتجات بهذه الشروط. غيّر البحث أو اضغط «مسح»."
+              : "لا منتجات بعد. ابدأ بـ «منتج جديد»."}
         </p>
       ) : (
         <ul className={styles.list}>
@@ -122,7 +152,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
             const prices = active.map((v) => v.price_ils ?? p.price_ils);
             const min = prices.length ? Math.min(...prices) : p.price_ils;
             const varies = new Set(prices).size > 1;
-            const src = productImageSrc(p.image_path);
+            const src = productImageSrc(p.image_path, "sm");
             return (
               <li key={p.id}>
                 <Link href={`/admin/products/${p.id}`} className={styles.row}>
@@ -139,7 +169,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
                   <span className={styles.side}>
                     <span className={styles.price}>{varies ? `من ${formatPrice(min)}` : formatPrice(min)}</span>
                     <span className={styles.state} data-active={p.is_active || undefined}>
-                      {p.is_active ? "ظاهر" : "مخفي"}
+                      {p.archived_at ? "مؤرشف" : p.is_active ? "ظاهر" : "مخفي"}
                     </span>
                   </span>
                 </Link>

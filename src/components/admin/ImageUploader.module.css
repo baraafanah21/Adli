@@ -10,15 +10,18 @@
   }
 }
 
-.seal {
+/* The shelf card's frame at 200px (4:5 comes from .ad-photo). */
+.frame {
   width: 200px;
   justify-self: center;
 }
 
+/* The local preview fills the frame like next/image `fill` does. */
 .blob {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
 }
 
 .none {

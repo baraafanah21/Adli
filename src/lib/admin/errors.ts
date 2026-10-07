@@ -1,6 +1,7 @@
 /*
   Errors from the admin_* functions → Arabic that says what to do. Used by every admin Server Action.
-  Codes: supabase/migrations/20261007000200_admin_products.sql (and 0000 / 0100 for orders, 0700 / 0800 for bookings).
+  Codes: supabase/migrations/20261007000200_admin_products.sql (and 0000 / 0100 for orders, 0700 / 0800 for bookings,
+  1000 for deleting / archiving products).
 */
 
 export type ActionState = { ok: boolean; message: string } | null;
@@ -78,6 +79,10 @@ export function adminErrorMessage(error: DbError): string {
       return "هذه القيمة مستعملة في نسخ. أخفِ النسخ بدلاً من حذفها.";
     case "P0013":
       return "أضف قيمة واحدة على الأقل لكل خيار قبل توليد النسخ.";
+    case "P0014":
+      return `هذا المنتج داخل بكجة ظاهرة${error.details ? `: «${error.details}»` : ""}. أخرجه منها أو أخفِها أولاً، ثم احذفه.`;
+    case "P0015":
+      return "هذا المنتج مؤرشف، فلا يُعدَّل ولا يوضع في بكجة. استرجعه من «المؤرشفة» أولاً.";
     case "P0003":
       return "لا يمكن إزالة آخر صاحب صالون أو تحويله إلى طاقم. أضف صاحب صالون آخر أولاً.";
     case "P0005":
@@ -125,6 +130,6 @@ function conflictMessage(details?: string | null) {
 export const isExpectedAdminError = (code?: string) =>
   !!code &&
   [
-    "42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013",
+    "42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013", "P0014", "P0015",
     "P0020", "P0021", "P0025", "P0026", "P0027", "P0028",
   ].includes(code);

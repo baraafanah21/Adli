@@ -11,7 +11,7 @@ type Props = { product: Omit<CartLine, "qty">; outOfStock?: boolean };
  */
 function flyToCart(from: HTMLElement) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const img = from.closest(".ad-card")?.querySelector<HTMLImageElement>(".ad-seal__img img");
+  const img = from.closest(".ad-card")?.querySelector<HTMLImageElement>(".ad-photo__frame img");
   const target = document.querySelector<HTMLElement>("[data-cart-target]");
   if (!img || !target || typeof img.animate !== "function") return;
 
@@ -30,7 +30,8 @@ function flyToCart(from: HTMLElement) {
     insetInlineStart: "0", // the right edge in RTL; x below is measured from it
     width: `${size}px`,
     height: `${size}px`,
-    objectFit: "contain",
+    objectFit: "cover",
+    borderRadius: "var(--radius-md)",
     pointerEvents: "none",
     zIndex: "var(--z-sheet)",
   });

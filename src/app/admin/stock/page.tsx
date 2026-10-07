@@ -179,7 +179,7 @@ export default async function AdminStockPage({ searchParams }: PageProps<"/admin
 }
 
 function Thumb({ path }: { path: string | null }) {
-  const src = productImageSrc(path);
+  const src = productImageSrc(path, "sm");
   return (
     <span className={styles.thumb} aria-hidden="true">
       {src && <Image src={src} alt="" fill sizes="40px" />}

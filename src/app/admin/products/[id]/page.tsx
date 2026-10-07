@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BundleEditor, type BundleChoice } from "@/components/admin/BundleEditor";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { OptionsEditor, type EditorOption } from "@/components/admin/OptionsEditor";
+import { DeleteProduct, RestoreProduct } from "@/components/admin/ProductRemoval";
 import { ProductDetailsForm, type EditableProduct } from "@/components/admin/ProductDetailsForm";
 import { VariantsEditor, type EditorVariant } from "@/components/admin/VariantsEditor";
 import { ArrowBackIcon } from "@/components/icons";
@@ -17,6 +18,7 @@ export const metadata: Metadata = { title: "تعديل منتج" };
 
 type ProductRow = EditableProduct & {
   image_path: string | null;
+  archived_at: string | null;
   product_options: (Omit<EditorOption, "values"> & { product_option_values: { id: string; label_ar: string; hex: string | null; sort: number }[] })[];
   product_variants: {
     id: string;
@@ -35,7 +37,8 @@ const bySort = <T extends { sort: number }>(a: T, b: T) => a.sort - b.sort;
 
 export default async function EditProductPage({ params, searchParams }: PageProps<"/admin/products/[id]">) {
   const { id } = await params;
-  await requireRole(["owner", "staff"], `/admin/products/${id}`);
+  const { role } = await requireRole(["owner", "staff"], `/admin/products/${id}`);
+  const isOwner = role.role === "owner";
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
 
@@ -45,7 +48,7 @@ export default async function EditProductPage({ params, searchParams }: PageProp
     supabase
       .from("products")
       .select(
-        `id, slug, name_ar, family_ar, description_ar, price_ils, volume_ml, category_id, sort, is_active, kind, image_path,
+        `id, slug, name_ar, family_ar, description_ar, price_ils, volume_ml, category_id, sort, is_active, kind, image_path, archived_at,
          product_options (id, name_ar, kind, sort, product_option_values (id, label_ar, hex, sort)),
          product_variants!product_variants_product_id_fkey (id, sku, option_value_ids, label_ar, price_ils, low_stock_threshold, stock_state, is_active, sort)`,
       )
@@ -93,6 +96,7 @@ export default async function EditProductPage({ params, searchParams }: PageProp
         .from("products")
         .select("name_ar, price_ils, is_active, product_variants!product_variants_product_id_fkey (id, price_ils, is_active, sort)")
         .eq("kind", "simple")
+        .is("archived_at", null)
         .order("name_ar"),
       supabase.from("variant_availability").select("variant_id, label_ar"),
     ]);
@@ -137,31 +141,44 @@ export default async function EditProductPage({ params, searchParams }: PageProp
       <div className={styles.head}>
         <h1 className="title">{p.name_ar}</h1>
         <span className={styles.state} data-active={p.is_active || undefined}>
-          {p.is_active ? "ظاهر" : "مخفي"}
+          {p.archived_at ? "مؤرشف" : p.is_active ? "ظاهر" : "مخفي"}
         </span>
       </div>
+      {sp.restored === "1" && (
+        <p className="ad-notice ad-notice--ok" role="status">
+          استُرجع المنتج، وهو مخفي. راجعه ثم أظهره من «التفاصيل».
+        </p>
+      )}
       {sp.created === "1" && (
         <p className="ad-notice ad-notice--ok" role="status">
           أُنشئ المنتج. أضف صورته{p.kind === "bundle" ? " ومحتواه" : " وخياراته إن وُجدت"}، ثم أظهره من «التفاصيل».
         </p>
       )}
-      <Link className={styles.siteLink} href={`/p/${p.slug}`} target="_blank">
-        عرض في الموقع
-      </Link>
-
-      <section className={formStyles.section} aria-labelledby="img-title">
-        <h2 id="img-title">الصورة</h2>
-        <ImageUploader productId={p.id} current={p.image_path} name={p.name_ar} />
-      </section>
-
-      <ProductDetailsForm product={product} categories={categories ?? []} />
-
-      {p.kind === "bundle" && bundle ? (
-        <BundleEditor productId={p.id} price={p.price_ils} items={bundle.items} choices={bundle.choices} />
+      {p.archived_at ? (
+        <RestoreProduct id={p.id} canRestore={isOwner} />
       ) : (
         <>
-          <OptionsEditor productId={p.id} options={options} usedValueIds={usedValueIds} />
-          <VariantsEditor productId={p.id} productPrice={p.price_ils} variants={variants} optionCount={options.length} />
+          <Link className={styles.siteLink} href={`/p/${p.slug}`} target="_blank">
+            عرض في الموقع
+          </Link>
+
+          <section className={formStyles.section} aria-labelledby="img-title">
+            <h2 id="img-title">الصورة</h2>
+            <ImageUploader productId={p.id} current={p.image_path} name={p.name_ar} />
+          </section>
+
+          <ProductDetailsForm product={product} categories={categories ?? []} />
+
+          {p.kind === "bundle" && bundle ? (
+            <BundleEditor productId={p.id} price={p.price_ils} items={bundle.items} choices={bundle.choices} />
+          ) : (
+            <>
+              <OptionsEditor productId={p.id} options={options} usedValueIds={usedValueIds} />
+              <VariantsEditor productId={p.id} productPrice={p.price_ils} variants={variants} optionCount={options.length} />
+            </>
+          )}
+
+          {isOwner && <DeleteProduct id={p.id} name={p.name_ar} />}
         </>
       )}
     </main>

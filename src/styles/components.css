@@ -47,28 +47,34 @@
 .ad-btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 .ad-btn--block { width: 100%; }
 
-/* ---------- Seal stage (product card) ---------- */
+/* ---------- Seal stage (product card): a 4:5 photo frame, full-bleed photo, the seal as a corner badge ----------
+   Two rings like the seal: a brass hairline, a small gap, then the photo (object-fit: cover). The frame's ratio is
+   fixed (aspect-ratio), so nothing shifts while the photo loads (F6, replaces the round disc). */
 .ad-card { position: relative; display: flex; flex-direction: column; width: 248px; }
-.ad-seal {
+.ad-photo {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius-seal);
-  border: 2px solid var(--brass);
-  padding: var(--space-2);
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
   transition: box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.ad-seal__disc {
+.ad-photo__frame {
   position: relative;
-  width: 100%;
   height: 100%;
-  border-radius: var(--radius-seal);
+  border-radius: calc(var(--radius-md) - var(--space-1));
   background: var(--surface-sunk);
   box-shadow: var(--shadow-stage);
-  display: grid;
-  place-items: center;
   overflow: hidden;
 }
-.ad-card:hover .ad-seal, .ad-card:focus-within .ad-seal { box-shadow: var(--shadow-glow); }
+.ad-photo__frame img { object-fit: cover; transition: transform var(--dur-panel) var(--ease-out); }
+.ad-photo__frame > a { position: absolute; inset: 0; display: block; }
+/* No photo yet: the seal alone, centred. */
+.ad-photo__empty { position: absolute; inset: 0; display: grid; place-items: center; }
+/* The badge: the logo seal in the photo's bottom corner (inline-end), above the photo. */
+.ad-photo__seal { position: absolute; inset-block-end: var(--space-2); inset-inline-end: var(--space-2); z-index: 1; pointer-events: none; }
+.ad-card:hover .ad-photo, .ad-card:focus-within .ad-photo { box-shadow: var(--shadow-glow); }
+.ad-card:hover .ad-photo__frame img, .ad-card:focus-within .ad-photo__frame img { transform: scale(1.03); }
 .ad-card__body { padding: var(--space-4) var(--space-1) 0; display: grid; gap: var(--space-1); text-align: center; }
 .ad-card__name { font-size: 20px; font-weight: 600; line-height: 1.4; margin: 0; }
 .ad-card__meta { font-size: 14px; color: var(--ink-muted); margin: 0; }
@@ -76,9 +82,8 @@
 .ad-price { font-size: 22px; font-weight: 600; color: var(--brass); font-variant-numeric: tabular-nums; }
 .ad-tag {
   position: absolute;
-  top: 14%;
-  inset-inline-start: 50%;
-  transform: translateX(50%);
+  top: var(--space-2);
+  inset-inline-start: var(--space-2);
   font-size: 12px;
   font-weight: 500;
   color: var(--oud);
@@ -185,23 +190,11 @@
 .ad-chip { min-height: 44px; transition: border-color var(--dur-press) var(--ease-out), background-color var(--dur-press) var(--ease-out); }
 .ad-chip:active { transform: scale(0.97); }
 
-/* ---------- Seal stage: product image in the disc (2D fallback until the 3D <View>) ---------- */
-.ad-seal__img {
-  position: relative;
-  width: 66%;
-  height: 66%;
-  transition: transform var(--dur-panel) var(--ease-out);
-}
-.ad-seal__img img { object-fit: contain; }
-/* The 2D stand-in for "the turntable turns 25°". */
-.ad-card:hover .ad-seal__img,
-.ad-card:focus-within .ad-seal__img { transform: perspective(600px) rotateY(25deg); }
 .ad-card__name a { text-decoration: none; display: inline-block; padding-block: 11px; margin-block: -11px; } /* 44px hit area, same layout */
 .ad-card__name a:hover { text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 6px; }
-.ad-seal > a { display: block; width: 100%; height: 100%; border-radius: var(--radius-seal); }
 
 /* ---------- Seal stage: the tag stays on one line in narrow cards ---------- */
-.ad-tag { white-space: nowrap; top: 10%; }
+.ad-tag { white-space: nowrap; }
 
 /* ---------- Seal stage: in a row of cards, price and button line up at the bottom ---------- */
 .ad-shelf > li { display: flex; }
@@ -209,8 +202,8 @@
 .ad-shelf .ad-card__body { flex: 1; display: flex; flex-direction: column; }
 .ad-shelf .ad-card__row { margin-top: auto; padding-top: var(--space-3); }
 
-/* ---------- Seal stage: out of stock (dim the seal only, text stays readable) ---------- */
-.ad-card--out .ad-seal__disc { opacity: 0.45; }
+/* ---------- Seal stage: out of stock (dim the photo only, text stays readable) ---------- */
+.ad-card--out .ad-photo__frame { opacity: 0.45; }
 
 /* ---------- Shelf grid: 248px cards, space-6 gap; two fluid columns on phones ---------- */
 .ad-shelf {
@@ -236,7 +229,8 @@
 
 /* ---------- Seal stage: large, for the product page ---------- */
 .ad-card--lg { width: 100%; }
-.ad-card--lg .ad-seal { width: min(100%, 440px); margin-inline: auto; border-width: 3px; padding: var(--space-3); }
+.ad-card--lg .ad-photo { width: min(100%, 440px); margin-inline: auto; border-width: 2px; padding: var(--space-2); }
+.ad-card--lg .ad-photo__frame { border-radius: calc(var(--radius-md) - var(--space-2)); }
 .ad-card--lg .ad-card__body { text-align: start; gap: var(--space-3); padding-top: var(--space-8); }
 .ad-card--lg .ad-card__name { font-family: var(--font-amiri); font-size: 40px; line-height: 1.4; font-weight: 400; } /* display-md */
 .ad-card--lg .ad-card__meta { font-size: 16px; }
@@ -247,8 +241,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ad-seal__img, .ad-chip, .ad-chip:active { transition: none; transform: none; }
-  .ad-card:hover .ad-seal__img, .ad-card:focus-within .ad-seal__img { transform: none; }
+  .ad-photo__frame img, .ad-chip, .ad-chip:active { transition: none; transform: none; }
+  .ad-card:hover .ad-photo__frame img, .ad-card:focus-within .ad-photo__frame img { transform: none; }
 }
 
 /* ======================================================================

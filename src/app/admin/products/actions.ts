@@ -10,6 +10,7 @@ import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib
 /*
   Every action: requireRole() first (layer 2), then one admin_* function that checks the role again (layer 3).
   After a save, the shop pages that show the product are revalidated (home shelf, category, product page).
+  Deleting and restoring are the owner's (admin_delete_product / admin_restore_product check it again).
 */
 
 const staff = () => requireRole(["owner", "staff"], "/admin/products");
@@ -109,15 +110,48 @@ export async function updateProduct(_prev: ActionState, form: FormData): Promise
   return { ok: true, message: "حُفظ المنتج." };
 }
 
-/** Called after the browser uploaded the file to Storage (staff-only storage policy). */
-export async function setProductImage(productId: string, path: string): Promise<ActionState> {
-  await staff();
-  if (!z.uuid().safeParse(productId).success) return INVALID;
+// Photos are saved by POST /api/admin/product-image (sharp makes the WebP files there).
+
+// ---------- Delete / archive / restore (owner only) ----------
+
+const owner = (next: string) => requireRole(["owner"], next);
+
+/**
+ * admin_delete_product decides: refused while in a shown bundle (P0014), archived when the product has history,
+ * otherwise deleted. After a real delete its photo files go from Storage too (Postgres can't remove them); if that
+ * fails the product is still gone and only orphan files stay, so it is logged, not shown.
+ */
+export async function deleteProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const id = String(form.get("id") ?? "");
+  if (!z.uuid().safeParse(id).success) return INVALID;
+  await owner(`/admin/products/${id}`);
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_set_product_image", { p_id: productId, p_path: path });
-  if (error) return fail(error, "admin_set_product_image");
-  revalidateCatalog(productId);
-  return { ok: true, message: "حُفظت الصورة." };
+  const { data, error } = await supabase.rpc("admin_delete_product", { p_id: id });
+  if (error) return fail(error, "admin_delete_product");
+  const { outcome, name_ar } = data as { outcome: "deleted" | "archived"; name_ar: string };
+
+  if (outcome === "deleted") {
+    const bucket = supabase.storage.from("products");
+    const { data: files, error: listError } = await bucket.list(id, { limit: 100 });
+    const paths = (files ?? []).map((f) => `${id}/${f.name}`);
+    const removed = paths.length ? await bucket.remove(paths) : { error: null };
+    if (listError || removed.error) console.error("deleteProduct: files kept", id, (listError ?? removed.error)?.message);
+  }
+
+  revalidateCatalog();
+  redirect(`/admin/products?${outcome}=${encodeURIComponent(name_ar)}`);
+}
+
+/** Back in the admin lists, still hidden: the owner checks it and shows it from «التفاصيل». */
+export async function restoreProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const id = String(form.get("id") ?? "");
+  if (!z.uuid().safeParse(id).success) return INVALID;
+  await owner(`/admin/products/${id}`);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_restore_product", { p_id: id });
+  if (error) return fail(error, "admin_restore_product");
+  revalidateCatalog(id);
+  redirect(`/admin/products/${id}?restored=1`);
 }
 
 // ---------- Options and values ----------

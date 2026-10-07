@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AddToOrderButton } from "@/components/cart/AddToOrderButton";
+import { SealMark } from "@/components/SealMark";
 import { formatPrice, joinAnd, metaLine, productImageSrc } from "@/lib/format";
 import type { ProductCard } from "@/lib/catalog";
 
@@ -24,30 +25,33 @@ type Props = {
 };
 
 /**
- * The product card: the logo's double-ring seal as a turntable, then name, meta, price and «أضف للطلب».
- * A product with options (size, colour) is chosen on its page, so the card links there instead.
+ * The product card: the photo filling a 4:5 frame (brass hairline, the logo seal as a corner badge), then name,
+ * meta, price and «أضف للطلب». A product with options (size, colour) is chosen on its page, so the card links there.
+ * Cards load the small photo (480×600), the product page the large one (1600px).
  */
 export function SealStage({ product, categoryName, size = "md", preload, children, purchase }: Props) {
   const href = `/p/${product.slug}`;
-  const src = productImageSrc(product.image_path);
   const isOut = product.stock_state === "out";
   const lg = size === "lg";
+  const src = productImageSrc(product.image_path, lg ? "lg" : "sm");
 
-  const disc = (
-    <div className="ad-seal__disc">
-      {!lg && product.stock_state === "low" && <span className="ad-tag">كمية محدودة</span>}
-      {src && (
-        <div className="ad-seal__img">
-          <Image
-            src={src}
-            alt={lg ? product.name_ar : ""}
-            fill
-            sizes={lg ? "(max-width: 840px) 70vw, 300px" : "(max-width: 600px) 30vw, 164px"}
-            preload={preload}
-          />
-        </div>
-      )}
-    </div>
+  const photo = src ? (
+    <>
+      <Image
+        src={src}
+        alt={lg ? product.name_ar : ""}
+        fill
+        sizes={lg ? "(max-width: 840px) calc(100vw - 32px), 440px" : "(max-width: 599px) 46vw, 248px"}
+        preload={preload}
+      />
+      <span className="ad-photo__seal">
+        <SealMark size="sm" />
+      </span>
+    </>
+  ) : (
+    <span className="ad-photo__empty">
+      <SealMark size="sm" />
+    </span>
   );
 
   const cls = ["ad-card", lg && "ad-card--lg", !purchase && isOut && "ad-card--out"].filter(Boolean).join(" ");
@@ -56,15 +60,18 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
 
   return (
     <Root className={cls}>
-      <div className="ad-seal">
-        {lg ? (
-          disc
-        ) : (
-          // Same destination as the name link; hidden from keyboard and screen readers so it is announced once.
-          <Link href={href} tabIndex={-1} aria-hidden="true">
-            {disc}
-          </Link>
-        )}
+      <div className="ad-photo">
+        <div className="ad-photo__frame">
+          {lg ? (
+            photo
+          ) : (
+            // Same destination as the name link; hidden from keyboard and screen readers so it is announced once.
+            <Link href={href} tabIndex={-1} aria-hidden="true">
+              {photo}
+            </Link>
+          )}
+        </div>
+        {!lg && product.stock_state === "low" && <span className="ad-tag">كمية محدودة</span>}
       </div>
       <div className="ad-card__body">
         {lg ? (
