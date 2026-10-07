@@ -11,14 +11,13 @@ export type Member = {
   email: string;
   full_name: string | null;
   role: "owner" | "staff";
-  is_barber: boolean;
   since: string;
   granted_by_name: string | null;
 };
 
 const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "medium" });
 
-/** One person: role and «حلاق» saved together; removal asks first, inside the page. */
+/** One person: the role; removal asks first, inside the page. Barbers are linked in «الصالون». */
 export function StaffMember({ member: m, isSelf }: { member: Member; isSelf: boolean }) {
   const [asking, setAsking] = useState(false);
   const [state, removeAction, pending] = useActionState(removeStaff, null);
@@ -55,10 +54,6 @@ export function StaffMember({ member: m, isSelf }: { member: Member; isSelf: boo
               <option value="owner">صاحب صالون</option>
             </select>
           </div>
-          <label className="ad-check">
-            <input type="checkbox" name="barber" defaultChecked={m.is_barber} />
-            حلاق
-          </label>
         </div>
       </ActionForm>
 

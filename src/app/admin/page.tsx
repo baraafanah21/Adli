@@ -4,6 +4,7 @@ import { SalesChart, type DailySales } from "@/components/admin/SalesChart";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
+import { formatSlot } from "@/lib/bookings";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = { title: "الرئيسية" };
@@ -14,6 +15,15 @@ type StaffSummary = {
   to_deliver: number;
   low_stock_count: number;
   low_stock: { variant_id: string; name_ar: string; qty: number; threshold: number }[];
+};
+
+type BookingsSummary = {
+  my_barber: string | null;
+  today_total: number;
+  today_left: number;
+  next: { id: string; code: string; starts_at: string; status: string; customer_name: string | null; service_name_ar: string; barber_name_ar: string }[];
+  pending: { id: string }[];
+  open_flags: number;
 };
 
 type Dashboard = {
@@ -57,16 +67,23 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const period: Period = sp.period === "day" || sp.period === "week" ? sp.period : "month";
 
   const supabase = await createClient();
-  const [summaryRes, dashRes, dailyRes] = await Promise.all([
+  const [summaryRes, bookingsRes, dashRes, dailyRes] = await Promise.all([
     supabase.rpc("admin_staff_summary"),
+    supabase.rpc("admin_bookings_summary"),
     // Owner-only figures: not even requested for staff (the database would refuse anyway).
     isOwner ? supabase.rpc("admin_owner_dashboard", { p_period: period }) : Promise.resolve({ data: null, error: null }),
     isOwner ? supabase.rpc("admin_sales_daily", { p_days: 30 }) : Promise.resolve({ data: null, error: null }),
   ]);
-  for (const [name, res] of [["staff_summary", summaryRes], ["owner_dashboard", dashRes], ["sales_daily", dailyRes]] as const) {
+  for (const [name, res] of [
+    ["staff_summary", summaryRes],
+    ["bookings_summary", bookingsRes],
+    ["owner_dashboard", dashRes],
+    ["sales_daily", dailyRes],
+  ] as const) {
     if (res.error) console.error(`admin home ${name}`, res.error.code, res.error.message);
   }
   const s = summaryRes.data as StaffSummary | null;
+  const bk = bookingsRes.data as BookingsSummary | null;
   const d = dashRes.data as Dashboard | null;
   const daily = (dailyRes.data ?? []) as DailySales[];
   const who = user.name ?? user.email ?? "";
@@ -75,7 +92,9 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
     <main className={styles.page}>
       <div>
         <h1 className="title">مرحباً، {who}</h1>
-        <p className={styles.muted}>{isOwner ? "صاحب الصالون" : role.is_barber ? "حلاق" : "طاقم"}</p>
+        <p className={styles.muted}>
+          {isOwner ? "صاحب الصالون" : bk?.my_barber ? `حلاق: ${bk.my_barber}` : "طاقم"}
+        </p>
       </div>
 
       {/* Today's work: everyone */}
@@ -90,12 +109,29 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         ) : (
           <ul className={styles.tiles}>
             <li>
-              <Link href="/admin/orders?status=new" className={styles.tile} data-attention={s.new_orders > 0 || undefined}>
-                <span className={styles.label}>بانتظار التأكيد</span>
+              <Link href="/admin/orders?status=new" className={styles.tile}>
+                <span className={styles.label}>
+                  طلبات بانتظار التأكيد
+                  {s.new_orders > 0 && <span className="ad-attention">يحتاج انتباه</span>}
+                </span>
                 <span className={styles.value}>{s.new_orders}</span>
                 <span className={styles.note}>{s.oldest_new_at ? `أقدمها ${since(s.oldest_new_at)}` : "لا طلبات جديدة"}</span>
               </Link>
             </li>
+            {bk && (
+              <li>
+                <Link href="/admin/bookings" className={styles.tile}>
+                  <span className={styles.label}>
+                    مواعيد بانتظار تأكيدك
+                    {bk.pending.length > 0 && <span className="ad-attention">يحتاج انتباه</span>}
+                  </span>
+                  <span className={styles.value}>{bk.pending.length}</span>
+                  <span className={styles.note}>
+                    {bk.pending.length > 0 ? "حسابات عليها وسم «تخلّف عن موعد»" : "لا مواعيد معلّقة"}
+                  </span>
+                </Link>
+              </li>
+            )}
             <li>
               <Link href="/admin/orders?status=confirmed" className={styles.tile}>
                 <span className={styles.label}>مؤكدة بانتظار التسليم</span>
@@ -103,8 +139,11 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
               </Link>
             </li>
             <li>
-              <Link href="/admin/stock?filter=low" className={styles.tile} data-attention={s.low_stock_count > 0 || undefined}>
-                <span className={styles.label}>تحت حد الإنذار</span>
+              <Link href="/admin/stock?filter=low" className={styles.tile}>
+                <span className={styles.label}>
+                  تحت حد الإنذار
+                  {s.low_stock_count > 0 && <span className="ad-attention">يحتاج انتباه</span>}
+                </span>
                 <span className={styles.value}>{s.low_stock_count}</span>
                 <span className={styles.note}>{s.low_stock_count === 0 ? "كل المعروض فيه ما يكفي" : "نسخ ظاهرة في الموقع"}</span>
               </Link>
@@ -124,6 +163,50 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Today's bookings: everyone */}
+      <section aria-labelledby="bookings-title" className={styles.section}>
+        <div className={styles.sectionHead}>
+          <h2 id="bookings-title" className={styles.h2}>
+            مواعيد اليوم
+          </h2>
+          <Link className="ad-btn ad-btn--ghost" href="/admin/bookings">
+            افتح التقويم
+          </Link>
+        </div>
+        {!bk ? (
+          <p className="ad-notice ad-notice--error" role="alert">
+            تعذّر تحميل المواعيد. حدّث الصفحة بعد قليل.
+          </p>
+        ) : (
+          <div className={styles.panel}>
+            <p className={styles.muted}>
+              {bk.today_total === 0
+                ? "لا مواعيد اليوم بعد."
+                : `${bk.today_total} مواعيد اليوم، بقي منها ${bk.today_left}.`}
+              {bk.open_flags > 0 ? ` · ${bk.open_flags} حسابات عليها وسم تخلّف.` : ""}
+            </p>
+            {bk.next.length > 0 && (
+              <ul className={styles.next}>
+                {bk.next.map((b) => (
+                  <li key={b.id}>
+                    <Link href={`/admin/bookings#b-${b.id}`}>
+                      <span className={styles.nextTime}>{formatSlot(b.starts_at)}</span>
+                      <span className={styles.nextWho}>
+                        <span>{b.customer_name ?? "بدون اسم"}</span>
+                        <span>
+                          {b.service_name_ar} · {b.barber_name_ar}
+                          {b.status === "pending" ? " · بانتظار التأكيد" : ""}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </section>
 

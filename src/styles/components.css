@@ -447,3 +447,21 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
 .ad-stock-state { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-2); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .ad-stock-state[data-state="low"] { border-color: var(--oud); color: var(--oud); }
 .ad-stock-state[data-state="out"] { border-color: var(--oud); background: var(--oud); color: var(--surface-sunk); }
+
+/* ---------- Needs attention: a badge beside the title (never a stripe on the card's side) ---------- */
+.ad-attention {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--brass);
+  color: var(--on-brass);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

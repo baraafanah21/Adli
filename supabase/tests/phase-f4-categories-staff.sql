@@ -1,4 +1,4 @@
--- Phase F4: categories and staff, owner only; the last owner is protected (tested even when real owners exist). Run in the SQL Editor after
+-- Phase F4: categories and staff, owner only (updated in E3: no is_barber, it moved to barbers.user_id); the last owner is protected (tested even when real owners exist). Run in the SQL Editor after
 -- 20261007000500_admin_categories_staff.sql. One DO block ending in a deliberate exception: everything is rolled back.
 -- Each line is one check; a line starting with FAIL is a failure.
 
@@ -55,7 +55,7 @@ begin
     perform public.admin_add_staff('f4-cust@test.invalid', 'staff'); r := r || 'FAIL staff added staff' || E'\n';
   exception when insufficient_privilege then r := r || 'staff admin_add_staff refused (' || sqlstate || ')' || E'\n'; end;
   begin
-    perform public.admin_update_staff(staff, 'owner', false); r := r || 'FAIL staff promoted themselves' || E'\n';
+    perform public.admin_update_staff(staff, 'owner'); r := r || 'FAIL staff promoted themselves' || E'\n';
   exception when insufficient_privilege then r := r || 'staff admin_update_staff (self → owner) refused (' || sqlstate || ')' || E'\n'; end;
   begin
     perform public.admin_save_category(null, 'f4-staff-cat', 'فئة', 'gift', null, null, true); r := r || 'FAIL staff saved a category' || E'\n';
@@ -89,10 +89,11 @@ begin
   begin
     perform public.admin_add_staff('f4-staff@test.invalid', 'staff'); r := r || 'FAIL existing staff added twice' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'already staff: ' || st || ' (expect P0012)' || E'\n'; end;
-  r := r || 'add by email (any case): ' || (public.admin_add_staff('  f4-newbie@test.INVALID ', 'staff', true) = newbie)::text || E'\n';
-  r := r || 'newbie: ' || (select role::text || ' barber=' || is_barber::text || ' granted by ' || coalesce(granted_by_name, '?') from public.admin_staff() where user_id = newbie) || E'\n';
-  perform public.admin_update_staff(newbie, 'staff', false);
-  r := r || 'newbie barber after update: ' || (select is_barber::text from public.admin_staff() where user_id = newbie) || ' (expect false)' || E'\n';
+  r := r || 'add by email (any case): ' || (public.admin_add_staff('  f4-newbie@test.INVALID ', 'staff') = newbie)::text || E'\n';
+  r := r || 'newbie: ' || (select role::text || ' granted by ' || coalesce(granted_by_name, '?') from public.admin_staff() where user_id = newbie) || E'\n';
+  perform public.admin_update_staff(newbie, 'owner');
+  r := r || 'newbie role after update: ' || (select role::text from public.admin_staff() where user_id = newbie) || ' (expect owner)' || E'\n';
+  perform public.admin_update_staff(newbie, 'staff');
   perform public.admin_remove_staff(newbie);
   r := r || 'newbie removed: ' || (not exists (select 1 from public.admin_staff() where user_id = newbie))::text || E'\n';
   reset role;
@@ -100,7 +101,7 @@ begin
   -- the last owner: owner1 is the only owner here
   set local role authenticated;
   begin
-    perform public.admin_update_staff(owner1, 'staff', false); r := r || 'FAIL last owner demoted' || E'\n';
+    perform public.admin_update_staff(owner1, 'staff'); r := r || 'FAIL last owner demoted' || E'\n';
   exception when others then get stacked diagnostics st = returned_sqlstate; r := r || 'demote last owner: ' || st || ' (expect P0003)' || E'\n'; end;
   begin
     perform public.admin_remove_staff(owner1); r := r || 'FAIL last owner removed' || E'\n';

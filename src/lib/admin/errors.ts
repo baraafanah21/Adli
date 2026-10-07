@@ -1,6 +1,6 @@
 /*
   Errors from the admin_* functions → Arabic that says what to do. Used by every admin Server Action.
-  Codes: supabase/migrations/20261007000200_admin_products.sql (and 0000 / 0100 for orders).
+  Codes: supabase/migrations/20261007000200_admin_products.sql (and 0000 / 0100 for orders, 0700 / 0800 for bookings).
 */
 
 export type ActionState = { ok: boolean; message: string } | null;
@@ -13,6 +13,8 @@ const UNIQUE: Record<string, string> = {
   product_options_product_id_name_ar_key: "للمنتج خيار بهذا الاسم من قبل.",
   product_option_values_option_id_label_ar_key: "هذه القيمة موجودة في هذا الخيار من قبل.",
   categories_slug_key: "هذا الرابط مستعمل لفئة أخرى. اختر رابطاً مختلفاً.",
+  services_slug_key: "هذا الرابط مستعمل لخدمة أخرى. اختر رابطاً مختلفاً.",
+  barbers_user_id_key: "هذا الحساب مربوط بحلاق آخر. افصله عنه أولاً.",
 };
 
 const CHECKS: Record<string, string> = {
@@ -30,6 +32,13 @@ const CHECKS: Record<string, string> = {
   categories_icon_check: "اختر أيقونة من القائمة.",
   categories_description_ar_check: "الوصف القصير 140 حرفاً على الأكثر.",
   categories_name_ar_check: "اسم الفئة من حرف إلى 60 حرفاً.",
+  services_slug_check: "رابط الخدمة: حروف إنجليزية صغيرة وأرقام وشرطة فقط، مثل full-cut.",
+  services_name_ar_check: "اسم الخدمة من حرف إلى 60 حرفاً.",
+  services_price_ils_check: "السعر رقم صحيح من 0 إلى 10000.",
+  services_duration_min_check: "المدة بالدقائق من 5 إلى 240، ومن مضاعفات 5.",
+  services_bookable_needs_duration: "الخدمة التي تُحجز من الموقع تحتاج مدة.",
+  barbers_name_ar_check: "اسم الحلاق من حرف إلى 40 حرفاً.",
+  closures_reason_check: "السبب 200 حرف على الأكثر.",
 };
 
 const RAISED: Record<string, string> = {
@@ -39,6 +48,12 @@ const RAISED: Record<string, string> = {
   not_a_bundle: "هذا المنتج ليس بكجة.",
   not_a_simple_product: "توليد النسخ للمنتجات العادية فقط، لا للبكجات.",
   kind_invalid: "اختر نوع المنتج: منتج أو بكجة.",
+  phone_invalid: "اكتب رقم جوال، مثل 0599123456، أو اتركه فارغاً.",
+  start_off_grid: "اختر وقتاً على رأس 5 دقائق، مثل 4:05 أو 4:10.",
+  reason_required: "اكتب السبب، فهو يظهر للزبون.",
+  range_invalid: "وقت النهاية يجب أن يكون بعد البداية، ولمدة 31 يوماً على الأكثر.",
+  weekly_invalid: "اختر اليوم، ووقت نهاية بعد البداية.",
+  hours_invalid: "وقت الإغلاق يجب أن يكون بعد الفتح.",
 };
 
 export function adminErrorMessage(error: DbError): string {
@@ -52,7 +67,9 @@ export function adminErrorMessage(error: DbError): string {
     case "23514":
       return named(CHECKS) ?? "بعض القيم غير صحيحة. راجع الحقول وحاول مرة أخرى.";
     case "23503":
-      return "الفئة أو المنتج المختار لم يعد موجوداً. حدّث الصفحة.";
+      return msg.includes("barbers_user_id_fkey")
+        ? "الحساب المختار ليس في الطاقم. أضفه للطاقم أولاً من «الطاقم»."
+        : "الفئة أو المنتج المختار لم يعد موجوداً. حدّث الصفحة.";
     case "22023":
       return named(RAISED) ?? "بعض القيم غير صحيحة. راجع الحقول وحاول مرة أخرى.";
     case "P0006":
@@ -67,11 +84,47 @@ export function adminErrorMessage(error: DbError): string {
       return "هذا البريد لم يسجّل في الموقع بعد. اطلب منه إنشاء حساب ثم أضفه.";
     case "P0012":
       return "هذا الشخص في الطاقم من قبل. عدّل دوره من القائمة.";
+    case "P0020":
+      return "هذا الوقت غير متاح لهذا الحلاق: محجوز أو مسكّر أو خارج الدوام. اختر وقتاً آخر.";
+    case "P0021":
+      return "هذا الوقت خارج المسموح: من ساعة مضت حتى 7 أيام قدّام.";
+    case "P0025":
+      return `عند هذا الحلاق ${error.details ?? ""} مواعيد قادمة. ألغها أو انقلها لحلاق آخر، ثم عطّله.`;
+    case "P0026":
+      return conflictMessage(error.details);
+    case "P0027":
+      return "هذه الخدمة أو هذا الحلاق غير متاح. اختر غيره.";
+    case "P0028":
+      return "تغيّرت حالة هذا الموعد، أو هذه الخطوة غير ممكنة الآن. حدّث الصفحة.";
     default:
       return "تعذّر الحفظ. تأكد من الاتصال وحاول مرة أخرى.";
   }
 }
 
+const conflictTime = new Intl.DateTimeFormat("ar-PS-u-nu-latn", {
+  timeZone: "Asia/Hebron",
+  weekday: "long",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** P0026: the bookings in the way, by code and time, so the salon knows what to move first. */
+function conflictMessage(details?: string | null) {
+  let list: { code: string; starts_at: string; customer_name: string | null; barber_name_ar: string | null }[] = [];
+  try {
+    list = JSON.parse(details ?? "[]");
+  } catch {}
+  const shown = list
+    .slice(0, 5)
+    .map((c) => `${c.code} (${[c.customer_name, c.barber_name_ar, conflictTime.format(new Date(c.starts_at))].filter(Boolean).join("، ")})`);
+  const more = list.length > 5 ? ` و${list.length - 5} غيرها` : "";
+  return `يتعارض مع مواعيد قائمة: ${shown.join("، ")}${more}. ألغها أو انقلها أولاً، أو اختر وقتاً آخر.`;
+}
+
 /** Codes that are the user's to fix; anything else is logged on the server. */
 export const isExpectedAdminError = (code?: string) =>
-  !!code && ["42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013"].includes(code);
+  !!code &&
+  [
+    "42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013",
+    "P0020", "P0021", "P0025", "P0026", "P0027", "P0028",
+  ].includes(code);

@@ -21,8 +21,8 @@ export default async function AdminStaffPage() {
     <main className={styles.page}>
       <h1 className="title">الطاقم</h1>
       <p className={formStyles.lede}>
-        «طاقم» يدير الطلبات والمنتجات والمخزون. «صاحب الصالون» يرى كل شيء، ومنها الإحصائيات المالية والفئات والطاقم. يبقى صاحب
-        صالون واحد على الأقل دائماً.
+        «طاقم» يدير الطلبات والمنتجات والمخزون والمواعيد. «صاحب الصالون» يرى كل شيء، ومنها الإحصائيات المالية والفئات والطاقم
+        والصالون. يبقى صاحب صالون واحد على الأقل دائماً. لربط حساب بحلاق (ليرى عموده ويسكّر أوقاته) افتح «الصالون».
       </p>
 
       <section className={formStyles.section} aria-labelledby="add-staff">
@@ -41,10 +41,6 @@ export default async function AdminStaffPage() {
                 <option value="owner">صاحب صالون</option>
               </select>
             </div>
-            <label className="ad-check">
-              <input type="checkbox" name="barber" />
-              حلاق
-            </label>
           </div>
         </ActionForm>
       </section>

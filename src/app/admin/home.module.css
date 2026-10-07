@@ -69,12 +69,56 @@ a.tile:hover {
   border-color: var(--brass);
 }
 
-.tile[data-attention] {
-  border-inline-start: 3px solid var(--brass);
+/* Needs attention: a badge beside the label («يحتاج انتباه»), never a stripe on the card's side. */
+.label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--ink-muted);
 }
 
-.label {
-  font-size: 14px;
+/* ---------- Today's bookings ---------- */
+.next {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.next a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 52px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.next a:hover {
+  color: var(--brass);
+}
+
+.nextTime {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nextWho {
+  display: grid;
+  gap: 2px;
+  text-align: end;
+}
+
+.nextWho span:last-child {
+  font-size: 13px;
   color: var(--ink-muted);
 }
 

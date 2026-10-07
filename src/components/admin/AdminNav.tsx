@@ -6,30 +6,32 @@ import { useEffect, useId, useRef, useState, type ComponentType, type ReactNode 
 import { signOut } from "@/app/(site)/auth/actions";
 import { SealMark } from "@/components/SealMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BottleIcon, BoxIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, UsersIcon } from "@/components/icons";
+import { BottleIcon, BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, ScissorsIcon, UsersIcon } from "@/components/icons";
 import styles from "@/app/admin/admin.module.css";
 
-type Item = { href: string; label: string; icon: ComponentType<{ size?: number }>; badge?: number };
-type Props = { role: "owner" | "staff"; newOrders: number };
+/** `bar`: on the phone's bottom bar; the rest go into «المزيد». */
+type Item = { href: string; label: string; icon: ComponentType<{ size?: number }>; badge?: number; bar?: boolean };
+type Props = { role: "owner" | "staff"; newOrders: number; pendingBookings: number };
 
 /**
  * Desktop (≥ 900px): a sidebar at the inline start with every section, «عرض الموقع», the theme and «خروج».
- * Phones: a bottom bar with the four daily sections and «المزيد» (owner sections, the site, the theme, sign out).
+ * Phones: a bottom bar with the four daily sections (the barber's calendar among them) and «المزيد» (products, owner
+ * sections, the site, the theme, sign out).
  * The owner-only sections are hidden from staff here, and refused by requireRole() and the database anyway.
  */
-export function AdminNav({ role, newOrders }: Props) {
+export function AdminNav({ role, newOrders, pendingBookings }: Props) {
   const pathname = usePathname();
   const main: Item[] = [
-    { href: "/admin", label: "الرئيسية", icon: HomeIcon },
-    { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badge: newOrders },
+    { href: "/admin", label: "الرئيسية", icon: HomeIcon, bar: true },
+    { href: "/admin/bookings", label: "المواعيد", icon: CalendarIcon, badge: pendingBookings, bar: true },
+    { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badge: newOrders, bar: true },
     { href: "/admin/products", label: "المنتجات", icon: BottleIcon },
-    { href: "/admin/stock", label: "المخزون", icon: BoxIcon },
-    // Bookings track (feature/bookings): add { href: "/admin/bookings", label: "الحجوزات", icon: <calendar icon> } here.
-    // On phones it goes into «المزيد» (the bar keeps four sections + المزيد); the sidebar shows it after «المخزون».
+    { href: "/admin/stock", label: "المخزون", icon: BoxIcon, bar: true },
   ];
   const ownerOnly: Item[] =
     role === "owner"
       ? [
+          { href: "/admin/salon", label: "الصالون", icon: ScissorsIcon },
           { href: "/admin/categories", label: "الفئات", icon: GridIcon },
           { href: "/admin/staff", label: "الطاقم", icon: UsersIcon },
         ]
@@ -44,7 +46,7 @@ export function AdminNav({ role, newOrders }: Props) {
       className={cls}
       aria-current={isCurrent(item.href) ? "page" : undefined}
       onClick={onClick}
-      aria-label={item.badge ? `${item.label}، ${item.badge} جديد` : undefined}
+      aria-label={item.badge ? `${item.label}، ${item.badge} ${item.href === "/admin/bookings" ? "بانتظار التأكيد" : "جديد"}` : undefined}
     >
       <item.icon />
       <span>{item.label}</span>
@@ -84,8 +86,12 @@ export function AdminNav({ role, newOrders }: Props) {
       </nav>
 
       <nav className={styles.bottomBar} aria-label="لوحة الصالون">
-        {main.map((i) => link(i, styles.barLink))}
-        <MoreMenu items={ownerOnly} current={ownerOnly.some((i) => isCurrent(i.href))} renderLink={link} />
+        {main.filter((i) => i.bar).map((i) => link(i, styles.barLink))}
+        <MoreMenu
+          items={[...main.filter((i) => !i.bar), ...ownerOnly]}
+          current={[...main.filter((i) => !i.bar), ...ownerOnly].some((i) => isCurrent(i.href))}
+          renderLink={link}
+        />
       </nav>
     </>
   );

@@ -10,7 +10,6 @@ import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib
 
 const owner = () => requireRole(["owner"], "/admin/staff");
 const role = z.enum(["owner", "staff"]);
-const barber = z.preprocess((v) => v === "on", z.boolean());
 
 const fail = (error: { code?: string; message?: string }, where: string, lastOwner?: string): ActionState => {
   if (!isExpectedAdminError(error.code)) console.error(where, error.code, error.message);
@@ -20,12 +19,12 @@ const fail = (error: { code?: string; message?: string }, where: string, lastOwn
 export async function addStaff(_prev: ActionState, form: FormData): Promise<ActionState> {
   await owner();
   const parsed = z
-    .object({ email: z.string().trim().max(254), role, barber })
-    .safeParse({ email: form.get("email"), role: form.get("role"), barber: form.get("barber") });
+    .object({ email: z.string().trim().max(254), role })
+    .safeParse({ email: form.get("email"), role: form.get("role") });
   if (!parsed.success || !isCompleteEmail(parsed.data.email)) return { ok: false, message: "اكتب البريد كاملاً، مثل name@gmail.com" };
   const s = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_add_staff", { p_email: s.email, p_role: s.role, p_is_barber: s.barber });
+  const { error } = await supabase.rpc("admin_add_staff", { p_email: s.email, p_role: s.role });
   if (error) return fail(error, "admin_add_staff");
   revalidatePath("/admin/staff");
   return { ok: true, message: s.role === "owner" ? "أُضيف صاحب صالون." : "أُضيف للطاقم." };
@@ -34,12 +33,12 @@ export async function addStaff(_prev: ActionState, form: FormData): Promise<Acti
 export async function updateStaff(_prev: ActionState, form: FormData): Promise<ActionState> {
   const { user } = await owner();
   const parsed = z
-    .object({ userId: z.uuid(), role, barber })
-    .safeParse({ userId: form.get("userId"), role: form.get("role"), barber: form.get("barber") });
+    .object({ userId: z.uuid(), role })
+    .safeParse({ userId: form.get("userId"), role: form.get("role") });
   if (!parsed.success) return { ok: false, message: "تعذّر قراءة البيانات. حدّث الصفحة وحاول مرة أخرى." };
   const s = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_update_staff", { p_user_id: s.userId, p_role: s.role, p_is_barber: s.barber });
+  const { error } = await supabase.rpc("admin_update_staff", { p_user_id: s.userId, p_role: s.role });
   if (error) {
     return fail(error, "admin_update_staff", "لا يمكن تحويل آخر صاحب صالون إلى طاقم. أضف صاحب صالون آخر أولاً.");
   }

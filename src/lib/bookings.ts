@@ -63,3 +63,19 @@ export const formatWhen = (iso: string) => `${formatDay(iso)}، ${formatSlot(iso
 /** Can the customer still cancel this online? (The database checks again.) */
 export const canCancelOnline = (startsAt: string, now = new Date()) =>
   new Date(startsAt).getTime() - now.getTime() >= CANCEL_UNTIL_MIN * 60_000;
+
+/** Minutes since midnight in salon time: "2026-10-12T14:30:00+00:00" → 1050 (17:30 in Hebron). */
+export function salonMinutes(iso: string) {
+  const [h, m] = hhmmFmt.format(new Date(iso)).split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** 1050 → "17:30" */
+export const minutesToHHMM = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+/** "YYYY-MM-DD" ± days, as a salon date. */
+export function addDays(ymd: string, days: number) {
+  const d = new Date(`${ymd}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}

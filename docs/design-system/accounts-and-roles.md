@@ -27,6 +27,10 @@ Roles are read from `user_roles` on every check (`private.has_role()`), never fr
 | Low-stock list | | | ✓ | ✓ |
 | Money stats (sales, averages, top products, by area) | | | | ✓ |
 | Add or remove staff | | | | ✓ |
+| Book an appointment, cancel own until 2 hours before | | ✓ | ✓ | ✓ |
+| Calendar, walk-ins, booking statuses, clear a no-show flag | | | ✓ | ✓ |
+| Close times (breaks, days off) | | | own barber | ✓ (any barber or the whole salon) |
+| Barbers, services and prices, opening hours | | | | ✓ |
 
 ## Where it's enforced (all three, on purpose)
 
@@ -60,14 +64,20 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_stock_movements(variant_id, limit)` | owner, staff | F3 |
 | `admin_save_category(id, slug, name_ar, icon, description_ar, sort, is_active)` | owner | F4 |
 | `admin_staff()` | owner | F4 |
-| `admin_add_staff(email, role, is_barber)` | owner | F4 |
-| `admin_update_staff(user_id, role, is_barber)` | owner | F4 |
+| `admin_add_staff(email, role)` | owner | F4 (is_barber dropped in E3) |
+| `admin_update_staff(user_id, role)` | owner | F4 (is_barber dropped in E3) |
 | `admin_remove_staff(user_id)` | owner | F4 |
 | `admin_owner_dashboard(period)` | owner | F5 |
 | `admin_sales_daily(days)` | owner | F5 |
 | `admin_staff_summary()` | owner, staff | F5 |
 | `admin_set_booking_status(booking_id, status, note)` | owner, staff | E1 |
 | `admin_clear_flag(user_id, note)` | owner, staff | E1 |
+| `admin_bookings_day(day)` / `admin_bookings_summary()` / `admin_open_flags()` | owner, staff | E3 |
+| `admin_add_walk_in(barber_id, service_id, starts_at, name, phone)` | owner, staff | E3 |
+| `admin_close_time(barber_id, starts_at, ends_at, reason)` / `admin_save_weekly_closure(…)` / `admin_delete_closure(id)` | owner (any barber or the whole salon); staff linked to a barber (that barber only) | E3 |
+| `admin_barbers()` / `admin_save_barber(id, name_ar, user_id, is_active, sort)` | owner | E3 |
+| `admin_save_service(id, slug, name_ar, price_ils, duration_min, bookable_online, sort, is_active)` | owner | E3 |
+| `admin_save_salon_hours(weekday, open, close)` | owner | E3 |
 
 Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `P0020`–`P0028` bookings (see `CLAUDE.md`, «Bookings»), `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 

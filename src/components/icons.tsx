@@ -131,6 +131,26 @@ export function ChevronDownIcon({ size = 16 }: IconProps) {
   );
 }
 
+export function CalendarIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="1.5" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+      <path d="M8 13h2M14 13h2M8 16.5h2" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+export function ScissorsIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="6" cy="6.5" r="2.5" />
+      <circle cx="6" cy="17.5" r="2.5" />
+      <path d="M8.2 7.8 20 17M8.2 16.2 20 7" />
+    </svg>
+  );
+}
+
 /*
   Category icons. The names are the fixed set allowed by the categories.icon check constraint
   (supabase/migrations/20261006000700_categories_ten.sql); add a drawing here before allowing a new name there.

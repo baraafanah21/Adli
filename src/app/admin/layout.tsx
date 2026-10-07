@@ -16,11 +16,19 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { role } = await requireRole(["owner", "staff"]);
   const supabase = await createClient();
-  const { data: newOrders } = await supabase.rpc("admin_new_orders_count");
+  const [{ data: newOrders }, { count: pendingBookings }] = await Promise.all([
+    supabase.rpc("admin_new_orders_count"),
+    // Staff read every booking (RLS); a head count, no rows.
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending"),
+  ]);
 
   return (
     <div className={styles.shell}>
-      <AdminNav role={role.role} newOrders={typeof newOrders === "number" ? newOrders : 0} />
+      <AdminNav
+        role={role.role}
+        newOrders={typeof newOrders === "number" ? newOrders : 0}
+        pendingBookings={pendingBookings ?? 0}
+      />
       <div className={styles.main}>{children}</div>
     </div>
   );

@@ -85,3 +85,10 @@
 .danger {
   border-color: var(--oud);
 }
+
+/* A weekday's name at the start of an hours row. */
+.dayName {
+  flex: 0 0 72px;
+  align-self: center;
+  font-weight: 600;
+}

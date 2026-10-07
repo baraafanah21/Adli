@@ -35,8 +35,8 @@ export async function requireUser(next: string): Promise<CurrentUser> {
 
 export const getRole = cache(async (userId: string) => {
   const supabase = await createClient();
-  const { data } = await supabase.from("user_roles").select("role, is_barber").eq("user_id", userId).maybeSingle();
-  return (data as { role: Role; is_barber: boolean } | null) ?? null;
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  return (data as { role: Role } | null) ?? null;
 });
 
 /**
