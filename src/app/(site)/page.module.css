@@ -144,6 +144,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Add-ons: not booked online, asked for at the salon. */
+.rowNote {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.list > a {
+  justify-self: start;
+  margin-top: var(--space-3);
+}
+
 .photos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

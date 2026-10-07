@@ -7,12 +7,12 @@ import { getCatalog } from "@/lib/catalog";
 import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
-import { SERVICES } from "@/lib/services";
+import { getServices, getWeek } from "@/lib/salon-data";
 import { whatsappChatUrl } from "@/lib/whatsapp";
 import styles from "./page.module.css";
 
 export default async function Home() {
-  const catalog = await getCatalog();
+  const [catalog, week, services] = await Promise.all([getCatalog(), getWeek(), getServices()]);
 
   return (
     <main>
@@ -60,26 +60,44 @@ export default async function Home() {
         <div className={styles.salonLists}>
           <div className={styles.list}>
             <h3 className="title">ساعات الدوام</h3>
-            <OpenNow />
-            <dl>
-              {hoursRows().map((h) => (
-                <div key={h.days} className={styles.row}>
-                  <dt>{h.days}</dt>
-                  <dd>{h.hours}</dd>
-                </div>
-              ))}
-            </dl>
+            {week ? (
+              <>
+                <OpenNow week={week} />
+                <dl>
+                  {hoursRows(week).map((h) => (
+                    <div key={h.days} className={styles.row}>
+                      <dt>{h.days}</dt>
+                      <dd>{h.hours}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            ) : (
+              <p className="body">تعذّر تحميل ساعات الدوام الآن.</p>
+            )}
           </div>
           <div className={styles.list}>
             <h3 className="title">الخدمات والأسعار</h3>
-            <dl>
-              {SERVICES.map((s) => (
-                <div key={s.name} className={styles.row}>
-                  <dt>{s.name}</dt>
-                  <dd>{formatPrice(s.priceIls)}</dd>
-                </div>
-              ))}
-            </dl>
+            {services ? (
+              <>
+                <dl>
+                  {services.map((s) => (
+                    <div key={s.id} className={styles.row}>
+                      <dt>
+                        {s.name_ar}
+                        {!s.bookable_online && <span className={styles.rowNote}>تُطلب في الصالون مع خدمتك</span>}
+                      </dt>
+                      <dd>{formatPrice(s.price_ils)}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <Button variant="primary" href="/booking">
+                  احجز موعد
+                </Button>
+              </>
+            ) : (
+              <p className="body">تعذّر تحميل الخدمات الآن.</p>
+            )}
           </div>
         </div>
         {SALON.photos.length > 0 && (

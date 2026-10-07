@@ -30,6 +30,15 @@
   text-align: center;
 }
 
+/* «بياناتي» under «مواعيدي» on /account. */
+.sectionTitle {
+  margin: var(--space-8) 0 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+  font-size: 18px;
+  font-weight: 600;
+}
+
 .lede {
   text-align: center;
   color: var(--ink-muted);

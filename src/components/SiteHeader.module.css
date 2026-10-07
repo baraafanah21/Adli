@@ -200,6 +200,39 @@
   flex: none;
 }
 
+/* «احجز موعد»: the one filled button in the header, next to the bottle. Brass, never the WhatsApp green. */
+.bookButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-inline-start: var(--space-1);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--brass);
+  color: var(--on-brass);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color var(--dur-press) var(--ease-out);
+}
+
+.bookButton:hover {
+  background: var(--brass-bright);
+}
+
+@media (max-width: 400px) {
+  .bookButton {
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookButton {
+    transition: none;
+  }
+}
+
 .iconButton {
   position: relative;
   display: grid;

@@ -58,11 +58,12 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - Double booking is impossible in the database: `bookings_no_overlap` (exclusion on barber + `during` for `pending` / `confirmed` / `completed`). Every function that writes a salon day's times takes `pg_advisory_xact_lock(hashtextextended('booking_day:' || salon_date, 0))` first, so closures and bookings never race. One booking per account per salon day: `bookings_one_per_day` (any status except `cancelled` / `rejected`).
 - Created only through `create_booking(p_idempotency_key, p_service_id, p_barber_id, p_starts_at, p_customer_name, p_phone, p_gateway_secret)` with `ORDER_GATEWAY_SECRET`, signed in. Phones are mobiles only (`private.normalize_mobile`: 05x, +970, +972 → `+9705…` / `+9725…`) and are saved to the profile with the name.
 - Statuses: `confirmed` (or `pending` while the account has an open no-show flag) → `completed` / `no_show` (from the start time) / `cancelled`; `pending` → `confirmed` / `rejected`; `no_show` → `completed` (correction, clears the flag it raised). Pending bookings are rejected at their start time by the pg_cron job `bookings-expire-pending` (`private.expire_pending_bookings()`).
+- Web: `/booking` (`BookingFlow`: service → barber → day → time → confirm; free times from `booking_availability` via the browser client; signed-out visitors browse and sign in at the confirm step, `?service=&barber=&at=` bring them back to the same choice), `POST /api/bookings` (signed in, same origin, phone normalized by `normalizeMobile()` in `src/lib/phone.ts`, one idempotency key per choice in sessionStorage), «مواعيدي» on `/account` (`MyBookings`, `CancelBooking` → `cancelMyBooking` Server Action; under 2 hours: «تواصل مع الصالون» link). «احجز موعد» in `SiteHeader` is brass, never `--whatsapp`.
 - Error codes: `P0020` time not available, `P0021` outside the window, `P0022` one booking per day, `P0023` too many bookings, `P0024` too late to cancel online, `P0025` barber has upcoming bookings, `P0026` change conflicts with bookings, `P0027` not bookable, `P0028` status change not allowed.
 
-## Salon data (temporary static files)
+## Salon data
 
-Hours are `WEEK` in `src/lib/salon.ts` (salon time `Asia/Hebron`; `openStatus()` drives the client-only `OpenNow` badge). Services and prices are `src/lib/services.ts`. Both get replaced by the bookings tables (`working_hours`, `services`), see `docs/BOOKINGS-BRIEF.md`.
+Opening hours, services and barbers live in the database (`salon_hours`, `services`, `barbers`), read on the server by `src/lib/salon-data.ts` (`getWeek()`, `getServices()`, `getBarbers()`). `src/lib/salon.ts` only formats (`hoursRows(week)`, `openStatus(at, week)`, salon time `Asia/Hebron`) and is safe in the browser; `OpenNow` gets the week as a prop. Add-ons (`bookable_online = false`) show «تُطلب في الصالون مع خدمتك».
 
 ## Env
 

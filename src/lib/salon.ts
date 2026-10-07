@@ -1,6 +1,7 @@
 /*
-  Salon details shown on the home page. Waiting on the owner (docs/ROADMAP.md, «ما ننتظره»):
-  empty values are simply not rendered, so nothing invented reaches the page.
+  Salon details and the display of opening hours. Safe in the browser: the hours themselves come from the
+  database (`salon_hours`, read by src/lib/salon-data.ts on the server) and are passed in.
+  SALON is waiting on the owner (docs/ROADMAP.md, «ما ننتظره»): empty values are simply not rendered.
 */
 
 export const SALON_TIME_ZONE = "Asia/Hebron";
@@ -10,19 +11,8 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 /** Opening and closing time, "HH:MM" 24h, salon local time. null = closed all day. */
 export type DayHours = { open: string; close: string } | null;
 
-/**
-  From the owner (docs/BOOKINGS-BRIEF.md). He said «12 صباحاً»; read as noon until he confirms.
-  Temporary static data: the bookings track replaces it with per-barber `working_hours`.
-*/
-export const WEEK: Record<Weekday, DayHours> = {
-  6: { open: "12:00", close: "22:00" },
-  0: { open: "12:00", close: "22:00" },
-  1: { open: "12:00", close: "20:00" },
-  2: { open: "12:00", close: "22:00" },
-  3: { open: "12:00", close: "22:00" },
-  4: { open: "12:00", close: "22:00" },
-  5: null,
-};
+/** The salon's week as `salon_hours` holds it (src/lib/salon-data.ts reads it). A weekday with no hours is closed. */
+export type Week = Record<Weekday, DayHours>;
 
 export const SALON = {
   /** e.g. "نابلس، رفيديا، شارع …" */
@@ -35,7 +25,7 @@ export const SALON = {
 
 /* ---------- Display ---------- */
 
-const DAY_NAMES: Record<Weekday, string> = {
+export const DAY_NAMES: Record<Weekday, string> = {
   0: "الأحد",
   1: "الاثنين",
   2: "الثلاثاء",
@@ -64,10 +54,10 @@ export function formatTime(hhmm: string): string {
 const formatDay = (d: DayHours) => (d ? `${formatTime(d.open)} – ${formatTime(d.close)}` : "مغلق");
 
 /** Days with the same hours share one row: «السبت، الأحد، … | 12 ظهراً – 10 مساءً». */
-export function hoursRows(): { days: string; hours: string }[] {
+export function hoursRows(week: Week): { days: string; hours: string }[] {
   const rows: { days: string[]; hours: string }[] = [];
   for (const day of WEEK_ORDER) {
-    const hours = formatDay(WEEK[day]);
+    const hours = formatDay(week[day]);
     const row = rows.find((r) => r.hours === hours);
     if (row) row.days.push(DAY_NAMES[day]);
     else rows.push({ days: [DAY_NAMES[day]], hours });
@@ -95,9 +85,9 @@ function salonClock(at: Date): { day: Weekday; minutes: number } {
 export type OpenStatus = { open: true; label: string } | { open: false; label: string };
 
 /** «مفتوح الآن، يغلق 10 مساءً» / «مغلق الآن، يفتح اليوم 12 ظهراً» / «… يفتح السبت 12 ظهراً». */
-export function openStatus(at: Date): OpenStatus {
+export function openStatus(at: Date, week: Week): OpenStatus {
   const { day, minutes } = salonClock(at);
-  const today = WEEK[day];
+  const today = week[day];
 
   if (today && minutes >= toMinutes(today.open) && minutes < toMinutes(today.close)) {
     return { open: true, label: `مفتوح الآن، يغلق ${formatTime(today.close)}` };
@@ -107,7 +97,7 @@ export function openStatus(at: Date): OpenStatus {
   }
   for (let i = 1; i <= 7; i++) {
     const next = ((day + i) % 7) as Weekday;
-    const hours = WEEK[next];
+    const hours = week[next];
     if (hours) {
       const when = i === 1 ? "غداً" : DAY_NAMES[next];
       return { open: false, label: `مغلق الآن، يفتح ${when} ${formatTime(hours.open)}` };

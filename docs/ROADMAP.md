@@ -69,8 +69,8 @@
 
 - [x] E1: الحلاقون والخدمات وساعات الدوام والإغلاقات في القاعدة، والحجوزات مع منع التداخل (exclusion constraint) وحجز واحد في اليوم لكل حساب، و`booking_availability` و`create_booking` و`cancel_my_booking` و`admin_set_booking_status` و`admin_clear_flag`، ووسم التخلّف، ورفض المعلّق تلقائياً عند وقته (pg_cron)
 - [x] E1: تطبيق `20261007000700_bookings.sql`
-- [ ] E1: `supabase/tests/phase-e1-bookings.sql` ناجح، و`phase-e1-concurrency.sh` (جلستان حقيقيتان)
-- [ ] E2: `POST /api/bookings`، صفحة `/booking`، الحجوزات والوسم في `/account`، زر «احجز موعد» في `SiteHeader`؛ الصفحة الرئيسية تقرأ الساعات والخدمات من القاعدة، وحذف `src/lib/services.ts`
+- [x] E1: `supabase/tests/phase-e1-bookings.sql` ناجح، و`phase-e1-concurrency.sh` (جلستان حقيقيتان)
+- [ ] E2 (مبني، `npm run build` و`lint` ناجحان؛ ينتظر الفحص على الجوال وحجزاً حقيقياً بحساب): `POST /api/bookings`، صفحة `/booking`، الحجوزات والوسم في `/account`، زر «احجز موعد» في `SiteHeader`؛ الصفحة الرئيسية تقرأ الساعات والخدمات من القاعدة، وحذف `src/lib/services.ts`
 - [ ] E3: تقويم اليوم لكل حلاق، walk-in وتسكير الوقت، الحالات والمعلّقة والوسم، بطاقة «مواعيد اليوم» و«يحتاج انتباه»، الحلاقون والخدمات والساعات للـ owner؛ حذف `user_roles.is_barber` (مهاجرة تُطبَّق من SQL Editor)
 - [ ] E4: إيميلات التأكيد والتذكير والإلغاء (من الصالون ومن الزبون) عبر pg_cron + pg_net + Resend، مرة واحدة لكل إيميل؛ عدد الإيميلات الفاشلة نهائياً في `admin_bookings_summary`
 

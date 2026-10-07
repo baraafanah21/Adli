@@ -19,10 +19,12 @@ export async function SiteHeader() {
         </Link>
         {categories.length > 0 && <CategoryNav categories={categories} />}
         <div className={styles.actions}>
-          {/* Reserved for the bookings track (feature/bookings): the «احجز موعد» button goes here, beside the bottle. */}
           <ThemeToggle />
           <AccountMenu user={user ? { name: profile?.full_name ?? user.name, email: user.email } : null} />
           <CartButton />
+          <Link href="/booking" className={styles.bookButton}>
+            احجز موعد
+          </Link>
         </div>
       </div>
       {categories.length > 0 && <CategoryStrip categories={categories} />}

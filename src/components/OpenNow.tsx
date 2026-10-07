@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { openStatus } from "@/lib/salon";
+import { openStatus, type Week } from "@/lib/salon";
 import styles from "./OpenNow.module.css";
 
 // The page can be prerendered, so "now" is only known in the browser. The server renders an
@@ -13,9 +13,10 @@ const subscribe = (onChange: () => void) => {
 const currentMinute = () => Math.floor(Date.now() / 60_000);
 const noMinute = () => null;
 
-export function OpenNow() {
+/** `week` comes from the server (salon_hours). */
+export function OpenNow({ week }: { week: Week }) {
   const minute = useSyncExternalStore(subscribe, currentMinute, noMinute);
-  const status = minute === null ? null : openStatus(new Date(minute * 60_000));
+  const status = minute === null ? null : openStatus(new Date(minute * 60_000), week);
 
   return (
     <p className={styles.status} data-open={status?.open} aria-live="polite">

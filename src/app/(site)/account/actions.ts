@@ -45,3 +45,23 @@ export async function updateProfile(_prev: ProfileState, form: FormData): Promis
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+export type CancelState = { done?: boolean; error?: "too_late" | "changed" | "failed" };
+
+/** «ألغِ الموعد». Identity is re-checked here; cancel_my_booking() checks ownership and the 2-hour limit itself. */
+export async function cancelMyBooking(_prev: CancelState, form: FormData): Promise<CancelState> {
+  await requireUser("/account");
+  const id = z.uuid().safeParse(form.get("booking_id"));
+  if (!id.success) return { error: "failed" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_my_booking", { p_booking_id: id.data });
+  if (error) {
+    if (error.code === "P0024") return { error: "too_late" };
+    if (error.code === "P0006" || error.code === "P0028") return { error: "changed" };
+    console.error("cancelMyBooking", error.code, error.message);
+    return { error: "failed" };
+  }
+  revalidatePath("/account");
+  return { done: true };
+}
