@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ShearsTurntable } from "@/components/ShearsTurntable";
 import styles from "./HeroStage.module.css";
 
 // three.js never enters the first-load bundle: this chunk is fetched only after first paint.
@@ -42,6 +43,39 @@ export function HeroStage() {
   const [load, setLoad] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Desktop only: the objects lean a little toward the pointer (CSS variables, one write per frame).
+  useEffect(() => {
+    const el = stage.current;
+    const hero = el?.closest("section");
+    if (!el || !hero) return;
+    if (!window.matchMedia("(pointer: fine) and (prefers-reduced-motion: no-preference)").matches) return;
+    let raf = 0;
+    let x = 0;
+    let y = 0;
+    const apply = () => {
+      raf = 0;
+      el.style.setProperty("--mx", x.toFixed(3));
+      el.style.setProperty("--my", y.toFixed(3));
+    };
+    const onMove = (e: PointerEvent) => {
+      const r = hero.getBoundingClientRect();
+      x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      y = ((e.clientY - r.top) / r.height) * 2 - 1;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onLeave = () => {
+      x = 0;
+      y = 0;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    hero.addEventListener("pointermove", onMove);
+    hero.addEventListener("pointerleave", onLeave);
+    return () => {
+      cancelAnimationFrame(raf);
+      hero.removeEventListener("pointermove", onMove);
+      hero.removeEventListener("pointerleave", onLeave);
+    };
+  }, []);
 
   useEffect(() => {
     if (!canRunWebGL()) return;
@@ -98,6 +132,10 @@ export function HeroStage() {
       {load && !failed && (
         <HeroBottle className={`${styles.canvas} ${live ? "" : styles.hidden}`} onReady={onReady} onError={onError} />
       )}
+      {/* U5.1: the shears beside the bottle, a second object in the same picture (2D, never WebGL). f000 after load. */}
+      <div className={styles.shearsOnPlinth}>
+        <ShearsTurntable inHero degPerS={20} />
+      </div>
       {live && <p className={styles.hint}>اسحب لتدوير القنينة</p>}
     </div>
   );

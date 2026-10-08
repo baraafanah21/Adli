@@ -332,3 +332,20 @@
 .curtainSunk {
   background: var(--surface-sunk);
 }
+
+/* U5.1 depth: the hero's text rises faster than the stage while scrolling (CSS scroll timeline, where supported). */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .heroText {
+      animation: depth-text linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100svh;
+    }
+  }
+}
+
+@keyframes depth-text {
+  to {
+    translate: 0 -22%;
+  }
+}
