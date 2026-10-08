@@ -18,7 +18,7 @@ export const SALON = {
   /** The city, always shown in «الموقع» (U4). */
   city: "قلقيلية",
   /** The street address, e.g. "قلقيلية، شارع …" (one value, used everywhere). Until it is set, «الموقع» shows the city. */
-  address: null as string | null,
+  address: "قلقيلية، السوق، آخر دخلة المسمكة، مقابل عاشور هوم" as string | null,
   /** The Google Maps link the owner gives: «افتح في خرائط جوجل» opens it in a new tab. */
   mapUrl: "https://www.google.com/maps/search/?api=1&query=32.188603,34.964322" as string | null,
   /** The salon's coordinates (from the owner: 32°11'18.97"N 34°57'51.56"E). With them «الموقع» shows a map that
@@ -27,7 +27,7 @@ export const SALON = {
   /** A light still of the map in public/salon/ (shown before the tap). Without it the tap target is a plain card. */
   mapImage: null as string | null,
   /** The salon's Instagram page (full URL). null until the owner gives it: the footer leaves it out. */
-  instagram: null as string | null,
+  instagram: "https://www.instagram.com/adli_for_men/" as string | null,
   /** Real salon photos in public/salon/, e.g. [{ src: "/salon/chair.webp", alt: "…" }] */
   photos: [] as { src: string; alt: string }[],
 };
