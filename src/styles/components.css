@@ -554,3 +554,10 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* ---------- Empty states: the logo's bottle, quiet, then one sentence and one action ---------- */
 .ad-sheet__empty-mark { color: var(--line-strong); }
+
+/* ---------- The page layer above the footer (SiteChrome): opaque, so the footer behind it is revealed at the end ---------- */
+.ad-page {
+  position: relative;
+  z-index: 1;
+  background: var(--ground);
+}

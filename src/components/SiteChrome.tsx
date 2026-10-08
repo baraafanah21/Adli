@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ServicesMarquee } from "@/components/ServicesMarquee";
 import { CartProvider } from "@/components/cart/CartContext";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { SessionIsland } from "@/components/session/SessionIsland";
@@ -20,7 +21,12 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       </Suspense>
       <CartProvider>
         <SiteHeader />
-        {children}
+        {/* The page layer: opaque, above the footer, so at the very end it rises off the footer that waits behind it.
+            The services marquee closes it. */}
+        <div className="ad-page">
+          {children}
+          <ServicesMarquee />
+        </div>
         <SiteFooter />
       </CartProvider>
     </>

@@ -1,28 +1,97 @@
-/* Dark in both themes (data-theme="night" on the element): the deep green under the page, a brass hairline on top. */
+/* Dark in both themes (data-theme="night" on the element): the deep green under the page. The page content rises off
+   it at the end: the footer sits behind (sticky to the bottom, below the page layer in SiteChrome). With reduced
+   motion it is an ordinary block. */
 .footer {
   position: relative;
-  z-index: 1;
-  border-top: 1px solid var(--brass);
   background: var(--surface-sunk);
   color: var(--ink);
-  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 0;
+  }
 }
 
 .inner {
   display: grid;
-  justify-items: center;
-  gap: var(--space-6);
+  gap: var(--space-12);
   max-width: 1200px;
   margin-inline: auto;
-  padding: var(--space-12) var(--space-4) var(--space-8);
-  text-align: center;
+  padding: var(--space-16) var(--space-4) var(--space-6);
+}
+
+.logo {
+  justify-self: center;
+  border-radius: var(--radius-hair);
+  color: var(--cream);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-6);
+}
+
+.columns > * {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+/* Hours first and full width on phones: it is the longest. */
+.columns > :first-child {
+  grid-column: 1 / -1;
+}
+
+.heading {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-amiri);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--brass);
+}
+
+.hours {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 14px;
+}
+
+.hours div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block-end: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.hours dt {
+  color: var(--ink-muted);
+}
+
+.hours dd {
+  flex: none;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.text,
+.muted {
+  margin: 0;
+  font-size: 15px;
+}
+
+.muted {
+  color: var(--ink-muted);
 }
 
 .links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-1) var(--space-6);
+  display: grid;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -45,41 +114,49 @@
   text-decoration-color: var(--brass);
 }
 
-.credit {
-  margin: 0;
+.base {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
   font-size: 13px;
-  line-height: 1.6;
   color: var(--ink-muted);
+  text-align: center;
 }
 
-/* The wordmark as wide as the screen, faint (the --line green, just above the footer's ground), its lower part cut
-   off by the footer's edge: the box shows the top 85% of the file (the letters, their feet cut). */
-.giant {
-  padding-inline: var(--space-4);
-  aspect-ratio: 766 / 230;
-  overflow: hidden;
-  pointer-events: none;
+.base p {
+  margin: 0;
 }
 
-.giant .giantMark {
-  color: var(--line);
+.credit {
+  line-height: 1.6;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 900px) {
   .inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    justify-items: start;
-    padding: var(--space-16) var(--space-8) var(--space-8);
-    text-align: start;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-16);
+    padding: var(--space-24) var(--space-8) var(--space-8);
   }
 
-  .links {
-    justify-content: flex-start;
+  .logo {
+    justify-self: start;
+    align-self: start;
   }
 
-  .giant {
-    padding-inline: var(--space-8);
+  .columns {
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .columns > :first-child {
+    grid-column: auto;
+  }
+
+  .base {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
   }
 }
 
