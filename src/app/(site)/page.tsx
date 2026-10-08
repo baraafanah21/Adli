@@ -40,7 +40,7 @@ export default async function Home() {
 
       {/* U4: the hero stays pinned (CSS sticky) and each section after it rises over the one before, on its own layer
           with a brass top edge. Only the hero pins; the shelf and the salon are taller than the screen. */}
-      <div className={styles.curtain}>
+      <div className={styles.curtain} data-covers-hero>
       <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
         <h2 id="shelf-title" className="display-lg ad-reveal">
           منتجات الصالون
@@ -61,7 +61,7 @@ export default async function Home() {
 
       </div>
 
-      <div className={`${styles.curtain} ${styles.curtainSunk}`}>
+      <div className={`${styles.curtain} ${styles.curtainSunk}`} data-covers-hero>
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">
         <div className={`${styles.salonHead} ad-reveal`}>
           <h2 id="salon-title" className="display-lg">
@@ -155,7 +155,7 @@ export default async function Home() {
       </section>
       </div>
 
-      <div className={styles.curtain}>
+      <div className={styles.curtain} data-covers-hero>
         <SalonLocation />
       </div>
     </main>

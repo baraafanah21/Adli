@@ -316,13 +316,40 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     let carved = false;
     let disposed = false;
     let inView = true;
-    const sync = () => renderer.setAnimationLoop(carved && inView && !document.hidden ? frame : null);
+    // Drawing stops entirely while the hero is off screen, covered, or in a hidden tab, and resumes when it shows again.
+    const covering = new Set<Element>();
+    const sync = () =>
+      renderer.setAnimationLoop(carved && inView && covering.size === 0 && !document.hidden ? frame : null);
     const io = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       sync();
     });
     io.observe(host);
     document.addEventListener("visibilitychange", sync);
+
+    // Covered (U4 stacking): the hero is pinned while the layers after it ([data-covers-hero]) rise over it, so it
+    // never leaves the screen. It is fully hidden once one of those layers reaches the header's bottom edge: watch a
+    // band from the top of the screen to just under the header, and count the layers inside it.
+    let coverIo: IntersectionObserver | undefined;
+    const watchCover = () => {
+      coverIo?.disconnect();
+      covering.clear();
+      const headerBottom = Math.ceil(document.querySelector("header")?.getBoundingClientRect().bottom ?? 0) + 1;
+      coverIo = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) covering.add(e.target);
+            else covering.delete(e.target);
+          }
+          sync();
+        },
+        { rootMargin: `0px 0px ${headerBottom - window.innerHeight}px 0px` },
+      );
+      document.querySelectorAll("[data-covers-hero]").forEach((el) => coverIo!.observe(el));
+    };
+    watchCover();
+    window.addEventListener("resize", watchCover);
+
     fetch(SEAL_SVG)
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${SEAL_SVG}: ${r.status}`))))
       .then((text) => {
@@ -349,6 +376,8 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("resize", watchCover);
+      coverIo?.disconnect();
       canvas.removeEventListener("webglcontextlost", onLost);
       controls.dispose();
 
