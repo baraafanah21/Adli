@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { HeroStage } from "@/components/HeroStage";
-import { SealMark } from "@/components/SealMark";
 import { Shelf, ShelfFromUrl } from "@/components/Shelf";
 import { Button } from "@/components/Button";
 import { getCatalog } from "@/lib/catalog";
@@ -9,7 +8,6 @@ import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
 import { getServices, getWeek } from "@/lib/salon-data";
-import { whatsappChatUrl } from "@/lib/whatsapp";
 import styles from "./page.module.css";
 
 export default async function Home() {
@@ -112,25 +110,6 @@ export default async function Home() {
             ))}
           </ul>
         )}
-      </section>
-
-      <section className={styles.closing} aria-labelledby="closing-title">
-        <SealMark />
-        <h2 id="closing-title" className="title">
-          نراك في الصالون
-        </h2>
-        {SALON.address && <p className="body">{SALON.address}</p>}
-        <div className={styles.closingActions}>
-          {SALON.mapUrl && (
-            <Button variant="ghost" href={SALON.mapUrl} target="_blank" rel="noopener noreferrer">
-              افتح الخريطة
-            </Button>
-          )}
-          {/* Ghost on purpose: the WhatsApp fill is reserved for sending an order. */}
-          <Button variant="ghost" href={whatsappChatUrl()} target="_blank" rel="noopener noreferrer">
-            تواصل على واتساب
-          </Button>
-        </div>
       </section>
     </main>
   );
