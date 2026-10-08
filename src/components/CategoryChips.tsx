@@ -10,10 +10,10 @@ type Props = {
   onChange: (slug: string | null) => void;
 };
 
-/** Toggle chips that filter the shelf. Exactly one is pressed; the parent keeps it in ?c=slug. Empty categories say «قريباً». */
+/** Toggle chips that filter the shelf (one row that scrolls on phones). Exactly one is pressed; the parent keeps it in ?c=slug. */
 export function CategoryChips({ categories, total, active, onChange }: Props) {
   return (
-    <div className="ad-chips" role="group" aria-label="الفئات">
+    <div className="ad-chips ad-chips--scroll" role="group" aria-label="الفئات">
       <button className="ad-chip" type="button" aria-pressed={active === null} onClick={() => onChange(null)}>
         الكل<span className="ad-chip__count">{total}</span>
       </button>

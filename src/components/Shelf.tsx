@@ -12,7 +12,8 @@ import styles from "./Shelf.module.css";
 type Props = { categories: Category[]; products: ProductCard[] };
 
 /**
- * Every active category is a chip; one with no products yet says «قريباً» instead of disappearing.
+ * Only categories with products are chips (U2): an empty one stays in the header's «الفئات» with «قريباً», and ?c= on
+ * it still shows its «قريباً» panel.
  * `requested` is the ?c= slug; the home page renders <ShelfFromUrl> inside <Suspense> with this as the fallback,
  * so the prerendered page shows the whole shelf and ?c= applies on the client.
  */
@@ -21,11 +22,9 @@ export function Shelf({ categories, products, requested = null }: Props & { requ
 
   const nameById = new Map(categories.map((c) => [c.id, c.name_ar]));
   const visible = activeCategory ? products.filter((p) => p.category_id === activeCategory.id) : products;
-  const chips = categories.map((c) => ({
-    slug: c.slug,
-    name_ar: c.name_ar,
-    count: products.filter((p) => p.category_id === c.id).length,
-  }));
+  const chips = categories
+    .map((c) => ({ slug: c.slug, name_ar: c.name_ar, count: products.filter((p) => p.category_id === c.id).length }))
+    .filter((c) => c.count > 0 || c.slug === activeCategory?.slug);
 
   return (
     <>
