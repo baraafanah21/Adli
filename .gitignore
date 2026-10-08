@@ -43,3 +43,14 @@ next-env.d.ts
 
 # Phase U screenshots (local only)
 /docs/screens/
+
+# Salon photos and videos (raw and compressed), never in git
+/salon-media/
+
+# Issue / PR bodies written before each gh command
+/.github/tmp/
+
+# Claude Code: local permissions stay local; skills are tracked
+/.claude/settings.json
+/.claude/settings.local.json
+!/.claude/skills/

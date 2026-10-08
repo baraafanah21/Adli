@@ -100,14 +100,44 @@ To turn email on: verify the sending domain in Resend and set the SMTP sender in
 
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER` (digits only, international, no +), `NEXT_PUBLIC_EMAIL_ENABLED` (`true` only once auth email reaches customers, see «Email»), and server-only `ORDER_GATEWAY_SECRET` (`openssl rand -hex 32`, Sensitive on Vercel; never `NEXT_PUBLIC_`). See `.env.example`. No service-role key is used anywhere.
 
-## Commits
+## Workflow (سير العمل)
 
-The user runs every git command (commit, push, switch, rebase); Claude only hands over the commands, with files named (never `git add -A`). Every commit ends with Ahmad Shanti as co-author, and never a Claude `Co-Authored-By` line:
+Real customers book and order on this site: a mistake reaches them.
 
-```bash
-git commit -m "<message>" -m "Co-authored-by: ahmadshanti <ahmad9shanti@gmail.com>"
+**Fixed rules**
+- Never change the booking, order or admin-permission logic as a side effect of other work.
+- `SessionIsland` is the only reader of the session; cached reads use the anon client; `adli/no-session-in-cache` must pass.
+- Any trigger or function that calls `private.*` is `security definer`, `set search_path = ''`, revoked from public / anon / authenticated, and tested as a plain customer (not staff).
+- Never print a secret or key; never write one to a tracked file.
+- Never in git: `salon-media/`, `.github/tmp/`, `.claude/settings.json` (all in `.gitignore`). `.claude/skills/` is tracked.
+- Migrations: Claude writes them in the repo and stops; Bara reviews and applies them. Additive only (no drop / rename in the same PR): Preview and Production share one database.
+- Before every PR: `npm run lint`, `npx tsc --noEmit`, `npm run build`, `npm run check:phone`, and the phase's `supabase/tests/` file; all pass.
+
+**Git and GitHub: the user runs every command.** Claude edits files locally and may read state (`git status/diff/log`, `gh issue view`, `gh pr view/checks`), but never runs anything that changes git or GitHub (issue, label, milestone, branch, add, commit, push, PR, merge). It writes the commands as one numbered block, with two lines before it (what we're doing, what it waits for), and after the user says «تم» it checks the result itself before going on:
+
 ```
+## 🧭 أوامر GitHub — <step>
+### 1) Issue      gh issue create --title "…" --label "…" --milestone "…" --body-file .github/tmp/issue-<slug>.md
+### 2) الفرع      git switch main && git pull --ff-only && git switch -c <type>/<phase>-<short-name>
+### 3) الكوميتات  git add <files by name> ; git commit … (one commit per logical part)
+### 4) Push + PR  git push -u origin <branch> ; gh pr create --base main --title "…" --body-file .github/tmp/pr-<slug>.md --reviewer ahmadshanti --label "…" --milestone "…"
+### 5) Preview    gh pr checks --watch, then the Vercel Preview link from Vercel's PR comment, to Bara
+### 6) الدمج      gh pr merge <n> --squash --delete-branch --body "<summary>\n\nCo-authored-by: …" ; git switch main && git pull --ff-only
+```
+Only the steps a batch needs, same numbering and titles. Issue / PR bodies are written first to `.github/tmp/` (ignored), from `.github/ISSUE_TEMPLATE/task.md` and `.github/pull_request_template.md`.
+
+- One Issue per batch (label + milestone), one branch per Issue (`feat/u5-2-motion`), one PR to `main` with `Closes #<n>`, reviewed by `ahmadshanti`, then Squash and merge. Never push to `main`.
+- `git add` by file name only, never `git add -A` / `git add .`.
+- Commit format, exactly, and no other `Co-Authored-By` line (never Claude's):
+  ```bash
+  git commit -m "<type>(<scope>): <description>" -m "Co-authored-by: ahmadshanti <ahmad9shanti@gmail.com>"
+  ```
+  The squash-merge body ends with the same `Co-authored-by` line.
+- Labels: `feat`, `fix`, `chore`, `db`, `ui`, `motion`, `admin`, `docs`, `media`. Milestones: «U5 – واجهة», «L – إطلاق», «E4 – إيميل».
+- Stop at the end of each batch with a report and the commands; don't start the next batch before the merge.
+
+**Skills** (`.claude/skills/`): `frontend-design` for visual direction (distinctive, not a template); `gsap-core`, `gsap-react`, `gsap-scrolltrigger`, `gsap-plugins`, `gsap-timeline`, `gsap-performance` for all motion work. Before each PR, self-review the motion and details: timing, easing, empty states, touch on phones, light and dark themes, reduced motion.
 
 ## Commands
 
-`npm run dev` · `npm run build` · `npm run lint`
+`npm run dev` · `npm run build` · `npm run lint` · `npx tsc --noEmit` · `npm run check:phone`
