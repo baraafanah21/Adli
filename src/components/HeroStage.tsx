@@ -8,7 +8,8 @@ import styles from "./HeroStage.module.css";
 // three.js never enters the first-load bundle: this chunk is fetched only after first paint.
 const HeroBottle = dynamic(() => import("@/components/HeroBottle"), { ssr: false });
 
-export const HERO_POSTER = "/hero/v1/f000.webp";
+// v2 (U1b): taken from the live scene with the seal carved from public/brand/adli-seal.svg.
+export const HERO_POSTER = "/hero/v2/f000.webp";
 
 type NavigatorHints = Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
 
