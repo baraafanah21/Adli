@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AddToOrderButton } from "@/components/cart/AddToOrderButton";
-import { SealMark } from "@/components/SealMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { formatPrice, joinAnd, metaLine, productImageSrc } from "@/lib/format";
 import type { ProductCard } from "@/lib/catalog";
 
@@ -47,13 +47,14 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
         unoptimized={!lg}
         preload={preload}
       />
+      {/* The colour seal: its own cream backing keeps it readable on any photo (the mono one would vanish). */}
       <span className="ad-photo__seal">
-        <SealMark size="sm" />
+        <BrandMark kind="seal" width={lg ? 40 : 32} />
       </span>
     </>
   ) : (
     <span className="ad-photo__empty">
-      <SealMark size="sm" />
+      <BrandMark kind="seal" tone="mono" width={lg ? 96 : 56} />
     </span>
   );
 
