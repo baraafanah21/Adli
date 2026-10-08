@@ -2,7 +2,7 @@
 
 # Adli Salon (عدلي)
 
-Showcase site for a men's barbershop that also sells perfumes and creams. Products are shown with their real photos, full-bleed in a 4:5 frame; the one 3D element is the Adli bottle in the hero, a live three.js scene (`src/components/HeroBottle.tsx`, reference `docs/prototypes/hero-bottle-prototype.html`). Buying means sending a pre-filled WhatsApp message. No online payment. Accounts are optional (guests can always order); signed-in customers see their orders and review products they received. Roles: owner and staff, see `docs/design-system/accounts-and-roles.md`.
+Showcase site for a men's barbershop that also sells perfumes and creams. Products are shown with their real photos, full-bleed in a 4:5 frame; the one 3D element is the Adli bottle in the hero, a live three.js scene (`src/components/HeroBottle.tsx`, reference `docs/prototypes/hero-bottle-prototype.html`); the seal on its cap is read at runtime from `public/brand/adli-seal.svg` (three's `SVGLoader`), never copied into code. Buying means sending a pre-filled WhatsApp message. No online payment. Accounts are optional (guests can always order); signed-in customers see their orders and review products they received. Roles: owner and staff, see `docs/design-system/accounts-and-roles.md`.
 
 Stack: Next.js (App Router, TypeScript) on Vercel · Supabase (Postgres, Storage, Auth) · three (pinned, hero bottle only; no R3F/drei) · lenis (gsap was never used and is removed; animations are CSS).
 
@@ -15,9 +15,10 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - Brand book: `docs/design-system/brand-book.md` (Arabic). 3D + motion rules: `docs/design-system/3d-and-motion.md`. Data + WhatsApp + env: `docs/design-system/build-stack.md`. Components: `docs/design-system/components/<Name>/README.md` with a reference `preview.html`.
 - Tokens live in `src/styles/tokens.css` (mirrors `docs/design-system/tokens.json`). Component classes (`ad-btn`, `ad-card`, `ad-photo`, `ad-chip`, `ad-sheet`, `ad-pole`…) in `src/styles/components.css`.
 - Never hard-code a color, radius or spacing value in components: use `var(--token)`. Only the hero canvas may read token hex values, via a single `src/lib/brand.ts` constants file.
-- Logo colors are fixed: `--forest` #0B300F and `--cream` #F5F5DB. Seal: `public/brand/adli-seal.svg`; full logo: `public/brand/logo.jpg`.
-- The signature shape is the seal: a circle with two rings, from the logo. Every product photo fills a 4:5 frame with two rings (brass hairline, gap, photo) and the seal as a corner badge (`SealStage`, F6). Don't invent other signature shapes.
+- Logo colors are fixed: `--forest` #0B300F and `--cream` #F5F5DB. The logo files in `public/brand/` (seal, wordmark, full logo, bottle, mono versions, `icons/`) are the only source: read `public/brand/README.md`. Show them only through `BrandMark` (`src/components/brand/BrandMark.tsx`); never redraw or retype any part of the logo (no CSS seal, no «ع» in a font, no hand-drawn bottle).
+- The signature shape is the seal: a circle with two rings, from the logo. Every product photo fills a 4:5 frame with two rings (brass hairline, gap, photo) and the colour seal as a corner badge (`SealStage`, F6). Don't invent other signature shapes.
 - Fonts: Amiri (display, `latin-mark`) and Readex Pro (everything else), loaded with next/font in `src/app/layout.tsx`.
+- Footer: `SiteFooter` in `SiteChrome` (every public page, never `/admin`), dark in both themes, full logo mono in cream. It ends with the credit line, word for word: «تصميم وبرمجة: براء عفانة & أحمد شنطي» (RLM around «&»).
 
 ## Rules
 
@@ -25,7 +26,7 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - Copy: plain Arabic, singular polite "you". Action names stay identical through the flow: «أضف للطلب» → «أُضيف للطلب» → «أرسل الطلب على واتساب». Prices `₪ 180`, western digits.
 - Only the order button uses `--whatsapp`, with `--on-whatsapp` (dark) text, never white.
 - Exactly one WebGL canvas on the site: the hero bottle. Products are photos only (full-bleed, `object-fit: cover`); no 3D product models.
-- The hero shows `public/hero/v1/f000.webp` as a preloaded `<img>` poster (unoptimized); three.js loads after the page has loaded, once the hero is on screen (IntersectionObserver) and the browser is idle (`requestIdleCallback`, dynamic import, `ssr: false`), and fades in on its first frame. `prefers-reduced-motion`, Save-Data, a weak device (≤ 2 GB / ≤ 2 cores) or no WebGL2: poster only, three never loads.
+- The hero shows `public/hero/v2/f000.webp` as a preloaded `<img>` poster (unoptimized); three.js loads after the page has loaded, once the hero is on screen (IntersectionObserver) and the browser is idle (`requestIdleCallback`, dynamic import, `ssr: false`), and fades in on its first frame. `prefers-reduced-motion`, Save-Data, a weak device (≤ 2 GB / ≤ 2 cores) or no WebGL2: poster only, three never loads.
 - Canvas: `dpr` ≤ 1.75, paused off-screen and in hidden tabs, full dispose on unmount, horizontal drag only (`touch-action: pan-y`), no zoom.
 - Performance: three is never in the first-load bundle. LCP is the hero title or the poster, never the canvas. Mobile Lighthouse: LCP < 2.5s, CLS < 0.1.
 
@@ -33,7 +34,7 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 
 - Project ref `hdkmrozwihaoqiqjlzld` (eu-central-1). Migrations in `supabase/migrations/`, applied in order. Add new migrations as new files; never edit an applied one.
 - Tables: `categories` (`is_active`, `icon` from the fixed set in `CategoryIcon`, `description_ar`), `products` (`kind` simple / bundle), `product_options`, `product_option_values` (colour values carry `hex`), `product_variants` (every product has ≥ 1; a simple product has one default variant with no option values, hidden in the UI), `bundle_items`, `orders` (optional `user_id`), `order_items` (`variant_id` + `variant_name_ar` snapshot), `profiles` (one per auth user, created by the `on_auth_user_created` trigger; users update only `full_name`, `area`, `phone`), `user_roles` (`owner` / `staff`; a barber is a `barbers` row linked through `barbers.user_id`, and `is_barber` is dropped by `20261007000900_drop_is_barber.sql`). RLS is on for all. The public reads active categories, active products, and active variants of active products only. `product_variants.stock_quantity` is not granted to anon / authenticated (column grants): the site reads `stock_state` or the `variant_availability` view (state + variant label), so name every column, never `select('*')`. Embeds between products and variants need FK hints (`product_variants!product_variants_product_id_fkey`) because `bundle_items` / `order_items` also link them; customers read their own profile and orders, staff read all. `private.*` holds server-only state (`app_secrets`, `order_rate_hits`) and is never exposed.
-- Orders are created ONLY through `POST /api/orders` (`src/app/api/orders/route.ts`), which calls `place_order(p_idempotency_key, p_customer_name, p_area, p_phone, p_items, p_client_ip, p_gateway_secret)` with `p_items = [{variant_id, qty}]` with the server-only `ORDER_GATEWAY_SECRET` (its SHA-256 is in `private.app_secrets`; a direct browser RPC call is refused). It recomputes prices, rate-limits 5 orders/minute per IP, stores `auth.uid()` as `orders.user_id` when the caller is signed in (guests stay null), and returns `{code, total_ils, items}`. It checks `stock_quantity` against the whole order (bundle pieces included); stock is decremented in Phase F. Error codes: `P0001` unavailable (DETAIL = `[{id: variant_id, name_ar: product + variant}]`), `P0002` rate limited, `22023` invalid, `42501` bad secret.
+- Orders are created ONLY through `POST /api/orders` (`src/app/api/orders/route.ts`), which calls `place_order(p_idempotency_key, p_customer_name, p_area, p_phone, p_items, p_client_ip, p_gateway_secret)` with `p_items = [{variant_id, qty}]` with the server-only `ORDER_GATEWAY_SECRET` (its SHA-256 is in `private.app_secrets`; a direct browser RPC call is refused). It recomputes prices, rate-limits 5 orders/minute per IP, stores `auth.uid()` as `orders.user_id` when the caller is signed in (guests stay null), and returns `{code, total_ils, items}`. The phone is required on every new order (Phase U): the order sheet, the route (`normalizeMobile`, `field: "phone"`) and `orders_phone_required` (`NOT VALID`, so older guest orders without a number stay). It checks `stock_quantity` against the whole order (bundle pieces included); stock is decremented in Phase F. Error codes: `P0001` unavailable (DETAIL = `[{id: variant_id, name_ar: product + variant}]`), `P0002` rate limited, `22023` invalid, `42501` bad secret.
 - The cart is `src/lib/cart-store.ts` (localStorage, `v: 2`, one line per variant) with `useCart()` / `useCartUI()` from `src/components/cart/CartContext.tsx`. The order sheet generates one idempotency key per checkout attempt (sessionStorage, rotated when the cart changes), then builds the message with `buildOrderMessage()` and opens `whatsappUrl()` from `src/lib/whatsapp.ts` in the same tab.
 - Staff = any row in `public.user_roles`. Roles are written only by the owner's functions (`admin_add_staff` / `admin_update_staff` / `admin_remove_staff`, by email of an existing account); categories only by `admin_save_category` (owner). `private.is_admin()` (any role) backs the staff policies; `private.has_role(app_role[])` checks a specific role. A trigger keeps at least one owner (`P0003 last_owner`).
 - `/admin` and `/account` are guarded in three layers: `src/proxy.ts` (signed in), `requireUser()` / `requireRole()` in `src/lib/auth/guards.ts` (roles read fresh from `user_roles`; wrong role = 404), then RLS.
@@ -94,6 +95,14 @@ To turn email on: verify the sending domain in Resend and set the SMTP sender in
 ## Env
 
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER` (digits only, international, no +), `NEXT_PUBLIC_EMAIL_ENABLED` (`true` only once auth email reaches customers, see «Email»), and server-only `ORDER_GATEWAY_SECRET` (`openssl rand -hex 32`, Sensitive on Vercel; never `NEXT_PUBLIC_`). See `.env.example`. No service-role key is used anywhere.
+
+## Commits
+
+The user runs every git command (commit, push, switch, rebase); Claude only hands over the commands, with files named (never `git add -A`). Every commit ends with Ahmad Shanti as co-author, and never a Claude `Co-Authored-By` line:
+
+```bash
+git commit -m "<message>" -m "Co-authored-by: ahmadshanti <ahmad9shanti@gmail.com>"
+```
 
 ## Commands
 
