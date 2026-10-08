@@ -15,10 +15,17 @@ export type DayHours = { open: string; close: string } | null;
 export type Week = Record<Weekday, DayHours>;
 
 export const SALON = {
-  /** e.g. "نابلس، رفيديا، شارع …" */
+  /** The city, always shown in «الموقع» (U4). */
+  city: "قلقيلية",
+  /** The street address, e.g. "قلقيلية، شارع …" (one value, used everywhere). Until it is set, «الموقع» shows the city. */
   address: null as string | null,
-  /** A maps link (Google Maps or OpenStreetMap). Opened in a new tab; no embed until the visitor asks. */
-  mapUrl: null as string | null,
+  /** The Google Maps link the owner gives: «افتح في خرائط جوجل» opens it in a new tab. */
+  mapUrl: "https://www.google.com/maps/search/?api=1&query=32.188603,34.964322" as string | null,
+  /** The salon's coordinates (from the owner: 32°11'18.97"N 34°57'51.56"E). With them «الموقع» shows a map that
+   * loads on tap only. */
+  geo: { lat: 32.188603, lng: 34.964322 } as { lat: number; lng: number } | null,
+  /** A light still of the map in public/salon/ (shown before the tap). Without it the tap target is a plain card. */
+  mapImage: null as string | null,
   /** Real salon photos in public/salon/, e.g. [{ src: "/salon/chair.webp", alt: "…" }] */
   photos: [] as { src: string; alt: string }[],
 };
