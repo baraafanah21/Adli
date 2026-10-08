@@ -1,6 +1,6 @@
 /*
-  Brand colors as hex, for the hero WebGL canvas only (a canvas can't read CSS variables).
-  Everything else uses var(--token). Keep in sync with src/styles/tokens.css (night values).
+  Brand colors as hex, for the places that can't read CSS variables: the hero WebGL canvas and the web app
+  manifest (src/app/manifest.ts). Everything else uses var(--token). Keep in sync with src/styles/tokens.css (night values).
 */
 export const BRAND = {
   forest: "#0B300F",
