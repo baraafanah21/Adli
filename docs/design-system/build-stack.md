@@ -17,7 +17,7 @@
 | `product_option_values` | id، option_id، label_ar، hex (للألوان فقط)، sort |
 | `product_variants` | id، product_id، sku (فريد، وهو `?v=` في الرابط)، option_value_ids، label_ar (اختياري)، price_ils (فارغ = سعر المنتج)، stock_quantity، low_stock_threshold، stock_state (مولّد: in / low / out)، is_active |
 | `bundle_items` | bundle_product_id، variant_id، qty |
-| `orders` | id، code (مثل `AD-1042`)، idempotency_key، customer_name، area، phone، total_ils، status، user_id (اختياري)، created_at |
+| `orders` | id، code (مثل `AD-1042`)، idempotency_key، customer_name، area، phone (مطلوب للطلبات الجديدة، `orders_phone_required`)، total_ils، status، user_id (اختياري)، created_at |
 | `order_items` | order_id، product_id، variant_id، name_ar، variant_name_ar، volume_ml، unit_price_ils، qty |
 | `profiles` | id (= المستخدم)، full_name، area، phone |
 | `user_roles` | user_id، role (`owner` / `staff`)، is_barber، granted_by |

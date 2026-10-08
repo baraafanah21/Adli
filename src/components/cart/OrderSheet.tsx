@@ -100,7 +100,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
     if (sending || blocked.length > 0 || lines.length === 0) return;
 
     const trimmed = name.trim();
-    const phoneOk = phone.empty || phone.valid;
+    const phoneOk = !phone.empty && phone.valid;
     setNameError(!trimmed);
     setPhoneError(!phoneOk);
     if (!trimmed) return nameRef.current?.focus();
@@ -290,9 +290,10 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
               />
             </div>
             <div className="ad-field">
-              <label htmlFor={ids.phone}>رقم الجوال (اختياري)</label>
+              <label htmlFor={ids.phone}>رقم الجوال</label>
               <PhoneField
                 id={ids.phone}
+                required
                 defaultPhone={prefill?.phone}
                 onChange={(v) => {
                   setPhone(v);
@@ -303,7 +304,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
               />
               {phoneError && (
                 <span className="ad-field__error" id={ids.phoneErr}>
-                  اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة +970 أو +972
+                  اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة <bdi dir="ltr">+970</bdi> أو <bdi dir="ltr">+972</bdi>
                 </span>
               )}
             </div>

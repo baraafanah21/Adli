@@ -13,8 +13,8 @@ const Body = z.object({
   idempotencyKey: z.uuid(),
   name: z.string().trim().min(1).max(80),
   area: z.string().trim().max(80).default(""),
-  // Optional; when given, the full number with the prefix the customer chose (+9705… / +9725…), see src/lib/phone.ts.
-  phone: z.string().trim().max(30).default(""),
+  // Required (Phase U): the full number with the prefix the customer chose (+9705… / +9725…), see src/lib/phone.ts.
+  phone: z.string().trim().min(1).max(30),
   items: z
     .array(z.object({ variantId: z.uuid(), qty: z.number().int().min(1).max(20) }))
     .min(1)
@@ -71,8 +71,8 @@ export async function POST(request: Request) {
     return fail({ error: "invalid", field: field === "name" || field === "phone" || field === "items" ? field : undefined }, 400);
   }
   const b = parsed.data;
-  const phone = b.phone ? normalizeMobile(b.phone) : null;
-  if (b.phone && !phone) return fail({ error: "invalid", field: "phone" }, 400);
+  const phone = normalizeMobile(b.phone);
+  if (!phone) return fail({ error: "invalid", field: "phone" }, 400);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("place_order", {
