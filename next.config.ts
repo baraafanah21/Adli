@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
       { source: "/hero/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     ];
   },
+  async rewrites() {
+    // The logo's favicon stays in public/brand/icons/ (the one source). Its PNGs are RGB, which app/favicon.ico
+    // can't decode, so /favicon.ico (asked for by browsers without reading the <link>) is served from there.
+    return [{ source: "/favicon.ico", destination: "/brand/icons/favicon.ico" }];
+  },
 };
 
 export default nextConfig;

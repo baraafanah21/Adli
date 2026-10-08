@@ -28,6 +28,15 @@ export const metadata: Metadata = {
     template: "%s | عدلي",
   },
   description: "صالون عدلي: حلاقة رجالية، عطور وكريمات. اختر منتجك وثبّت طلبك على واتساب.",
+  // The logo's icons (public/brand/icons/; /favicon.ico is rewritten there in next.config.ts). Manifest: app/manifest.ts.
+  icons: {
+    icon: [
+      { url: "/brand/icons/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/brand/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: { url: "/brand/icons/apple-touch-icon.png", sizes: "180x180" },
+  },
 };
 
 export const viewport: Viewport = {
