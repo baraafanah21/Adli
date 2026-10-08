@@ -1,0 +1,39 @@
+/* 4:5 like the frames (494×618), so nothing shifts while they load. Transparent: sits on paper or forest. */
+.stage {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  /* Vertical swipes scroll the page; only horizontal drags turn the shears. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.live {
+  cursor: grab;
+}
+
+.live:active {
+  cursor: grabbing;
+}
+
+.poster,
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canvas {
+  opacity: 0;
+}
+
+.live .canvas {
+  opacity: 1;
+}
+
+.live .poster {
+  visibility: hidden;
+}
