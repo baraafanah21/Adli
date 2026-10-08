@@ -66,3 +66,18 @@
 - الصورة الثابتة ≤ 120KB. لقطات `public/hero/` تُخدم بـ `Cache-Control: public, max-age=31536000, immutable`.
 - صور المنتجات عبر `next/image` بأحجام `sizes` صحيحة لكل بطاقة.
 - على جوال متوسط (Lighthouse، محاكاة الجوال): LCP < 2.5s، CLS < 0.1.
+
+## المقص (U2)
+
+- 48 لقطة Cycles شفافة في `public/shears/v1/` (دورة كاملة، 7.5° بين اللقطة والتالية، 494×618). المصدر وإعادة التصيير في `assets/shears/README.md`.
+- مكانه: رأس صفحة `/booking` فقط، يدور ببطء (`ShearsTurntable`، لوحة 2D لا WebGL، فالقنينة تبقى لوحة WebGL الوحيدة).
+- `f000.webp` يظهر فوراً `<img>`. باقي اللقطات تُحمَّل فقط حين يقترب الرأس من الشاشة (`IntersectionObserver`)، ولا تُحمَّل أبداً مع `prefers-reduced-motion` أو Save-Data: يبقى `f000` وحده.
+- الدمج بين لقطتين `globalCompositeOperation = 'lighter'` بوزنين (1−f) وf، لأن اللقطات شفافة؛ الدمج العادي يترك هالة على الحواف.
+- السحب أفقي فقط (`touch-action: pan-y`)، والأسهم تدير لقطة لقطة. الحلقة تتوقف خارج الشاشة وفي التبويب المخفي.
+- الكاش: `/shears/*` immutable؛ أي تصيير جديد يذهب إلى `v2/`.
+- في الرئيسية، بجانب لوح الأسعار على الشاشات العريضة فقط (≥ 900px): `f000` ثابتاً كخلفية CSS داخل media query، فالجوال لا يحمّله، ولا تُحمَّل باقي اللقطات أبداً.
+
+## الظهور عند التمرير (U2)
+
+- CSS فقط (`ad-reveal` ولكل بطاقة في `.ad-shelf`): `animation-timeline: view()` داخل `@supports (animation-timeline: view())` وداخل `prefers-reduced-motion: no-preference`. خارجهما لا يُطبَّق شيء، فلا يبدأ أي عنصر بـ `opacity: 0` في متصفح لا يدعمه (Safari القديم، Firefox) ولا مع تقليل الحركة. لا JavaScript.
+- الهيرو لا يُطبَّق عليه أبداً (هو LCP).
