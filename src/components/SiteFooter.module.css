@@ -1,0 +1,153 @@
+/* Dark in both themes (data-theme="night" on the element): the deep green under the page, a brass hairline on top. */
+.footer {
+  border-top: 1px solid var(--brass);
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+.inner {
+  display: grid;
+  gap: var(--space-12);
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-16) var(--space-4) var(--space-6);
+}
+
+.logo {
+  justify-self: center;
+  border-radius: var(--radius-hair);
+  color: var(--cream);
+}
+
+.columns {
+  display: grid;
+  gap: var(--space-8);
+  text-align: center;
+}
+
+.columns > * {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.heading {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-amiri);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--brass);
+}
+
+.hours {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 14px;
+}
+
+.hours div {
+  display: grid;
+}
+
+.hours dt {
+  color: var(--ink-muted);
+}
+
+.hours dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.links {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 6px;
+  transition: color var(--dur-press) var(--ease-out), text-decoration-color var(--dur-press) var(--ease-out);
+}
+
+.links a:hover {
+  color: var(--brass-bright);
+  text-decoration-color: var(--brass);
+}
+
+.base {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.base p {
+  margin: 0;
+}
+
+.credit {
+  line-height: 1.6;
+}
+
+@media (min-width: 720px) {
+  .inner {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-24);
+    padding: var(--space-24) var(--space-8) var(--space-8);
+  }
+
+  .logo {
+    justify-self: start;
+    align-self: start;
+  }
+
+  .columns {
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+    text-align: start;
+  }
+
+  .columns > * {
+    justify-items: start;
+  }
+
+  .hours {
+    width: min(100%, 320px);
+  }
+
+  .hours div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-4);
+  }
+
+  .base {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .links a {
+    transition: none;
+  }
+}
