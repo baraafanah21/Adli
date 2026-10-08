@@ -13,6 +13,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { BRAND, SCENE } from "@/lib/brand";
+import { watchHeroCover } from "@/lib/hero-cover";
 
 type Props = {
   className?: string;
@@ -23,6 +24,7 @@ type Props = {
 };
 
 const MAX_DPR = 1.75;
+
 
 /** The logo file, the only source of the seal (public/brand/README.md): never redrawn. */
 const SEAL_SVG = "/brand/adli-seal.svg";
@@ -283,6 +285,7 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     const haloCentre = new THREE.Vector3(0, 4.2, 0);
     const toCam = new THREE.Vector3();
 
+
     // ---------- Size ----------
     function resize() {
       const w = host!.clientWidth;
@@ -317,9 +320,8 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     let disposed = false;
     let inView = true;
     // Drawing stops entirely while the hero is off screen, covered, or in a hidden tab, and resumes when it shows again.
-    const covering = new Set<Element>();
-    const sync = () =>
-      renderer.setAnimationLoop(carved && inView && covering.size === 0 && !document.hidden ? frame : null);
+    let covered = false;
+    const sync = () => renderer.setAnimationLoop(carved && inView && !covered && !document.hidden ? frame : null);
     const io = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       sync();
@@ -327,28 +329,11 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     io.observe(host);
     document.addEventListener("visibilitychange", sync);
 
-    // Covered (U4 stacking): the hero is pinned while the layers after it ([data-covers-hero]) rise over it, so it
-    // never leaves the screen. It is fully hidden once one of those layers reaches the header's bottom edge: watch a
-    // band from the top of the screen to just under the header, and count the layers inside it.
-    let coverIo: IntersectionObserver | undefined;
-    const watchCover = () => {
-      coverIo?.disconnect();
-      covering.clear();
-      const headerBottom = Math.ceil(document.querySelector("header")?.getBoundingClientRect().bottom ?? 0) + 1;
-      coverIo = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) covering.add(e.target);
-            else covering.delete(e.target);
-          }
-          sync();
-        },
-        { rootMargin: `0px 0px ${headerBottom - window.innerHeight}px 0px` },
-      );
-      document.querySelectorAll("[data-covers-hero]").forEach((el) => coverIo!.observe(el));
-    };
-    watchCover();
-    window.addEventListener("resize", watchCover);
+    // Covered by the sections rising over the pinned hero (src/lib/hero-cover.ts).
+    const stopCover = watchHeroCover((c) => {
+      covered = c;
+      sync();
+    });
 
     fetch(SEAL_SVG)
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${SEAL_SVG}: ${r.status}`))))
@@ -376,8 +361,7 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", sync);
-      window.removeEventListener("resize", watchCover);
-      coverIo?.disconnect();
+      stopCover();
       canvas.removeEventListener("webglcontextlost", onLost);
       controls.dispose();
 
