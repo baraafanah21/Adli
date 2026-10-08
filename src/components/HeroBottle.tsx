@@ -11,8 +11,8 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { BRAND, SCENE } from "@/lib/brand";
-import { AIN_OUTLINE, SEAL_RADIUS_PX, SEAL_RING_PX } from "@/lib/seal-ain";
 
 type Props = {
   className?: string;
@@ -23,6 +23,42 @@ type Props = {
 };
 
 const MAX_DPR = 1.75;
+
+/** The logo file, the only source of the seal (public/brand/README.md): never redrawn. */
+const SEAL_SVG = "/brand/adli-seal.svg";
+
+type Seal = { ain: THREE.Vector2[]; outer: number; ringOuter: number; ringInner: number };
+
+/**
+ * Reads the seal from adli-seal.svg. Its forest fill is two paths, each of two contours: the outer ring (its outside
+ * and inside edges), and the disc (its edge, and the ع cut out of it in cream). The thin cream ring is the gap
+ * between the outer ring's inside edge and the disc's edge. Returned in logo px around the seal's centre, y up.
+ */
+function readSeal(svgText: string): Seal {
+  const forest = new SVGLoader()
+    .parse(svgText)
+    .paths.filter((p) => String((p.userData?.style as { fill?: string } | undefined)?.fill).toLowerCase() === BRAND.forest.toLowerCase())
+    .map((p) => {
+      // Each contour as points, largest first. 3 points per curve: the ع is ~800 points, ~9k triangles extruded.
+      const contours = p.subPaths.map((sp) => {
+        const pts = sp.getPoints(3);
+        const box = new THREE.Box2().setFromPoints(pts);
+        return { pts, box, half: box.getSize(new THREE.Vector2()).x / 2 };
+      });
+      return contours.sort((x, y) => y.half - x.half);
+    })
+    .sort((x, y) => y[0].half - x[0].half);
+  const [ring, disc] = forest;
+  if (forest.length !== 2 || ring.length !== 2 || disc.length !== 2) throw new Error("adli-seal.svg: unexpected structure");
+
+  const centre = disc[0].box.getCenter(new THREE.Vector2());
+  return {
+    ain: disc[1].pts.map((v) => new THREE.Vector2(v.x - centre.x, centre.y - v.y)),
+    outer: ring[0].half,
+    ringOuter: ring[1].half,
+    ringInner: disc[0].half,
+  };
+}
 
 export default function HeroBottle({ className, onReady, onError }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -127,7 +163,6 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     // ---------- Cap: the seal, carved, in brass ----------
     const RC = 1.85;
     const CAP_DEPTH = 0.9;
-    const S = (RC * 0.86) / SEAL_RADIUS_PX; // logo px → world units
 
     const capGroup = new THREE.Group();
     capGroup.position.y = H + 0.42 + RC + 0.02;
@@ -143,32 +178,33 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     capBody.castShadow = true;
     capGroup.add(capBody);
 
-    const ringShape = new THREE.Shape();
-    ringShape.absarc(0, 0, SEAL_RING_PX.outer * S, 0, Math.PI * 2, false);
-    const ringHole = new THREE.Path();
-    ringHole.absarc(0, 0, SEAL_RING_PX.inner * S, 0, Math.PI * 2, true);
-    ringShape.holes.push(ringHole);
+    // The logo's cream parts (the ع and the thin ring) stand out in polished brass on both faces, read from the file.
+    function carveSeal(seal: Seal) {
+      const S = (RC * 0.86) / seal.outer; // logo px → world units
 
-    const ainShape = new THREE.Shape();
-    const pts = AIN_OUTLINE.map(([x, y]) => new THREE.Vector2(x * S, -y * S));
-    ainShape.moveTo(pts[0].x, pts[0].y);
-    ainShape.splineThru(pts.slice(1).concat([pts[0]]));
+      const ringShape = new THREE.Shape();
+      ringShape.absarc(0, 0, seal.ringOuter * S, 0, Math.PI * 2, false);
+      const ringHole = new THREE.Path();
+      ringHole.absarc(0, 0, seal.ringInner * S, 0, Math.PI * 2, true);
+      ringShape.holes.push(ringHole);
+      const ainShape = new THREE.Shape(seal.ain.map((v) => v.clone().multiplyScalar(S)));
 
-    const reliefOpts = { depth: 0.07, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.018, bevelSegments: 4, curveSegments: 48 };
-    const ringGeo = new THREE.ExtrudeGeometry(ringShape, { ...reliefOpts, curveSegments: 128 });
-    const ainGeo = new THREE.ExtrudeGeometry(ainShape, reliefOpts);
+      const reliefOpts = { depth: 0.07, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.012, bevelSegments: 2 };
+      const ringGeo = new THREE.ExtrudeGeometry(ringShape, { ...reliefOpts, curveSegments: 128 });
+      const ainGeo = new THREE.ExtrudeGeometry(ainShape, reliefOpts);
 
-    const faceZ = CAP_DEPTH / 2 + 0.16 - 0.01;
-    for (const side of [1, -1]) {
-      const face = new THREE.Group();
-      face.rotation.y = side === 1 ? 0 : Math.PI;
-      const ring = new THREE.Mesh(ringGeo, brassPolished);
-      const ain = new THREE.Mesh(ainGeo, brassPolished);
-      ring.position.z = faceZ;
-      ain.position.z = faceZ;
-      ring.castShadow = ain.castShadow = true;
-      face.add(ring, ain);
-      capGroup.add(face);
+      const faceZ = CAP_DEPTH / 2 + 0.16 - 0.01;
+      for (const side of [1, -1]) {
+        const face = new THREE.Group();
+        face.rotation.y = side === 1 ? 0 : Math.PI;
+        const ring = new THREE.Mesh(ringGeo, brassPolished);
+        const ain = new THREE.Mesh(ainGeo, brassPolished);
+        ring.position.z = faceZ;
+        ain.position.z = faceZ;
+        ring.castShadow = ain.castShadow = true;
+        face.add(ring, ain);
+        capGroup.add(face);
+      }
     }
 
     // ---------- Plinth: the seal turntable ----------
@@ -276,15 +312,28 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
       }
     }
 
+    // The loop starts once the seal is carved, so the first frame (and the poster's fade) already has it.
+    let carved = false;
+    let disposed = false;
     let inView = true;
-    const sync = () => renderer.setAnimationLoop(inView && !document.hidden ? frame : null);
+    const sync = () => renderer.setAnimationLoop(carved && inView && !document.hidden ? frame : null);
     const io = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       sync();
     });
     io.observe(host);
     document.addEventListener("visibilitychange", sync);
-    sync();
+    fetch(SEAL_SVG)
+      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${SEAL_SVG}: ${r.status}`))))
+      .then((text) => {
+        if (disposed) return;
+        carveSeal(readSeal(text));
+        carved = true;
+        sync();
+      })
+      .catch(() => {
+        if (!disposed) callbacks.current.onError();
+      });
 
     const onLost = (e: Event) => {
       e.preventDefault();
@@ -295,6 +344,7 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
 
     // ---------- Full cleanup ----------
     return () => {
+      disposed = true;
       renderer.setAnimationLoop(null);
       io.disconnect();
       ro.disconnect();
