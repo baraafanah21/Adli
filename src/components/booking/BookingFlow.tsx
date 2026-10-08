@@ -309,10 +309,11 @@ export function BookingFlow({ services, barbers, initial }: Props) {
           {services.map((s) => (
             <li key={s.id}>
               <button type="button" className={styles.option} aria-pressed={s.id === serviceId} onClick={() => chooseService(s.id)}>
-                <span className={styles.optionName}>{s.name_ar}</span>
-                <span className={styles.optionMeta}>
-                  {durationLabel(s.duration_min)} · {formatPrice(s.price_ils)}
+                <span className={styles.optionName}>
+                  {s.name_ar}
+                  <small>{durationLabel(s.duration_min)}</small>
                 </span>
+                <span className={styles.optionPrice}>{formatPrice(s.price_ils)}</span>
               </button>
             </li>
           ))}

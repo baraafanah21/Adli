@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BookingFlow, BookingFromUrl } from "@/components/booking/BookingFlow";
 import { Button } from "@/components/Button";
+import { ShearsTurntable } from "@/components/ShearsTurntable";
 import { getBarbers, getServices } from "@/lib/salon-data";
 import styles from "@/components/booking/booking.module.css";
 
@@ -25,8 +26,14 @@ export default async function BookingPage() {
 
   return (
     <main className={styles.page}>
-      <h1 className="title">احجز موعد</h1>
-      <p className={styles.lede}>اختر الخدمة والحلاق والوقت. التثبيت فوري، وتلغي من حسابك حتى ساعتين قبل الموعد.</p>
+      {/* The turning shears (public/shears/v1): frames load only once on screen, never with reduced motion or Save-Data. */}
+      <header className={styles.head}>
+        <div>
+          <h1 className={styles.headTitle}>احجز موعد</h1>
+          <p className={styles.lede}>اختر الخدمة والحلاق والوقت. التثبيت فوري، وتلغي من حسابك حتى ساعتين قبل الموعد.</p>
+        </div>
+        <ShearsTurntable className={styles.headShears} eager />
+      </header>
 
       {!bookable || !barbers ? (
         <div className={styles.empty} role="alert">
