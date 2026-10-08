@@ -12,7 +12,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { SealMark } from "@/components/SealMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { productImageSrc } from "@/lib/format";
 import type { ActionState } from "@/lib/admin/errors";
 import styles from "./ImageUploader.module.css";
@@ -156,7 +156,7 @@ export function ImageUploader({ productId, current, name }: { productId: string;
           )}
           {(prepared || saved) && (
             <span className="ad-photo__seal">
-              <SealMark size="sm" />
+              <BrandMark kind="seal" width={32} />
             </span>
           )}
         </div>
