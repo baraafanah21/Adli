@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CategoryNav, CategoryStrip } from "@/components/CategoryNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SealMark } from "@/components/SealMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { CartButton } from "@/components/cart/CartButton";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { getCatalog } from "@/lib/catalog";
@@ -15,7 +15,9 @@ export async function SiteHeader() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.home} aria-label="عدلي، الصفحة الرئيسية">
-          <SealMark size="sm" />
+          {/* Phones: the seal. From 720px: the wordmark, in the text colour (cream at night, forest by day). */}
+          <BrandMark kind="seal" width={36} className={styles.homeSeal} />
+          <BrandMark kind="wordmark" tone="mono" height={38} className={styles.homeWordmark} />
         </Link>
         {categories.length > 0 && <CategoryNav categories={categories} />}
         <div className={styles.actions}>

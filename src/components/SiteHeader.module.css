@@ -29,9 +29,24 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
-  border-radius: var(--radius-seal);
+  border-radius: var(--radius-hair);
+  color: var(--ink);
+}
+
+.home .homeWordmark {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .home .homeSeal {
+    display: none;
+  }
+
+  .home .homeWordmark {
+    display: block;
+  }
 }
 
 /* ---------- Categories, desktop: «الفئات» and its panel (CategoryNav) ---------- */
