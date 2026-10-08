@@ -7,7 +7,10 @@
   color: var(--ink);
 }
 
-@media (prefers-reduced-motion: no-preference) {
+/* Only where all of it fits on the screen (≥ 900px wide: one row of columns, about 520px tall). A footer taller than
+   the screen, stuck to its bottom, would keep its top (the logo, the hours) behind the page for good: on phones and
+   tablets it is an ordinary block, scrolled to like any section. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) and (min-height: 600px) {
   .footer {
     position: sticky;
     bottom: 0;

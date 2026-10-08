@@ -547,6 +547,30 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
   to { opacity: 1; transform: none; }
 }
 
+/* ---------- U5.2 motion layer (GSAP, src/lib/motion/effects.ts) ----------
+   Each rule waits for an attribute the motion layer sets once it has loaded, so before that, without JS and with
+   reduced motion (it never loads) nothing here applies. Individual `translate` / `scale`, never `transform`, so the
+   card's hover zoom and the button's press keep working underneath. */
+[data-parallax="on"] img { scale: 1.12; translate: 0 var(--drift, 0); }
+[data-magnetic-on] { translate: calc(var(--mag-x, 0) * 1px) calc(var(--mag-y, 0) * 1px); }
+
+/* The layer being covered dims as the next one rises over it (--cover 0 → 1). */
+[data-shade]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-content) + 1);
+  border-radius: inherit;
+  background: var(--shade);
+  opacity: var(--cover, 0);
+  pointer-events: none;
+}
+
+/* The footer logo's drawing: an overlay of the logo file's own paths, over the BrandMark, removed when filled. */
+[data-motion~="draw-logo"] { position: relative; }
+.ad-draw-logo { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.ad-draw-logo path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-linejoin: round; stroke-linecap: round; }
+
 @media (prefers-reduced-motion: reduce) {
   .ad-photo, .ad-btn--ghost { transition: none; }
   .ad-shelf .ad-card:hover .ad-photo { transform: none; }

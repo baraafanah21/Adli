@@ -12,11 +12,11 @@ export function SalonLocation() {
   const place = SALON.address ?? SALON.city;
   return (
     <section id="location" className={styles.location} aria-labelledby="location-title">
-      <div className={`${styles.text} ad-reveal`}>
-        <h2 id="location-title" className="display-lg">
+      <div className={styles.text}>
+        <h2 id="location-title" className="display-lg" data-motion="words">
           الموقع
         </h2>
-        <p className={`body-lg ${styles.address}`}>{place}</p>
+        <p className={`body-lg ${styles.address} ad-reveal`}>{place}</p>
         <div className={styles.actions}>
           {SALON.mapUrl && (
             <Button variant="primary" href={SALON.mapUrl} target="_blank" rel="noopener noreferrer">

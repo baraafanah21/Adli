@@ -24,7 +24,7 @@ export async function SiteHeader() {
           <ThemeToggle />
           <AccountMenu />
           <CartButton />
-          <Link href="/booking" className={styles.bookButton}>
+          <Link href="/booking" className={styles.bookButton} data-magnetic>
             احجز موعد
           </Link>
         </div>

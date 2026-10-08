@@ -297,18 +297,37 @@
    scrolls to its end first, then stays while the shelf rises. --hero-h is a generous estimate per layout (too large
    only makes it pin a little later; never hides any of it). */
 @media (prefers-reduced-motion: no-preference) {
-  .hero {
+  .hero,
+  .curtain {
     --header-h: 114px;
+  }
+
+  .hero {
     --hero-h: calc(30rem + min(100vw, 520px) * 1.25);
     position: sticky;
     top: min(var(--header-h), calc(100svh - var(--hero-h)));
     z-index: 0;
   }
+
+  /* U5.2: once the motion layer has measured it (--layer-h, data-stacked), a section layer sticks the same way, at its
+     own bottom edge, and the next layer rises over it. The last one sticks to nothing (its parent ends with it). */
+  .curtain[data-stacked] {
+    position: sticky;
+    top: min(var(--header-h), calc(100svh - var(--layer-h)));
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 720px) {
-  .hero {
+  .hero,
+  .curtain {
     --header-h: 53px;
+  }
+}
+
+/* The covered hero dims across the full-bleed forest too (its clip-path keeps the sides). */
+@media (min-width: 840px) {
+  .hero[data-shade]::after {
+    box-shadow: 0 0 0 100vmax var(--shade);
   }
 }
 

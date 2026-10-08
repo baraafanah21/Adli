@@ -17,7 +17,7 @@ export default async function Home() {
   return (
     <main>
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
-      <section className={styles.hero} data-theme="night" aria-labelledby="hero-title">
+      <section className={styles.hero} data-theme="night" data-layer aria-labelledby="hero-title">
         <div className={styles.heroText}>
           <h1 id="hero-title" className={`display-xl ${styles.wordmark}`}>
             عدلي
@@ -39,10 +39,11 @@ export default async function Home() {
       </section>
 
       {/* U4: the hero stays pinned (CSS sticky) and each section after it rises over the one before, on its own layer
-          with a brass top edge. Only the hero pins; the shelf and the salon are taller than the screen. */}
-      <div className={styles.curtain} data-covers-hero>
+          with a brass top edge. U5.2 (motion layer, data-layer): the section layers stick at their own bottom edge too,
+          so the next one rises over each of them, and the layer being covered dims. */}
+      <div className={styles.curtain} data-covers-hero data-layer="rise">
       <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
-        <h2 id="shelf-title" className="display-lg ad-reveal">
+        <h2 id="shelf-title" className="display-lg" data-motion="words">
           منتجات الصالون
         </h2>
         {catalog.data ? (
@@ -61,13 +62,13 @@ export default async function Home() {
 
       </div>
 
-      <div className={`${styles.curtain} ${styles.curtainSunk}`} data-covers-hero>
+      <div className={`${styles.curtain} ${styles.curtainSunk}`} data-covers-hero data-layer="rise">
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">
-        <div className={`${styles.salonHead} ad-reveal`}>
-          <h2 id="salon-title" className="display-lg">
+        <div className={styles.salonHead}>
+          <h2 id="salon-title" className="display-lg" data-motion="words">
             الصالون
           </h2>
-          <p className={`body-lg ${styles.salonText}`}>
+          <p className={`body-lg ${styles.salonText} ad-reveal`}>
             صالون عدلي للحلاقة الرجالية. العطور والكريمات التي تراها هنا هي ما نستعمله ونثق به، وتطلبها برسالة واتساب
             وتستلمها من الصالون.
           </p>
@@ -80,7 +81,7 @@ export default async function Home() {
               <h3 className={styles.boardTitle}>الخدمات والأسعار</h3>
               {services ? (
                 <>
-                  <ul className={styles.prices}>
+                  <ul className={styles.prices} data-motion="price-list">
                     {services
                       .filter((s) => s.bookable_online)
                       .map((s) => (
@@ -89,28 +90,32 @@ export default async function Home() {
                             {s.name_ar}
                             {s.duration_min && <small>{s.duration_min} دقيقة</small>}
                           </span>
-                          <span className={styles.leader} aria-hidden="true" />
-                          <span className={styles.priceValue}>{formatPrice(s.price_ils)}</span>
+                          <span className={styles.leader} aria-hidden="true" data-leader />
+                          <span className={styles.priceValue} data-count={s.price_ils}>
+                            {formatPrice(s.price_ils)}
+                          </span>
                         </li>
                       ))}
                   </ul>
                   {services.some((s) => !s.bookable_online) && (
                     <>
                       <p className={styles.addonsTitle}>إضافات تُطلب في الصالون مع خدمتك</p>
-                      <ul className={`${styles.prices} ${styles.addons}`}>
+                      <ul className={`${styles.prices} ${styles.addons}`} data-motion="price-list">
                         {services
                           .filter((s) => !s.bookable_online)
                           .map((s) => (
                             <li key={s.id}>
                               <span className={styles.priceName}>{s.name_ar}</span>
-                              <span className={styles.leader} aria-hidden="true" />
-                              <span className={styles.priceValue}>{formatPrice(s.price_ils)}</span>
+                              <span className={styles.leader} aria-hidden="true" data-leader />
+                              <span className={styles.priceValue} data-count={s.price_ils}>
+                                {formatPrice(s.price_ils)}
+                              </span>
                             </li>
                           ))}
                       </ul>
                     </>
                   )}
-                  <Button variant="primary" href="/booking">
+                  <Button variant="primary" href="/booking" data-magnetic>
                     احجز موعد
                   </Button>
                 </>
@@ -155,7 +160,7 @@ export default async function Home() {
       </section>
       </div>
 
-      <div className={styles.curtain} data-covers-hero>
+      <div className={styles.curtain} data-covers-hero data-layer="rise">
         <SalonLocation />
       </div>
     </main>

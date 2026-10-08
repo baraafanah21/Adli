@@ -67,7 +67,8 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
   return (
     <Root className={cls}>
       <div className="ad-photo">
-        <div className="ad-photo__frame">
+        {/* Cards: the photo drifts inside the frame on scroll (motion layer); never the product page's LCP photo. */}
+        <div className="ad-photo__frame" data-motion={lg ? undefined : "parallax"}>
           {lg ? (
             photo
           ) : (
