@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "v-line-design",
+      "file": "IMG_0412.mov",
+      "start": 6.8,
+      "duration": 8.4,
+      "poster": 7.6,
+      "why": "ليش هالمقطع (للمراجعة بس، السكربت ما بيقرأه)",
+      "faces": "مين ظاهر وبدّه موافقة (للمراجعة بس)"
+    },
+    {
+      "id": "salon-chair",
+      "file": "photos/chair.jpg"
+    }
+  ]
+}
