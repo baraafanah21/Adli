@@ -1,0 +1,229 @@
+<title>مقص عدلي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Readex+Pro:wght@300;400;500&display=swap">
+<style>
+  /* Layout: a dark photo studio; the rendered bottle fills the height, the page dissolves into its edges. */
+  :root {
+    --paper: #F5F5DB;
+    --forest: #0B300F;
+    --bg: var(--paper);
+    --ink: #0B300F;
+    --ink-muted: #5d6b55;
+    --brass: #9A7426;
+    --line: #cfcbb0;
+    --font-display: Amiri, "Readex Pro", serif;
+    --font-sans: "Readex Pro", "Segoe UI", Tahoma, sans-serif;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse 60% 55% at 50% 45%, color-mix(in srgb, var(--bg) 88%, #fff) 0%, var(--bg) 70%);
+    transition: background 400ms ease;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    overflow: hidden;
+  }
+  .stage {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none; -webkit-user-select: none;
+  }
+  .stage.dragging { cursor: grabbing; }
+  .stage:focus-visible { outline: 2px solid var(--brass); outline-offset: -6px; }
+  .frame {
+    position: relative;
+    height: min(100%, calc(100vw * 1.25));
+    aspect-ratio: 4 / 5;
+    max-width: 100%;
+  }
+  .frame img, .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .name {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 20px);
+    inset-inline-start: 24px;
+    direction: rtl;
+    pointer-events: none;
+    display: grid;
+  }
+  .name h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 6vw, 60px); line-height: 1.2; margin: 0; }
+  .name p { margin: 0; font-size: 13px; letter-spacing: 0.12em; color: var(--ink-muted); font-family: var(--font-display); }
+
+  .controls {
+    position: fixed;
+    inset-inline: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    display: flex; flex-wrap: wrap; gap: 10px 16px;
+    justify-content: center; align-items: center;
+    direction: rtl;
+  }
+  .toggle {
+    font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+    min-height: 44px; padding: 0 18px; border-radius: 999px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 80%, transparent); color: var(--ink);
+    backdrop-filter: blur(6px); cursor: pointer;
+  }
+  .toggle:hover { border-color: var(--brass); }
+  .toggle:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+  .hint { margin: 0; font-size: 13px; color: var(--ink-muted); }
+  body.forest { --bg: var(--forest); --ink: #F5F5DB; --ink-muted: #A9BBA3; --brass: #C9A24A; --line: #3c4a34; color-scheme: dark; }
+  .progress {
+    position: fixed; top: 0; inset-inline: 0; height: 2px;
+    background: var(--brass); transform-origin: right; transform: scaleX(0);
+    transition: transform 200ms ease, opacity 400ms ease;
+  }
+</style>
+
+<div class="progress" id="progress"></div>
+
+<div class="stage" id="stage" role="img" aria-label="مقص حلاقة عدلي، شفرات فولاذ ومقابض نحاس، وعلى برغيه ختم عدلي بالمينا الخضراء. اسحب أو استعمل الأسهم لتدويره.">
+  <div class="frame">
+    <img id="first" src="v1/f000.webp" alt="" fetchpriority="high" decoding="async">
+    <canvas id="canvas" hidden></canvas>
+  </div>
+</div>
+
+<div class="name">
+  <h1>عدلي</h1>
+  <p>ADLI</p>
+</div>
+
+<div class="controls">
+  <button type="button" class="toggle" id="spin" aria-pressed="true">إيقاف الدوران</button>
+  <button type="button" class="toggle" id="bg" aria-pressed="false">خلفية خضراء</button>
+  <p class="hint">اسحب يميناً أو يساراً لتدوير المقص</p>
+</div>
+
+<script>
+(() => {
+  const FRAMES = 48;          // 48 shots cover a full turn (7.5° apart): the shears are not symmetric
+  const DEG_PER_FRAME = 360 / FRAMES;
+  const AUTO_DEG_PER_S = 14;
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('canvas');
+  const first = document.getElementById('first');
+  const progress = document.getElementById('progress');
+  const spinBtn = document.getElementById('spin');
+  const ctx = canvas.getContext('2d');
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let auto = !reduce;
+  let angle = 0, velocity = 0;
+  let dragging = false, lastX = 0, lastT = 0;
+  const imgs = new Array(FRAMES);
+  let loaded = 0, ready = false;
+
+  function syncBtn() {
+    spinBtn.setAttribute('aria-pressed', String(auto));
+    spinBtn.textContent = auto ? 'إيقاف الدوران' : 'تشغيل الدوران';
+  }
+  spinBtn.addEventListener('click', () => { auto = !auto; syncBtn(); });
+  const bgBtn = document.getElementById('bg');
+  bgBtn.addEventListener('click', () => {
+    const on = document.body.classList.toggle('forest');
+    bgBtn.setAttribute('aria-pressed', String(on));
+    bgBtn.textContent = on ? 'خلفية كريمية' : 'خلفية خضراء';
+  });
+  syncBtn();
+
+  function size() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+  }
+
+  function draw() {
+    const t = (((angle % 360) + 360) % 360) / DEG_PER_FRAME;
+    const i = Math.floor(t) % FRAMES;
+    const j = (i + 1) % FRAMES;
+    const f = t - Math.floor(t);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    // transparent frames: add the two shots weighted (1-f, f) so edges blend without a halo
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 1 - f;
+    ctx.drawImage(imgs[i], 0, 0, w, h);
+    if (f > 0.001) {
+      ctx.globalAlpha = f;
+      ctx.drawImage(imgs[j], 0, 0, w, h);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  let prev = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - prev) / 1000, 0.05);
+    prev = now;
+    if (!dragging) {
+      if (Math.abs(velocity) > 0.5) {
+        angle += velocity * dt;
+        velocity *= Math.pow(0.04, dt);   // inertia after a flick
+      } else if (auto) {
+        angle += AUTO_DEG_PER_S * dt;
+      }
+    }
+    if (ready) draw();
+    requestAnimationFrame(loop);
+  }
+
+  function onReady() {
+    ready = true;
+    canvas.hidden = false;
+    size();
+    first.style.visibility = 'hidden';
+    progress.style.opacity = '0';
+    requestAnimationFrame(loop);
+  }
+
+  for (let k = 0; k < FRAMES; k++) {
+    const im = new Image();
+    im.decoding = 'async';
+    im.onload = () => {
+      loaded++;
+      progress.style.transform = `scaleX(${loaded / FRAMES})`;
+      if (loaded === FRAMES) onReady();
+    };
+    im.src = `v1/f${String(k).padStart(3, '0')}.webp`;
+    imgs[k] = im;
+  }
+
+  // drag to turn: one screen width ≈ one full turn
+  stage.addEventListener('pointerdown', (e) => {
+    dragging = true; lastX = e.clientX; lastT = performance.now(); velocity = 0;
+    stage.classList.add('dragging');
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const now = performance.now();
+    const d = ((e.clientX - lastX) / stage.clientWidth) * 360;
+    angle += d;
+    velocity = d / Math.max((now - lastT) / 1000, 0.001);
+    lastX = e.clientX; lastT = now;
+  });
+  const end = () => {
+    dragging = false;
+    stage.classList.remove('dragging');
+    velocity = Math.max(-720, Math.min(720, velocity));
+  };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+
+  // keyboard: arrows turn by one shot
+  stage.tabIndex = 0;
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      angle += (e.key === 'ArrowRight' ? 1 : -1) * DEG_PER_FRAME;
+      auto = false; syncBtn();
+    }
+  });
+
+  window.addEventListener('resize', () => { if (ready) size(); });
+})();
+</script>
