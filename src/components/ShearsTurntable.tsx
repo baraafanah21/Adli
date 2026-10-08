@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { watchHeroCover } from "@/lib/hero-cover";
 import styles from "./ShearsTurntable.module.css";
 
 /*
@@ -34,17 +35,39 @@ type Props = {
   className?: string;
   /** Above the fold (the /booking header): load f000 eagerly. Never preloaded: it is not a page's LCP. */
   eager?: boolean;
+  /** Turning speed, degrees a second (default 14). */
+  degPerS?: number;
+  /** In the hero (U5.1): f000 appears only after the page's load event, so it never competes with the bottle's
+   *  poster (the LCP); and drawing stops while the sections cover the pinned hero. */
+  inHero?: boolean;
 };
 
-export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرات فولاذ ومقابض نحاس، وعلى برغيه ختم عدلي.", className, eager }: Props) {
+export function ShearsTurntable({
+  label = "مقص حلاقة عدلي، شفرات فولاذ ومقابض نحاس، وعلى برغيه ختم عدلي.",
+  className,
+  eager,
+  degPerS = AUTO_DEG_PER_S,
+  inHero = false,
+}: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [live, setLive] = useState(false);
+  // In the hero, f000 waits for the load event (the poster first).
+  const [posterOk, setPosterOk] = useState(!inHero);
+  const speed = useRef(degPerS);
+
+  useEffect(() => {
+    if (posterOk) return;
+    const show = () => setPosterOk(true);
+    if (document.readyState === "complete") show();
+    else window.addEventListener("load", show, { once: true });
+    return () => window.removeEventListener("load", show);
+  }, [posterOk]);
 
   useEffect(() => {
     const stage = stageRef.current;
     const canvas = canvasRef.current;
-    if (!stage || !canvas || !mayTurn()) return;
+    if (!posterOk || !stage || !canvas || !mayTurn()) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -93,17 +116,18 @@ export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرا
           angle += velocity * dt;
           velocity *= Math.pow(0.04, dt); // inertia after a flick
         } else {
-          angle += AUTO_DEG_PER_S * dt;
+          angle += speed.current * dt;
         }
       }
       draw();
       raf = requestAnimationFrame(loop);
     }
 
+    let covered = false;
     function sync() {
       cancelAnimationFrame(raf);
       raf = 0;
-      if (ready && inView && !document.hidden) {
+      if (ready && inView && !covered && !document.hidden) {
         prev = performance.now();
         raf = requestAnimationFrame(loop);
       }
@@ -141,6 +165,12 @@ export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرا
     );
     io.observe(stage);
     document.addEventListener("visibilitychange", sync);
+    const stopCover = inHero
+      ? watchHeroCover((c) => {
+          covered = c;
+          sync();
+        })
+      : () => {};
     const ro = new ResizeObserver(() => {
       if (ready) {
         size();
@@ -187,6 +217,7 @@ export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرا
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
+      stopCover();
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", sync);
@@ -197,7 +228,7 @@ export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرا
       stage.removeEventListener("keydown", onKey);
       for (const im of imgs) im.onload = null;
     };
-  }, []);
+  }, [posterOk, inHero]);
 
   return (
     <div
@@ -208,8 +239,10 @@ export function ShearsTurntable({ label = "مقص حلاقة عدلي، شفرا
       tabIndex={live ? 0 : undefined}
     >
       {/* f000 shown at once, from public/ as it is (18 KB, transparent WebP); the canvas covers it once live. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className={styles.poster} src={frameSrc(0)} alt="" width={494} height={618} loading={eager ? "eager" : "lazy"} decoding="async" />
+      {posterOk && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className={styles.poster} src={frameSrc(0)} alt="" width={494} height={618} loading={eager || inHero ? "eager" : "lazy"} decoding="async" />
+      )}
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
     </div>
   );
