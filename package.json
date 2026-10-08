@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "media:compress": "node scripts/media/compress.mjs",
     "check:phone": "node --experimental-strip-types --no-warnings scripts/phone-check.mjs"
   },
   "dependencies": {
