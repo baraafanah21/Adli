@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { signOut } from "@/app/(site)/auth/actions";
-import { SealMark } from "@/components/SealMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BottleIcon, BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, ScissorsIcon, UserIcon, UsersIcon } from "@/components/icons";
+import { BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, PerfumeIcon, ReceiptIcon, ScissorsIcon, UserIcon, UsersIcon } from "@/components/icons";
 import styles from "@/app/admin/admin.module.css";
 
 /**
@@ -41,7 +41,7 @@ export function AdminNav({ role, newOrders, newBookings, pendingBookings }: Prop
     { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badges: [{ n: newOrders, what: "جديد" }], bar: true },
     // E3.2: every staff member; on the phone it sits in «المزيد».
     { href: "/admin/customers", label: "الزبائن", icon: UserIcon },
-    { href: "/admin/products", label: "المنتجات", icon: BottleIcon },
+    { href: "/admin/products", label: "المنتجات", icon: PerfumeIcon },
     { href: "/admin/stock", label: "المخزون", icon: BoxIcon, bar: true },
   ];
   const ownerOnly: Item[] =
@@ -81,7 +81,7 @@ export function AdminNav({ role, newOrders, newBookings, pendingBookings }: Prop
     <>
       <nav className={styles.sidebar} aria-label="لوحة الصالون">
         <Link href="/admin" className={styles.brand}>
-          <SealMark size="sm" />
+          <BrandMark kind="seal" width={32} />
           <span>لوحة الصالون</span>
         </Link>
         <div className={styles.sideLinks}>

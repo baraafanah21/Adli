@@ -14,18 +14,7 @@ const base = (size: number) => ({
   focusable: false,
 });
 
-/** The perfume bottle from the logo: oval stopper, collar, square body with inner frame and dip tube. */
-export function BottleIcon({ size = 24 }: IconProps) {
-  return (
-    <svg {...base(size)}>
-      <ellipse cx="12" cy="3.6" rx="2.6" ry="1.8" />
-      <path d="M10.6 5.4v2.2h2.8V5.4" />
-      <rect x="5.5" y="7.6" width="13" height="14" rx="1" />
-      <rect x="7.6" y="9.7" width="8.8" height="9.8" rx="0.4" strokeWidth="1" />
-      <path d="M12 7.6v9.4" strokeWidth="1" />
-    </svg>
-  );
-}
+// The logo's own bottle (the cart) is public/brand/adli-bottle-icon-mono.svg through BrandMark, never redrawn here.
 
 export function MoonIcon({ size = 22 }: IconProps) {
   return (
@@ -226,11 +215,15 @@ export type CategoryIconName = keyof typeof CATEGORY_PATHS;
 /** The allowed names, in the order the admin's icon picker shows them. */
 export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_PATHS) as CategoryIconName[];
 
-/** A category's icon by name; an unknown or missing name falls back to the bottle. */
+/** A category's icon by name; an unknown or missing name falls back to the perfume icon. */
 export function CategoryIcon({ name, size = 24 }: IconProps & { name: string | null }) {
-  const paths = name && name in CATEGORY_PATHS ? CATEGORY_PATHS[name as CategoryIconName] : null;
-  if (!paths) return <BottleIcon size={size} />;
+  const paths = name && name in CATEGORY_PATHS ? CATEGORY_PATHS[name as CategoryIconName] : CATEGORY_PATHS.perfume;
   return <svg {...base(size)}>{paths}</svg>;
+}
+
+/** Products (the admin menu): the generic perfume icon, not the logo's bottle. */
+export function PerfumeIcon({ size = 24 }: IconProps) {
+  return <svg {...base(size)}>{CATEGORY_PATHS.perfume}</svg>;
 }
 
 /** Points back. In RTL "back" is to the right. */
