@@ -1,0 +1,73 @@
+/* A brass band of service names, between the page and the footer. Night ground in both themes, like the footer. */
+.marquee {
+  overflow: hidden;
+  border-block: 1px solid var(--brass);
+  background: var(--forest);
+  color: var(--brass-bright);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+}
+
+.run {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding-inline-end: var(--space-6);
+  padding-block: var(--space-4);
+  font-family: var(--font-amiri);
+  font-size: clamp(22px, 4vw, 32px);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.sep {
+  color: var(--brass);
+}
+
+/* Motion welcome: slide by one full run (the copy takes its place, so the loop has no seam). RTL: the band moves
+   toward the reading direction's end. Pauses under the pointer and while anything inside has focus. */
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    animation: marquee 40s linear infinite;
+  }
+
+  .marquee:hover .track,
+  .marquee:focus-within .track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(50%);
+  }
+}
+
+/* Reduced motion: no sliding; one run, wrapped, the copy hidden. */
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    width: auto;
+    justify-content: center;
+  }
+
+  .run {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .run[aria-hidden] {
+    display: none;
+  }
+}
