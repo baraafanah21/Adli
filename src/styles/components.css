@@ -459,3 +459,22 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* ======================================================================
+   Phase U additions: the real logo (BrandMark). Noted in BrandMark/README.md.
+   The files in public/brand/ are the only source: color = the file as <img>, mono = the -mono file as a mask
+   over currentColor. Never redrawn, recoloured inside, outlined, or animated.
+   ====================================================================== */
+.ad-mark { display: block; flex: none; }
+.ad-mark--mono {
+  background: currentColor;
+  -webkit-mask: var(--mark-file) center / contain no-repeat;
+  mask: var(--mark-file) center / contain no-repeat;
+}
+.ad-mark--seal { --mark-file: url("/brand/adli-seal-mono.svg"); }
+.ad-mark--wordmark { --mark-file: url("/brand/adli-wordmark-mono.svg"); }
+.ad-mark--logo { --mark-file: url("/brand/adli-logo-mono.svg"); }
+.ad-mark--bottle { --mark-file: url("/brand/adli-bottle-icon-mono.svg"); }
+
+/* No photo yet: the seal alone, quiet. */
+.ad-photo__empty { color: var(--line-strong); }
