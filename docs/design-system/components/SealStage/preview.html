@@ -4,16 +4,15 @@
   .photo { position: absolute; inset: 0; }
   .photo--perfume { background: radial-gradient(circle at 50% 38%, var(--brass) 0 14%, transparent 15%), linear-gradient(160deg, var(--oud), var(--forest)); }
   .photo--watch { background: radial-gradient(circle at 50% 50%, var(--surface) 0 22%, var(--ink) 23% 26%, transparent 27%), linear-gradient(200deg, var(--line-strong), var(--surface-sunk)); }
-  /* The SealMark component (src/components/SealMark.tsx, size sm) drawn with the same tokens. */
-  .seal { display: grid; place-items: center; width: 36px; aspect-ratio: 1; border-radius: var(--radius-seal); background: var(--cream); padding: 2px; }
-  .seal span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: var(--radius-seal); background: var(--forest); color: var(--cream); font-family: var(--font-amiri); font-size: 18px; box-shadow: inset 0 0 0 2px var(--forest), inset 0 0 0 3px var(--cream); }
+  /* The badge is the logo file itself (public/brand/adli-seal.svg through BrandMark), never redrawn. */
+  .seal { display: block; width: 32px; height: 32px; }
 </style>
 <div class="ad-root" style="padding:32px 24px;display:flex;flex-wrap:wrap;gap:32px">
   <article class="ad-card">
     <div class="ad-photo">
       <div class="ad-photo__frame">
         <span class="photo photo--perfume" role="img" aria-label="صورة المنتج"></span>
-        <span class="ad-photo__seal"><span class="seal"><span>ع</span></span></span>
+        <span class="ad-photo__seal"><img class="seal" src="../../../../public/brand/adli-seal.svg" alt="" width="32" height="32"></span>
       </div>
       <span class="ad-tag">كمية محدودة</span>
     </div>
@@ -30,7 +29,7 @@
     <div class="ad-photo">
       <div class="ad-photo__frame">
         <span class="photo photo--watch" role="img" aria-label="صورة المنتج"></span>
-        <span class="ad-photo__seal"><span class="seal"><span>ع</span></span></span>
+        <span class="ad-photo__seal"><img class="seal" src="../../../../public/brand/adli-seal.svg" alt="" width="32" height="32"></span>
       </div>
     </div>
     <div class="ad-card__body">
