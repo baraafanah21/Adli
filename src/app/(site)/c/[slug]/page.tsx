@@ -5,7 +5,7 @@ import { Button } from "@/components/Button";
 import { ComingSoon } from "@/components/ComingSoon";
 import { SealStage } from "@/components/SealStage";
 import { ArrowBackIcon, CategoryIcon } from "@/components/icons";
-import { getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
+import { getCatalog, getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
 import styles from "./page.module.css";
 
 /** Every active category is prerendered; one added later is built on its first visit (cached the same way). */
@@ -22,13 +22,21 @@ export async function generateMetadata({ params }: PageProps<"/c/[slug]">): Prom
   return { title: category.name_ar, description: category.description_ar ?? undefined };
 }
 
+/** «منتج واحد»، «منتجان»، «3 منتجات»، «11 منتجاً». */
+function productCount(n: number) {
+  if (n === 1) return "منتج واحد";
+  if (n === 2) return "منتجان";
+  if (n <= 10) return `${n} منتجات`;
+  return `${n} منتجاً`;
+}
+
 /**
  * One category's shelf. Inactive or unknown slugs are a 404 (a real one from src/proxy.ts; notFound() here is the
  * fallback); an active category with no products says «قريباً».
  */
 export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
   const { slug } = await params;
-  const { data, error } = await getCategoryShelf(slug);
+  const [{ data, error }, catalog] = await Promise.all([getCategoryShelf(slug), getCatalog()]);
 
   if (error) {
     return (
@@ -45,6 +53,10 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
 
   if (!data) notFound();
   const { category, products } = data;
+  // «تصنيفات أخرى»: the other categories that have products (the cached catalog, no extra query).
+  const others = (catalog.data?.categories ?? []).filter(
+    (c) => c.slug !== category.slug && catalog.data!.products.some((p) => p.category_id === c.id),
+  );
 
   return (
     <main className={styles.page}>
@@ -58,6 +70,7 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
         </span>
         <h1 className="display-lg">{category.name_ar}</h1>
         {category.description_ar && products.length > 0 && <p className={`body-lg ${styles.lede}`}>{category.description_ar}</p>}
+        {products.length > 0 && <p className={styles.count}>{productCount(products.length)}</p>}
       </header>
 
       {products.length > 0 ? (
@@ -75,6 +88,24 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
             تصفّح كل المنتجات
           </Button>
         </ComingSoon>
+      )}
+
+      {others.length > 0 && (
+        <nav className={`${styles.others} ad-reveal`} aria-labelledby="others-title">
+          <h2 id="others-title" className={styles.othersTitle}>
+            تصنيفات أخرى
+          </h2>
+          <ul className="ad-chips">
+            {others.map((c) => (
+              <li key={c.slug}>
+                <Link className={`ad-chip ${styles.otherChip}`} href={`/c/${c.slug}`}>
+                  <CategoryIcon name={c.icon} size={20} />
+                  {c.name_ar}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       )}
     </main>
   );
