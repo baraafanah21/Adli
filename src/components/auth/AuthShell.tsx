@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SealMark } from "@/components/SealMark";
+import { BrandMark } from "@/components/brand/BrandMark";
 import styles from "./auth.module.css";
 
 /** The frame for sign-in, sign-up and password pages: small seal, title, one short line, the form. */
@@ -8,7 +8,7 @@ export function AuthShell({ title, lede, children, footer }: { title: string; le
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="auth-title">
         <div className={styles.seal}>
-          <SealMark size="sm" />
+          <BrandMark kind="logo" tone="mono" width={128} label="عدلي" />
         </div>
         <h1 id="auth-title" className="title">
           {title}

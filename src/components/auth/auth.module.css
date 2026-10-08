@@ -17,13 +17,12 @@
   margin: 0;
 }
 
+/* The full logo, mono in the text colour (forest by day, cream at night). */
 .seal {
   display: flex;
   justify-content: center;
-}
-
-.seal > span {
-  --seal-size: 56px;
+  margin-bottom: var(--space-2);
+  color: var(--ink);
 }
 
 .card h1 {
