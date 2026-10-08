@@ -464,7 +464,7 @@ export function BookingFlow({ services, barbers, initial }: Props) {
                 />
                 {phoneError && (
                   <span className="ad-field__error" id={ids.phoneErr}>
-                    اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة +970 أو +972
+                    اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة <bdi dir="ltr">+970</bdi> أو <bdi dir="ltr">+972</bdi>
                   </span>
                 )}
               </div>
