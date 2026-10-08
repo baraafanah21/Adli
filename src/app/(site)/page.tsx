@@ -26,6 +26,11 @@ export default async function Home() {
           <Button variant="ghost" href="#shelf">
             تصفّح المنتجات
           </Button>
+          {week && (
+            <div className={styles.heroOpen}>
+              <OpenNow week={week} />
+            </div>
+          )}
         </div>
         <div className={styles.heroStage}>
           <HeroStage />
@@ -33,7 +38,7 @@ export default async function Home() {
       </section>
 
       <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
-        <h2 id="shelf-title" className="title">
+        <h2 id="shelf-title" className="display-lg ad-reveal">
           منتجات الصالون
         </h2>
         {catalog.data ? (
@@ -51,22 +56,74 @@ export default async function Home() {
       </section>
 
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">
-        <h2 id="salon-title" className="display-lg">
-          الصالون
-        </h2>
-        <p className={`body-lg ${styles.salonText}`}>
-          صالون عدلي للحلاقة الرجالية. العطور والكريمات التي تراها هنا هي ما نستعمله ونثق به، وتطلبها برسالة واتساب
-          وتستلمها من الصالون.
-        </p>
-        <div className={styles.salonLists}>
-          <div className={styles.list}>
+        <div className={`${styles.salonHead} ad-reveal`}>
+          <h2 id="salon-title" className="display-lg">
+            الصالون
+          </h2>
+          <p className={`body-lg ${styles.salonText}`}>
+            صالون عدلي للحلاقة الرجالية. العطور والكريمات التي تراها هنا هي ما نستعمله ونثق به، وتطلبها برسالة واتساب
+            وتستلمها من الصالون.
+          </p>
+        </div>
+
+        <div className={styles.salonGrid}>
+          {/* The price board: a paper card on the wall, cream in both themes, a brass double hairline like the seal. */}
+          <div className={`${styles.board} ad-reveal`} data-theme="day">
+            <div className={styles.boardInner}>
+              <h3 className={styles.boardTitle}>الخدمات والأسعار</h3>
+              {services ? (
+                <>
+                  <ul className={styles.prices}>
+                    {services
+                      .filter((s) => s.bookable_online)
+                      .map((s) => (
+                        <li key={s.id}>
+                          <span className={styles.priceName}>
+                            {s.name_ar}
+                            {s.duration_min && <small>{s.duration_min} دقيقة</small>}
+                          </span>
+                          <span className={styles.leader} aria-hidden="true" />
+                          <span className={styles.priceValue}>{formatPrice(s.price_ils)}</span>
+                        </li>
+                      ))}
+                  </ul>
+                  {services.some((s) => !s.bookable_online) && (
+                    <>
+                      <p className={styles.addonsTitle}>إضافات تُطلب في الصالون مع خدمتك</p>
+                      <ul className={`${styles.prices} ${styles.addons}`}>
+                        {services
+                          .filter((s) => !s.bookable_online)
+                          .map((s) => (
+                            <li key={s.id}>
+                              <span className={styles.priceName}>{s.name_ar}</span>
+                              <span className={styles.leader} aria-hidden="true" />
+                              <span className={styles.priceValue}>{formatPrice(s.price_ils)}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
+                  <Button variant="primary" href="/booking">
+                    احجز موعد
+                  </Button>
+                </>
+              ) : (
+                <p className="body">تعذّر تحميل الخدمات الآن.</p>
+              )}
+            </div>
+          </div>
+
+          <aside className={styles.salonSide} aria-label="ساعات الدوام">
+            {/* Wide screens only: the shears' first frame, still (a CSS background inside a media query, so phones never
+                fetch it; never the other frames, never turning: the turning shears are /booking's). */}
+            <span className={styles.shearsStill} aria-hidden="true" />
             <h3 className="title">ساعات الدوام</h3>
             {week ? (
               <>
                 <OpenNow week={week} />
-                <dl>
+                <dl className={styles.hours}>
                   {hoursRows(week).map((h) => (
-                    <div key={h.days} className={styles.row}>
+                    <div key={h.days}>
                       <dt>{h.days}</dt>
                       <dd>{h.hours}</dd>
                     </div>
@@ -76,31 +133,9 @@ export default async function Home() {
             ) : (
               <p className="body">تعذّر تحميل ساعات الدوام الآن.</p>
             )}
-          </div>
-          <div className={styles.list}>
-            <h3 className="title">الخدمات والأسعار</h3>
-            {services ? (
-              <>
-                <dl>
-                  {services.map((s) => (
-                    <div key={s.id} className={styles.row}>
-                      <dt>
-                        {s.name_ar}
-                        {!s.bookable_online && <span className={styles.rowNote}>تُطلب في الصالون مع خدمتك</span>}
-                      </dt>
-                      <dd>{formatPrice(s.price_ils)}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <Button variant="primary" href="/booking">
-                  احجز موعد
-                </Button>
-              </>
-            ) : (
-              <p className="body">تعذّر تحميل الخدمات الآن.</p>
-            )}
-          </div>
+          </aside>
         </div>
+
         {SALON.photos.length > 0 && (
           <ul className={styles.photos}>
             {SALON.photos.map((p) => (
