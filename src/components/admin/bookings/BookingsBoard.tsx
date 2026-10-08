@@ -364,7 +364,9 @@ export function BookingsBoard({ data, today, week, newIds, isOwner, pending, ser
             {flags.map((f) => (
               <li key={f.user_id} className={styles.remind}>
                 <span>
-                  <strong>{f.full_name ?? f.email}</strong>
+                  <Link href={`/admin/customers/${f.user_id}`}>
+                    <strong>{f.full_name ?? f.email}</strong>
+                  </Link>
                   <span className={styles.rowMeta}>
                     منذ {flagDate.format(new Date(f.flagged_at))}
                     {f.booking_code ? ` · ${f.booking_code}` : ""}

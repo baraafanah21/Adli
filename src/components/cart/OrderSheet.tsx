@@ -5,7 +5,7 @@ import { useCart } from "@/components/cart/CartContext";
 import { Button } from "@/components/Button";
 import { WhatsAppIcon } from "@/components/icons";
 import { formatPrice, joinAnd } from "@/lib/format";
-import { buildOrderMessage, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp";
+import { buildOrderMessage, whatsappChatUrl, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp";
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
 import { PhoneField, initialPhoneValue } from "@/components/PhoneField";
@@ -20,7 +20,7 @@ type Props = {
 type Phase =
   | { kind: "idle" }
   | { kind: "sending" }
-  | { kind: "error"; message: string }
+  | { kind: "error"; message: string; contact?: boolean }
   | { kind: "sent"; code: string; url: string };
 
 const KEY_STORE = "adli-checkout-key";
@@ -152,6 +152,9 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
       }
       case "rate_limited":
         setPhase({ kind: "error", message: "أرسلت طلبات كثيرة خلال دقيقة. انتظر دقيقة ثم أرسل الطلب من جديد." });
+        break;
+      case "blocked":
+        setPhase({ kind: "error", message: "لا يمكن الطلب من حسابك الآن.", contact: true });
         break;
       case "invalid":
         if (body.field === "name") {
@@ -308,6 +311,14 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
             {phase.kind === "error" && (
               <p className="ad-sheet__error" role="alert">
                 {phase.message}
+                {phase.contact && (
+                  <>
+                    {" "}
+                    <a href={whatsappChatUrl()} target="_blank" rel="noopener noreferrer">
+                      تواصل مع الصالون
+                    </a>
+                  </>
+                )}
               </p>
             )}
 

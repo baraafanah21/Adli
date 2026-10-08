@@ -55,6 +55,8 @@ const RAISED: Record<string, string> = {
   range_invalid: "وقت النهاية يجب أن يكون بعد البداية، ولمدة 31 يوماً على الأكثر.",
   weekly_invalid: "اختر اليوم، ووقت نهاية بعد البداية.",
   hours_invalid: "وقت الإغلاق يجب أن يكون بعد الفتح.",
+  block_reason_required: "اكتب سبب الحظر (3 أحرف على الأقل). يبقى في سجل الزبون، ولا يراه الزبون.",
+  note_too_long: "الملاحظة 1000 حرف على الأقصى.",
 };
 
 export function adminErrorMessage(error: DbError): string {
@@ -89,6 +91,10 @@ export function adminErrorMessage(error: DbError): string {
       return "هذا البريد لم يسجّل في الموقع بعد. اطلب منه إنشاء حساب ثم أضفه.";
     case "P0012":
       return "هذا الشخص في الطاقم من قبل. عدّل دوره من القائمة.";
+    case "P0029":
+      return "هذا الحساب محظور. ارفع الحظر من صفحة الزبون أولاً.";
+    case "P0030":
+      return "هذا الزبون محظور من قبل. حدّث الصفحة.";
     case "P0020":
       return "هذا الوقت غير متاح لهذا الحلاق: محجوز أو مسكّر أو خارج الدوام. اختر وقتاً آخر.";
     case "P0021":
@@ -130,6 +136,6 @@ function conflictMessage(details?: string | null) {
 export const isExpectedAdminError = (code?: string) =>
   !!code &&
   [
-    "42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013", "P0014", "P0015",
+    "42501", "23505", "23514", "23503", "22023", "P0003", "P0005", "P0006", "P0011", "P0012", "P0013", "P0014", "P0015", "P0029", "P0030",
     "P0020", "P0021", "P0025", "P0026", "P0027", "P0028",
   ].includes(code);

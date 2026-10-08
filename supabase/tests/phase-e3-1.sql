@@ -1,7 +1,9 @@
 -- Phase E3.1: upcoming bookings and «جديد», and phones in full form only (the prefix the person chose, no guessing).
 -- Run after 20261008000000_bookings_upcoming_phone_prefix.sql. One DO block ending in a deliberate exception:
 -- everything is rolled back (test accounts, barber, bookings, product, order, the temporary gateway secret, hours).
--- Each line is one check; a line starting with FAIL is a failure. Hours are set for the test so it runs at any time.
+-- Each line is one check; a line starting with FAIL is a failure. Nothing is deleted (so the Supabase connector runs
+-- it): the open days are set to 00:00–24:00 for the test, and the closed day is a day with no salon_hours row
+-- (Friday, always inside the 7-day window).
 
 do $t$
 declare
@@ -11,8 +13,8 @@ declare
   j jsonb;
   tz constant text := 'Asia/Hebron';
   today date := (now() at time zone 'Asia/Hebron')::date;
-  dd date := (now() at time zone 'Asia/Hebron')::date + 3;
-  shut date := (now() at time zone 'Asia/Hebron')::date + 2;   -- a day the salon is closed for the test
+  dd date;     -- the first open day after today: the test's bookings go there
+  shut date;   -- a day in the window with no salon_hours row (closed)
   own uuid := gen_random_uuid();
   stf uuid := gen_random_uuid();
   c1 uuid := gen_random_uuid(); c2 uuid := gen_random_uuid(); c3 uuid := gen_random_uuid();
@@ -32,9 +34,14 @@ begin
   insert into public.user_roles (user_id, role) values (own, 'owner'), (stf, 'staff');
   insert into public.barbers (name_ar, sort) values ('حلاق E31', 950) returning id into ba;
   select id into v_cut from public.services where slug = 'full-cut';
-  delete from public.salon_hours;
-  insert into public.salon_hours (weekday, open_time, close_time)
-    select d, '00:00', '24:00' from generate_series(0, 6) d where d <> extract(dow from shut);
+  update public.salon_hours set open_time = '00:00', close_time = '24:00';
+  select min(g::date) into shut from generate_series(today, today + 6, interval '1 day') g
+  where not exists (select 1 from public.salon_hours h where h.weekday = extract(dow from g));
+  select min(g::date) into dd from generate_series(today + 1, today + 6, interval '1 day') g
+  where exists (select 1 from public.salon_hours h where h.weekday = extract(dow from g));
+  if shut is null or dd is null then
+    raise exception 'E3.1 TEST SETUP: needs one closed weekday and one open day in the next 7 days';
+  end if;
 
   -- Bookings on day D: one seen long ago, one pending a minute old, a walk-in the staff member seated, a cancelled one.
   insert into public.bookings (idempotency_key, user_id, barber_id, service_id, service_name_ar, price_ils, duration_min,
@@ -131,8 +138,25 @@ begin
   r := r || 'walk-in +972 59 900 0002 saved as: ' || (select b.phone from public.bookings b where b.code = v_code) || ' (expect +972599000002)' || E'\n';
   reset role;
 
-  -- Profiles: the trigger refuses a local number, keeps the full one --------------------------------------------------
+  -- Profiles: a signed-in customer (not staff) saves their number from «بياناتي» -----------------------------------
+  -- As the plain authenticated role, the way updateProfile() writes it (RLS: own row; column grant on phone). This is
+  -- the case that caught phone_normalize() running as SECURITY INVOKER (42501 on private.normalize_mobile): the
+  -- trigger must work for a customer, not only for the owner.
+  r := r || 'c1 is not staff: ' || (not exists (select 1 from public.user_roles where user_id = c1))::text || ' (expect true)' || E'\n';
   perform set_config('request.jwt.claims', json_build_object('sub', c1, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    update public.profiles set full_name = 'زبون E31', area = 'رفيديا', phone = '+970599123456' where id = c1;
+    r := r || 'customer saves +970599123456 from «بياناتي»: '
+         || coalesce((select phone from public.profiles where id = c1), 'null') || ' (expect +970599123456)' || E'\n';
+  exception when others then
+    get stacked diagnostics st = returned_sqlstate, msg = message_text;
+    r := r || 'FAIL customer saving their own phone: ' || st || ' ' || msg || E'\n';
+  end;
+  update public.profiles set phone = '+970599000099' where id = c2;
+  reset role;  -- read c2's row as the owner: as c1, RLS would hide it and the check would always pass
+  r := r || 'customer changed someone else''s phone: ' || coalesce((select phone from public.profiles where id = c2), 'null')
+       || ' (expect null: RLS, own row only)' || E'\n';
   set local role authenticated;
   begin
     update public.profiles set phone = '0599123456' where id = c1;

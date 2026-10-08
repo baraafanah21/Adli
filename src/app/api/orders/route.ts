@@ -26,6 +26,8 @@ export type OrderError =
   /** `id` is the variant id; `name_ar` is the product with its variant («طاقية أسود، مقاس L»). */
   | { error: "unavailable"; products: { id: string; name_ar: string | null }[] }
   | { error: "rate_limited" }
+  /** The salon blocked this account (E3.2); ordering signed out (as a guest) still works. */
+  | { error: "blocked" }
   | { error: "failed" };
 
 const fail = (body: OrderError, status: number) => Response.json(body, { status });
@@ -92,6 +94,8 @@ export async function POST(request: Request) {
         } catch {}
         return fail({ error: "unavailable", products }, 409);
       }
+      case "P0029":
+        return fail({ error: "blocked" }, 403);
       case "P0002":
         return fail({ error: "rate_limited" }, 429);
       case "22023":

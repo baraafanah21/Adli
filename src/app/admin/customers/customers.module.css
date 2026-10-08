@@ -1,0 +1,123 @@
+/* «الزبائن» (E3.2). The list rows reuse the products list (../products/products.module.css); this adds the badges,
+   the counts and the customer page's sections. Tokens only. */
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* «تخلّف عن موعد» / «وصل حد المحاولات»: outlined; «محظور»: the oud tone, filled, so it reads first. */
+.badge {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.badge[data-tone="blocked"] {
+  border-color: var(--oud);
+  background: var(--oud);
+  color: var(--surface);
+}
+
+.badge[data-tone="flag"] {
+  border-color: var(--oud);
+  color: var(--oud);
+}
+
+.counts {
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* The customer page ------------------------------------------------------------------------------------------- */
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.facts dt {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.history {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.history a {
+  color: var(--ink);
+}
+
+.history .muted {
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.note textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.private {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}

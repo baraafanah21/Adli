@@ -29,6 +29,8 @@ export type BookingError =
   /** One booking per account per salon day. */
   | { error: "daily_limit" }
   | { error: "rate_limited" }
+  /** The salon blocked this account (E3.2): the page asks the customer to contact the salon. */
+  | { error: "blocked" }
   /** The service or the barber is no longer bookable. */
   | { error: "not_bookable" }
   | { error: "failed" };
@@ -95,6 +97,8 @@ export async function POST(request: Request) {
         return fail({ error: "daily_limit" }, 409);
       case "P0023":
         return fail({ error: "rate_limited" }, 429);
+      case "P0029":
+        return fail({ error: "blocked" }, 403);
       case "P0027":
         return fail({ error: "not_bookable" }, 409);
       case "22023":

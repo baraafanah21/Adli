@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/format";
 import { PhoneField, initialPhoneValue, type PhoneValue } from "@/components/PhoneField";
 import { BOOKING_STATUS, dayChip, formatSlot, formatWhen, type AvailabilityDay, type PlacedBooking } from "@/lib/bookings";
 import type { BookingError } from "@/app/api/bookings/route";
+import { whatsappChatUrl } from "@/lib/whatsapp";
 import styles from "./booking.module.css";
 
 type Service = { id: string; name_ar: string; price_ils: number; duration_min: number };
@@ -29,7 +30,7 @@ type Slots = { key: string; kind: "error" } | { key: string; kind: "ready"; days
 type Phase =
   | { kind: "idle" }
   | { kind: "sending" }
-  | { kind: "error"; message: string; signIn?: boolean }
+  | { kind: "error"; message: string; signIn?: boolean; contact?: boolean }
   | { kind: "done"; booking: PlacedBooking };
 
 const KEY_STORE = "adli-booking-key";
@@ -232,6 +233,9 @@ export function BookingFlow({ services, barbers, initial }: Props) {
         break;
       case "rate_limited":
         setPhase({ kind: "error", message: "حجزت مرات كثيرة خلال ساعة. حاول مرة أخرى بعد قليل." });
+        break;
+      case "blocked":
+        setPhase({ kind: "error", message: "لا يمكن الحجز من حسابك الآن.", contact: true });
         break;
       case "not_bookable":
         setPhase({ kind: "error", message: "هذه الخدمة أو هذا الحلاق لم يعد متاحاً للحجز. حدّث الصفحة واختر من جديد." });
@@ -472,6 +476,14 @@ export function BookingFlow({ services, barbers, initial }: Props) {
                     <>
                       {" "}
                       <Link href={signInHref}>سجّل الدخول</Link>
+                    </>
+                  )}
+                  {phase.contact && (
+                    <>
+                      {" "}
+                      <a href={whatsappChatUrl()} target="_blank" rel="noopener noreferrer">
+                        تواصل مع الصالون
+                      </a>
                     </>
                   )}
                 </p>

@@ -80,8 +80,11 @@ The Supabase advisor reports these as `authenticated_security_definer_function_e
 | `admin_save_salon_hours(weekday, open, close)` | owner | E3 |
 | `admin_delete_product(id)` / `admin_restore_product(id)` | owner | F6 |
 | `admin_upcoming_bookings()` / `admin_bookings_badges()` / `admin_mark_bookings_seen()` | owner, staff | E3.1 |
+| `admin_customers(q, filter, limit, offset)` / `admin_customer(user_id)` | owner, staff (totals: owner only, null for staff) | E3.2 |
+| `admin_reset_booking_rate(user_id)` / `admin_set_customer_note(user_id, note)` | owner, staff | E3.2 |
+| `admin_block_customer(user_id, reason)` / `admin_unblock_customer(user_id, note)` | owner | E3.2 |
 
-Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `P0014` product in a shown bundle (DETAIL = bundle names), `P0015` product archived (frozen until restored), `P0020`–`P0028` bookings (see `CLAUDE.md`, «Bookings»), `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
+Error codes the admin maps to messages: `42501` no permission, `22023` invalid input, `P0001` not enough stock (DETAIL lists each piece with needed and available), `P0003` last owner (the keep_one_owner trigger), `P0005` no account with this email, `P0012` already staff, `P0010` status change not allowed (not P0004: Postgres reserves it for assert_failure, which `exception when others` never catches), `P0006` not found, `P0011` option or value still used by a variant, `P0013` an option has no values yet, `P0014` product in a shown bundle (DETAIL = bundle names), `P0015` product archived (frozen until restored), `P0029` customer blocked (create_booking, place_order), `P0030` already blocked, `P0020`–`P0028` bookings (see `CLAUDE.md`, «Bookings»), `23505` slug / sku / name taken, `23514` a check or integrity trigger (the constraint name is in the message; `src/lib/admin/errors.ts` maps each one).
 
 ## Orders
 

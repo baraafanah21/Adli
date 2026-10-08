@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type ComponentType, type ReactNode 
 import { signOut } from "@/app/(site)/auth/actions";
 import { SealMark } from "@/components/SealMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BottleIcon, BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, ScissorsIcon, UsersIcon } from "@/components/icons";
+import { BottleIcon, BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, ReceiptIcon, ScissorsIcon, UserIcon, UsersIcon } from "@/components/icons";
 import styles from "@/app/admin/admin.module.css";
 
 /**
@@ -39,6 +39,8 @@ export function AdminNav({ role, newOrders, newBookings, pendingBookings }: Prop
       bar: true,
     },
     { href: "/admin/orders", label: "الطلبات", icon: ReceiptIcon, badges: [{ n: newOrders, what: "جديد" }], bar: true },
+    // E3.2: every staff member; on the phone it sits in «المزيد».
+    { href: "/admin/customers", label: "الزبائن", icon: UserIcon },
     { href: "/admin/products", label: "المنتجات", icon: BottleIcon },
     { href: "/admin/stock", label: "المخزون", icon: BoxIcon, bar: true },
   ];
