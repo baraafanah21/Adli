@@ -26,6 +26,8 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 - Copy: plain Arabic, singular polite "you". Action names stay identical through the flow: «أضف للطلب» → «أُضيف للطلب» → «أرسل الطلب على واتساب». Prices `₪ 180`, western digits.
 - Only the order button uses `--whatsapp`, with `--on-whatsapp` (dark) text, never white.
 - Exactly one WebGL canvas on the site: the hero bottle. Products are photos only (full-bleed, `object-fit: cover`); no 3D product models.
+- The shears (`ShearsTurntable`, a 2D canvas of the 48 frames in `public/shears/v1/`, see `docs/design-system/3d-and-motion.md`) turn only in the `/booking` header: `f000` at once, the other frames only once on screen, never with reduced motion or Save-Data, blended with `'lighter'`, `pan-y`. The home page shows `f000` still on wide screens only.
+- Scroll reveals are CSS only (`ad-reveal`, shelf cards), inside `@supports (animation-timeline: view())` and `prefers-reduced-motion: no-preference`: nothing may start at `opacity: 0` outside it. Never on the hero.
 - The hero shows `public/hero/v2/f000.webp` as a preloaded `<img>` poster (unoptimized); three.js loads after the page has loaded, once the hero is on screen (IntersectionObserver) and the browser is idle (`requestIdleCallback`, dynamic import, `ssr: false`), and fades in on its first frame. `prefers-reduced-motion`, Save-Data, a weak device (≤ 2 GB / ≤ 2 cores) or no WebGL2: poster only, three never loads.
 - Canvas: `dpr` ≤ 1.75, paused off-screen and in hidden tabs, full dispose on unmount, horizontal drag only (`touch-action: pan-y`), no zoom.
 - Performance: three is never in the first-load bundle. LCP is the hero title or the poster, never the canvas. Mobile Lighthouse: LCP < 2.5s, CLS < 0.1.
