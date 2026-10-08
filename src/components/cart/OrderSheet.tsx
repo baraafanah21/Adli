@@ -9,6 +9,7 @@ import { buildOrderMessage, whatsappChatUrl, whatsappUrl, type PlacedOrder } fro
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
 import { PhoneField, initialPhoneValue } from "@/components/PhoneField";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 type Props = {
   open: boolean;
@@ -206,7 +207,8 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
           </div>
         ) : lines.length === 0 ? (
           <div className="ad-sheet__empty">
-            <p className="body">سلتك فارغة</p>
+            <BrandMark kind="bottle" tone="mono" height={48} className="ad-sheet__empty-mark" />
+            <p className="body">سلتك فارغة. اختر من الرف، ثم أرسل الطلب على واتساب.</p>
             <Button variant="ghost" href="/#shelf" onClick={close}>
               تصفّح المنتجات
             </Button>
