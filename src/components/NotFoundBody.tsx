@@ -10,11 +10,16 @@ export function NotFoundBody() {
   return (
     <main className={styles.status}>
       <BrandMark kind="seal" width={120} />
-      <h1 className="title">لم نجد هذه الصفحة</h1>
+      <h1 className="display-md">لم نجد هذه الصفحة</h1>
       <p className="body">ربما تغيّر الرابط أو لم يعد المنتج متوفراً.</p>
-      <Button variant="ghost" href="/#shelf">
-        تصفّح المنتجات
-      </Button>
+      <div className={styles.actions}>
+        <Button variant="primary" href="/#shelf">
+          تصفّح المنتجات
+        </Button>
+        <Button variant="ghost" href="/booking">
+          احجز موعد
+        </Button>
+      </div>
     </main>
   );
 }
