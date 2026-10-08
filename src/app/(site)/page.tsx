@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { HeroStage } from "@/components/HeroStage";
+import { SalonLocation } from "@/components/SalonLocation";
 import { Shelf, ShelfFromUrl } from "@/components/Shelf";
 import { Button } from "@/components/Button";
 import { getCatalog } from "@/lib/catalog";
@@ -37,6 +38,9 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* U4: the hero stays pinned (CSS sticky) and each section after it rises over the one before, on its own layer
+          with a brass top edge. Only the hero pins; the shelf and the salon are taller than the screen. */}
+      <div className={styles.curtain}>
       <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
         <h2 id="shelf-title" className="display-lg ad-reveal">
           منتجات الصالون
@@ -55,6 +59,9 @@ export default async function Home() {
         )}
       </section>
 
+      </div>
+
+      <div className={`${styles.curtain} ${styles.curtainSunk}`}>
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">
         <div className={`${styles.salonHead} ad-reveal`}>
           <h2 id="salon-title" className="display-lg">
@@ -146,6 +153,11 @@ export default async function Home() {
           </ul>
         )}
       </section>
+      </div>
+
+      <div className={styles.curtain}>
+        <SalonLocation />
+      </div>
     </main>
   );
 }

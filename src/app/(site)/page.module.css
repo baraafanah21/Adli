@@ -290,3 +290,45 @@
     padding-inline: var(--space-8);
   }
 }
+
+/* ---------- U4: stacking. The hero pins; each later section is a layer that rises over it ----------
+   CSS only. Only where motion is welcome; with reduced motion the page scrolls as usual. The hero pins under the
+   header once all of it has been seen: top = min(header, screen − hero), so a hero taller than the screen (phones)
+   scrolls to its end first, then stays while the shelf rises. --hero-h is a generous estimate per layout (too large
+   only makes it pin a little later; never hides any of it). */
+@media (prefers-reduced-motion: no-preference) {
+  .hero {
+    --header-h: 114px;
+    --hero-h: calc(30rem + min(100vw, 520px) * 1.25);
+    position: sticky;
+    top: min(var(--header-h), calc(100svh - var(--hero-h)));
+    z-index: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 720px) {
+  .hero {
+    --header-h: 53px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 840px) {
+  .hero {
+    --hero-h: 680px;
+  }
+}
+
+/* A layer: full width, opaque, rounded top with the brass hairline and the panel shadow above it. */
+.curtain {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--brass);
+  border-start-start-radius: calc(var(--radius-md) * 2);
+  border-start-end-radius: calc(var(--radius-md) * 2);
+  background: var(--ground);
+  box-shadow: var(--shadow-panel);
+}
+
+.curtainSunk {
+  background: var(--surface-sunk);
+}
