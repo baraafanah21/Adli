@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
     return [
       // Hero frames are versioned by folder (public/hero/v1, v2…): a new set gets a new path.
       { source: "/hero/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      // The shears' frames too (public/shears/v1, a re-render goes to v2).
+      { source: "/shears/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     ];
   },
   async rewrites() {
