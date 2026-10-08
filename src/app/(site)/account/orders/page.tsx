@@ -50,7 +50,7 @@ export default async function MyOrdersPage() {
   return (
     <main className={styles.page}>
       <div className={styles.head}>
-        <h1 className="title">طلباتي</h1>
+        <h1 className="display-md">طلباتي</h1>
         <Link className={styles.link} href="/account">
           بياناتي
         </Link>
