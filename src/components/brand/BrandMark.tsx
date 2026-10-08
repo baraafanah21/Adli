@@ -26,9 +26,11 @@ type Props = {
   height?: number;
   label?: string;
   className?: string;
+  /** Mono only: as wide as its container (the footer's giant wordmark); the height follows the file's ratio. */
+  fluid?: boolean;
 };
 
-export function BrandMark({ kind, tone = "color", width, height, label, className }: Props) {
+export function BrandMark({ kind, tone = "color", width, height, label, className, fluid }: Props) {
   const f = FILES[kind];
   const w = width ?? Math.round(((height ?? 32) * f.w) / f.h);
   const h = height ?? Math.round((w * f.h) / f.w);
@@ -54,7 +56,7 @@ export function BrandMark({ kind, tone = "color", width, height, label, classNam
       aria-label={label}
       aria-hidden={label ? undefined : true}
       className={["ad-mark", "ad-mark--mono", `ad-mark--${kind}`, className].filter(Boolean).join(" ")}
-      style={{ width: w, height: h }}
+      style={fluid ? { width: "100%", aspectRatio: `${f.w} / ${f.h}` } : { width: w, height: h }}
     />
   );
 }
