@@ -22,6 +22,8 @@ type Props = {
   children?: ReactNode;
   /** Product page: replaces the price row (the variant picker owns price, availability and the button). */
   purchase?: ReactNode;
+  /** Product page: one quiet line under the purchase block. */
+  after?: ReactNode;
 };
 
 /**
@@ -29,7 +31,7 @@ type Props = {
  * meta, price and «أضف للطلب». A product with options (size, colour) is chosen on its page, so the card links there.
  * Cards load the small photo (480×600), the product page the large one (1600px).
  */
-export function SealStage({ product, categoryName, size = "md", preload, children, purchase }: Props) {
+export function SealStage({ product, categoryName, size = "md", preload, children, purchase, after }: Props) {
   const href = `/p/${product.slug}`;
   const isOut = product.stock_state === "out";
   const lg = size === "lg";
@@ -117,6 +119,7 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
             )}
           </div>
         )}
+        {after && <p className="ad-card__after">{after}</p>}
       </div>
     </Root>
   );

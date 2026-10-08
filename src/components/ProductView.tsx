@@ -36,6 +36,7 @@ export function ProductView({ product, purchase, note }: { product: ProductDetai
         size="lg"
         preload
         purchase={purchase}
+        after="تثبّت الطلب على واتساب، وتستلمه من الصالون."
       >
         {product.description_ar && <p className={`body-lg ${styles.description}`}>{product.description_ar}</p>}
         {product.bundle && <BundleContents lines={product.bundle} bundlePrice={initial?.price_ils ?? product.price_ils} />}
