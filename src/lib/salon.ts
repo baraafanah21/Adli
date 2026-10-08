@@ -26,6 +26,8 @@ export const SALON = {
   geo: { lat: 32.188603, lng: 34.964322 } as { lat: number; lng: number } | null,
   /** A light still of the map in public/salon/ (shown before the tap). Without it the tap target is a plain card. */
   mapImage: null as string | null,
+  /** The salon's Instagram page (full URL). null until the owner gives it: the footer leaves it out. */
+  instagram: null as string | null,
   /** Real salon photos in public/salon/, e.g. [{ src: "/salon/chair.webp", alt: "…" }] */
   photos: [] as { src: string; alt: string }[],
 };

@@ -45,3 +45,8 @@ export function whatsappUrl(message: string) {
 export function whatsappChatUrl() {
   return `https://wa.me/${salonNumber()}`;
 }
+
+/** A phone call to the salon (the same number as WhatsApp). */
+export function salonTelUrl() {
+  return `tel:+${salonNumber()}`;
+}
