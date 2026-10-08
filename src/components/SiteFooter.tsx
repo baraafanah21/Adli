@@ -20,8 +20,9 @@ const PAGES = [
 /**
  * The public site's footer, on every page in SiteChrome (never in /admin, no admin links). Dark in both themes.
  * The full logo (adli-logo-mono.svg) large in cream, then four columns: hours (salon_hours, «مفتوح الآن»), location,
- * contact, pages; the credit line at the very bottom. It sits behind the page (sticky bottom) so the content rises off
- * it at the end (SiteChrome). Reads only cached salon data (getWeek), never the session.
+ * contact, pages; the credit line at the very bottom. On wide screens it sits behind the page (sticky bottom) so the
+ * content rises off it at the end (SiteChrome); where it is taller than the screen it is an ordinary block. Reads only
+ * cached salon data (getWeek), never the session.
  */
 export async function SiteFooter() {
   const week = await getWeek();
@@ -30,7 +31,7 @@ export async function SiteFooter() {
   return (
     <footer className={styles.footer} data-theme="night">
       <div className={styles.inner}>
-        <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية">
+        <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية" data-motion="draw-logo">
           <BrandMark kind="logo" tone="mono" width={200} />
         </Link>
 

@@ -26,6 +26,7 @@
   --shadow-stage: inset 0 18px 40px -10px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 48px rgba(201, 162, 74, 0.35);
   --shadow-panel: 0 -16px 48px rgba(0, 0, 0, 0.5);
+  --shade: rgba(0, 0, 0, 0.55);
 
   color-scheme: dark;
 }
@@ -49,6 +50,7 @@
   --shadow-stage: inset 0 18px 40px -10px rgba(11, 48, 15, 0.2);
   --shadow-glow: 0 12px 32px rgba(122, 90, 20, 0.22);
   --shadow-panel: 0 -12px 40px rgba(11, 48, 15, 0.14);
+  --shade: rgba(11, 48, 15, 0.3);
 
   color-scheme: light;
 }
