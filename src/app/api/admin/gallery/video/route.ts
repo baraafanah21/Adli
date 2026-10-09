@@ -6,6 +6,7 @@ import { MAX_FILE, MAX_UPLOAD, framedWebp, ownerGate, reply } from "@/lib/admin/
 import { aspectValue } from "@/lib/gallery-aspects";
 import { expireGalleryNow } from "@/lib/gallery-cache";
 import { isH264, readMp4 } from "@/lib/mp4";
+import { keptNote, removeFiles } from "@/lib/storage-files";
 
 /*
   A gallery video (owner only), second step. A video can be 5 MB and a request through Vercel at most 4.5 MB, so the
@@ -44,9 +45,8 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const bucket = supabase.storage.from("gallery");
   const drop = async (paths: string[], message: string, status: number) => {
-    const { error } = await bucket.remove(paths);
-    if (error) console.error("gallery-video: files kept", error.message);
-    return reply({ ok: false, message }, status);
+    const removed = await removeFiles(supabase, "gallery", paths, "gallery-video refused");
+    return reply({ ok: false, message: removed.ok ? message : `${message} ${keptNote(removed.kept.length)}` }, status);
   };
 
   // Sent twice (a retry after it had already worked): the item exists, and its files must not be removed below.
@@ -88,9 +88,11 @@ export async function POST(request: Request) {
     bucket.upload(key, body, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
   const uploads = await Promise.all([upload(paths.poster, framed.large), upload(paths.small, framed.small)]);
   const failed = uploads.find((u) => u.error);
+  // Only the poster files that did get uploaded are removed (with the video).
+  const posterDone = [paths.poster, paths.small].filter((_, i) => !uploads[i].error);
   if (failed) {
     console.error("gallery-video: poster upload", failed.error?.message);
-    return drop([videoPath, paths.poster, paths.small], "تعذّر رفع صورة الغلاف. تأكد من الاتصال وحاول مرة أخرى.", 502);
+    return drop([videoPath, ...posterDone], "تعذّر رفع صورة الغلاف. تأكد من الاتصال وحاول مرة أخرى.", 502);
   }
 
   const { error } = await supabase.rpc("admin_gallery_add", {

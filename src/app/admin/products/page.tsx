@@ -1,3 +1,4 @@
+import { keptNote } from "@/lib/storage-files";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,6 +32,8 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
   // «المؤرشفة» is the owner's (they restore); everyone else only ever sees live products.
   const status = wanted === "active" || wanted === "hidden" || (wanted === "archived" && isOwner) ? wanted : null;
   const deleted = one("deleted")?.slice(0, 120);
+  // Files of the deleted product left in Storage: a count, or -1 when the folder couldn't even be listed.
+  const filesKept = Number(one("files") ?? 0) || 0;
   const archived = one("archived")?.slice(0, 120);
   const q = (one("q") ?? "").trim().slice(0, 80);
 
@@ -93,9 +96,14 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
         )}
       </nav>
 
-      {deleted && (
+      {deleted && !filesKept && (
         <p className="ad-notice ad-notice--ok" role="status">
           حُذف «{deleted}» مع صوره.
+        </p>
+      )}
+      {deleted && filesKept !== 0 && (
+        <p className="ad-notice ad-notice--error" role="alert">
+          حُذف «{deleted}»، لكن {filesKept > 0 ? keptNote(filesKept) : "تعذّر التأكد من حذف صوره من التخزين. أبلغ المطوّر."}
         </p>
       )}
       {archived && (

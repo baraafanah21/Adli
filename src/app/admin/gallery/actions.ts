@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib/admin/errors";
 import { expireGallery } from "@/lib/gallery-cache";
+import { keptNote, removeFiles } from "@/lib/storage-files";
 
 /*
   «المعرض» (U5.3): owner only, here (requireRole) and in the database (admin_gallery_*). Each write expires the cached
@@ -64,7 +65,7 @@ export async function reorderGallery(ids: string[]): Promise<ActionState> {
   return done("حُفظ الترتيب.");
 }
 
-/** The row goes first; then its files (the function returns their paths). A file left behind is only logged. */
+/** The row goes first; then its files (the function returns their paths). A file left behind is logged and said. */
 export async function deleteGalleryItem(id: string): Promise<ActionState> {
   await owner();
   if (!uuid.safeParse(id).success) return { ok: false, message: "حدّث الصفحة وحاول مرة أخرى." };
@@ -73,7 +74,7 @@ export async function deleteGalleryItem(id: string): Promise<ActionState> {
   if (error) return fail(error, "admin_gallery_delete");
   const files = data as { storage_path: string; poster_path: string | null; sm_path: string };
   const paths = [files.storage_path, files.poster_path, files.sm_path].filter((p): p is string => Boolean(p));
-  const { error: removeError } = await supabase.storage.from("gallery").remove(paths);
-  if (removeError) console.error("gallery delete: files kept", id, removeError.message);
-  return done("حُذف من المعرض.");
+  const removed = await removeFiles(supabase, "gallery", paths, `gallery delete ${id}`);
+  const result = done("حُذف من المعرض.");
+  return removed.ok ? result : { ok: false, message: `حُذف من المعرض، لكن ${keptNote(removed.kept.length)}` };
 }
