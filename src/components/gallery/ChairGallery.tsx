@@ -14,6 +14,8 @@
      right to left. The card in the middle is full size, its neighbours 0.92. Only that card plays; the rest show
      their poster; photos drift slowly (Ken Burns). On a computer, hovering a card plays it.
   C. A tap opens the reels viewer (ReelViewer, loaded on demand).
+  D. The photos the owner marked «خلفية» (published) change slowly behind the title and the row (GalleryBackdrop),
+     under a light forest tint, in the night tokens; they are not cards. Without any, the section looks as before.
 
   One video plays at a time on the whole page (playback.ts). Posters are lazy and sized (480px on phones), videos
   are preload="none" here; nothing loads before the section comes near. GSAP (ScrollTrigger, Flip, DrawSVG) comes
@@ -23,7 +25,9 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { GalleryBackdrop } from "./GalleryBackdrop";
 import type { GalleryItem } from "@/lib/gallery";
+import { backdropPhotos, rowItems } from "@/lib/gallery-items";
 import { play, release } from "./playback";
 import styles from "./ChairGallery.module.css";
 
@@ -34,8 +38,10 @@ const RATIO: Record<GalleryItem["aspect"], number> = { "9:16": 9 / 16, "4:5": 4 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = () => typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-export function ChairGallery({ items }: { items: GalleryItem[] }) {
+export function ChairGallery({ items: all }: { items: GalleryItem[] }) {
   const titleId = useId();
+  const items = useMemo(() => rowItems(all), [all]);
+  const photos = useMemo(() => backdropPhotos(all), [all]);
   const featured = useMemo(() => items.find((i) => i.featured && i.kind === "video") ?? null, [items]);
   const section = useRef<HTMLElement>(null);
   const mirror = useRef<HTMLDivElement>(null);
@@ -167,6 +173,11 @@ export function ChairGallery({ items }: { items: GalleryItem[] }) {
         card.style.setProperty("--near", String(Math.max(0, 1 - distance / Math.max(1, r.width))));
       });
       setActive(best);
+      // Every card fits without scrolling (layout widths, not the scaled boxes): centre the row (data-fits, CSS).
+      const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+      const total = cards.current.reduce((sum, card) => sum + (card?.offsetWidth ?? 0), 0) + gap * Math.max(0, cards.current.length - 1);
+      const fits = total <= list.clientWidth - 2 * 16;
+      if (fits !== list.hasAttribute("data-fits")) list.toggleAttribute("data-fits", fits);
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(measure);
@@ -235,6 +246,13 @@ export function ChairGallery({ items }: { items: GalleryItem[] }) {
         </div>
       )}
 
+      <div className={styles.body} data-theme={photos.length ? "night" : undefined}>
+      {photos.length > 0 && (
+        <>
+          <GalleryBackdrop images={photos} paused={open !== null} />
+          <span className={styles.backdropTint} aria-hidden="true" />
+        </>
+      )}
       <div className={styles.head}>
         <h2 id={titleId} className="display-lg" data-motion="words">
           زبايننا المرتّبين
@@ -291,6 +309,7 @@ export function ChairGallery({ items }: { items: GalleryItem[] }) {
           );
         })}
       </ol>
+      </div>
 
       {open !== null && (
         <ReelViewer

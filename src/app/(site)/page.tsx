@@ -7,6 +7,7 @@ import { DrawnLogo } from "@/components/brand/DrawnLogo";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
 import { getCatalog } from "@/lib/catalog";
 import { GALLERY_MIN, getGallery } from "@/lib/gallery";
+import { rowItems } from "@/lib/gallery-items";
 import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
@@ -87,8 +88,9 @@ export default async function Home() {
 
       </div>
 
-      {/* زبايننا المرتّبين (U5.3, the gallery): the salon's photos and silent videos, from 3 published items. */}
-      {gallery && gallery.length >= GALLERY_MIN && (
+      {/* زبايننا المرتّبين (U5.3, the gallery): the salon's photos and silent videos, from 3 published items in the row
+          (the «خلفية» photos behind it don't count). */}
+      {gallery && rowItems(gallery).length >= GALLERY_MIN && (
         <div className={styles.curtain} data-covers-hero data-layer="rise">
           <ChairGallery items={gallery} />
         </div>
