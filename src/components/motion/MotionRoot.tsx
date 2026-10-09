@@ -9,7 +9,6 @@ import {
   magnetic,
   photoParallax,
   priceLists,
-  stackLayers,
 } from "@/lib/motion/effects";
 
 gsap.registerPlugin(useGSAP);
@@ -33,7 +32,6 @@ export default function MotionRoot() {
         if (!motion) return;
         // Top to bottom, so ScrollTrigger refreshes them in page order.
         const cleanups = [
-          stackLayers(root),
           headingWords(root),
           priceLists(root),
           counters(root),

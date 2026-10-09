@@ -15,7 +15,7 @@ import { getServices, getWeek } from "@/lib/salon-data";
 import styles from "./page.module.css";
 
 /** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
-const HOME_SHELF = 8;
+const HOME_SHELF = 4;
 
 export default async function Home() {
   const [catalog, week, services, gallery] = await Promise.all([getCatalog(), getWeek(), getServices(), getGallery()]);
@@ -24,7 +24,7 @@ export default async function Home() {
   return (
     <main>
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
-      <section className={styles.hero} data-theme="night" data-layer aria-labelledby="hero-title">
+      <section className={styles.hero} data-theme="night" aria-labelledby="hero-title">
         <div className={styles.heroText}>
           {/* The full logo (seal + «ADLI ▯ عدلي»), drawing itself then filling: the page's name, from the file. */}
           <h1 id="hero-title" className={styles.logo}>
@@ -45,10 +45,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* U4: the hero stays pinned (CSS sticky) and each section after it rises over the one before, on its own layer
-          with a brass top edge. U5.2 (motion layer, data-layer): the section layers stick at their own bottom edge too,
-          so the next one rises over each of them, and the layer being covered dims. */}
-      <div className={styles.curtain} data-covers-hero data-layer="rise">
+      {/* Each section after the hero is a layer with a brass top edge, one after the other in the page's flow. */}
+      <div className={styles.curtain}>
       <section id="shelf" className={styles.shelf} aria-labelledby="shelf-title" tabIndex={-1}>
         <h2 id="shelf-title" className="display-lg" data-motion="words">
           منتجات الصالون
@@ -91,12 +89,12 @@ export default async function Home() {
       {/* زبايننا المرتّبين (U5.3, the gallery): the salon's photos and silent videos, from 3 published items in the row
           (the «خلفية» photos behind it don't count). */}
       {gallery && rowItems(gallery).length >= GALLERY_MIN && (
-        <div className={styles.curtain} data-covers-hero data-layer="rise">
+        <div className={styles.curtain}>
           <ChairGallery items={gallery} />
         </div>
       )}
 
-      <div className={`${styles.curtain} ${styles.curtainSunk}`} data-covers-hero data-layer="rise">
+      <div className={`${styles.curtain} ${styles.curtainSunk}`}>
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">
         <div className={styles.salonHead}>
           <h2 id="salon-title" className="display-lg" data-motion="words">
@@ -194,7 +192,7 @@ export default async function Home() {
       </section>
       </div>
 
-      <div className={styles.curtain} data-covers-hero data-layer="rise">
+      <div className={styles.curtain}>
         <SalonLocation />
       </div>
     </main>

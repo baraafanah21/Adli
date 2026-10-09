@@ -4,10 +4,8 @@
  * An effect hides something only if it is still under the screen at that moment (`belowFold`); whatever is already
  * in view stays exactly as it is. Every effect hooks onto server-rendered markup by a data attribute, never changes
  * the DOM React owns for longer than its animation (SplitText reverts when done), and
- * returns a cleanup. Colours come from tokens (currentColor, --shade).
+ * returns a cleanup. Colours come from tokens (currentColor).
  *
- *   data-layer            hero and each section layer, in page order: dims (--cover, --shade) as the next one rises
- *   data-layer="rise"     a section layer: sticky at its own bottom edge, so the next one rises over it (U4 extended)
  *   data-motion="words"   a heading: word by word (SplitText words only: Arabic letters are joined, never chars)
  *   data-motion="parallax"  a photo frame: the photo drifts inside it
  *   data-motion="price-list"  the price board: each leader is drawn ([data-leader]), then the price counts up
@@ -30,57 +28,6 @@ const EASE = "power4.out";
 
 const belowFold = (el: Element) => el.getBoundingClientRect().top >= window.innerHeight;
 const rtlOrigin = (el: Element) => (getComputedStyle(el).direction === "rtl" ? "100% 50%" : "0% 50%");
-
-/** Layers: each one dims while the next rises over it; the section layers stick at their bottom edge (CSS). */
-export function stackLayers(root: ParentNode): Cleanup {
-  const layers = [...root.querySelectorAll<HTMLElement>("[data-layer]")];
-  if (layers.length < 2) return;
-  const rising = layers.filter((l) => l.dataset.layer === "rise");
-
-  // Sticky needs each layer's height (top = min(header, screen − height)); kept fresh as the shelf filters change.
-  const ro = new ResizeObserver(() => {
-    for (const l of rising) l.style.setProperty("--layer-h", `${l.offsetHeight}px`);
-  });
-  for (const l of rising) {
-    ro.observe(l);
-    l.dataset.stacked = "";
-  }
-  for (const l of layers) l.dataset.shade = "";
-
-  // ScrollTrigger measures in normal flow: a layer stuck at that moment would give a wrong position.
-  const unstick = () => rising.forEach((l) => delete l.dataset.stacked);
-  const restick = () => rising.forEach((l) => (l.dataset.stacked = ""));
-  ScrollTrigger.addEventListener("refreshInit", unstick);
-  ScrollTrigger.addEventListener("refresh", restick);
-
-  // clamp(): a layer already peeking in at the top of the page (wide screens) starts from 0 there, so nothing on
-  // screen changes the moment this loads.
-  layers.forEach((layer, i) => {
-    const next = layers[i + 1];
-    if (!next) return;
-    gsap.fromTo(
-      layer,
-      { "--cover": 0 },
-      {
-        "--cover": 1,
-        ease: "none",
-        scrollTrigger: { trigger: next, start: "clamp(top bottom)", end: "clamp(top top)", scrub: true },
-      },
-    );
-  });
-
-  return () => {
-    ro.disconnect();
-    ScrollTrigger.removeEventListener("refreshInit", unstick);
-    ScrollTrigger.removeEventListener("refresh", restick);
-    for (const l of layers) {
-      delete l.dataset.shade;
-      delete l.dataset.stacked;
-      l.style.removeProperty("--layer-h");
-      l.style.removeProperty("--cover");
-    }
-  };
-}
 
 /** Section headings, word by word, once. Reverted to the original markup as soon as they have landed. */
 export function headingWords(root: ParentNode): Cleanup {
