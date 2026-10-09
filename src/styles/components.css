@@ -570,11 +570,6 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
    and no pull-to-refresh or scroll chaining starts from it. */
 html[data-reel-open] { overflow-y: scroll; overscroll-behavior: none; }
 
-/* The footer logo's drawing: an overlay of the logo file's own paths, over the BrandMark, removed when filled. */
-[data-motion~="draw-logo"] { position: relative; }
-.ad-draw-logo { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.ad-draw-logo path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-linejoin: round; stroke-linecap: round; }
-
 @media (prefers-reduced-motion: reduce) {
   .ad-photo, .ad-btn--ghost { transition: none; }
   .ad-shelf .ad-card:hover .ad-photo { transform: none; }
@@ -588,4 +583,40 @@ html[data-reel-open] { overflow-y: scroll; overscroll-behavior: none; }
   position: relative;
   z-index: 1;
   background: var(--ground);
+}
+
+/* ---------- DrawnLogo: the hero's logo draws itself, then fills (CSS only, from the first frame) ----------
+   The file's own paths in currentColor. Each is stroked along its length (pathLength 1: dash 1, offset 1 → 0), one
+   after another, then filled while the stroke fades, so the end state is the plain logo. The stroke is in the logo's
+   units (viewBox 1165 wide): about 1.5px at the hero's sizes; butt caps, so no dot marks where a path starts. Reduced motion: filled from the start. */
+.ad-drawn {
+  display: block;
+  height: auto;
+  overflow: visible;
+}
+
+.ad-drawn path {
+  fill: currentColor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ad-drawn path {
+    stroke: currentColor;
+    stroke-width: 12;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    animation:
+      ad-drawn-stroke 2.2s cubic-bezier(0.45, 0, 0.55, 1) calc(0.1s + var(--i, 0) * 0.15s) both,
+      ad-drawn-fill 0.9s var(--ease-out) calc(1.9s + var(--i, 0) * 0.15s) both;
+  }
+}
+
+@keyframes ad-drawn-stroke {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes ad-drawn-fill {
+  from { fill-opacity: 0; stroke-opacity: 1; }
+  to { fill-opacity: 1; stroke-opacity: 0; }
 }

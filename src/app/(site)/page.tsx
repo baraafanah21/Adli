@@ -3,6 +3,7 @@ import { HeroStage } from "@/components/HeroStage";
 import { SalonLocation } from "@/components/SalonLocation";
 import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
+import { DrawnLogo } from "@/components/brand/DrawnLogo";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
 import { getCatalog } from "@/lib/catalog";
 import { GALLERY_MIN, getGallery } from "@/lib/gallery";
@@ -24,10 +25,10 @@ export default async function Home() {
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
       <section className={styles.hero} data-theme="night" data-layer aria-labelledby="hero-title">
         <div className={styles.heroText}>
-          <h1 id="hero-title" className={`display-xl ${styles.wordmark}`}>
-            عدلي
+          {/* The full logo (seal + «ADLI ▯ عدلي»), drawing itself then filling: the page's name, from the file. */}
+          <h1 id="hero-title" className={styles.logo}>
+            <DrawnLogo label="عدلي" />
           </h1>
-          <p className="latin-mark">ADLI</p>
           <p className={`body-lg ${styles.lede}`}>صالون حلاقة رجالي، وعطور وكريمات تختارها هنا وتثبّت طلبها على واتساب.</p>
           <Button variant="ghost" href="#shelf">
             تصفّح المنتجات

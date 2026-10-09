@@ -31,7 +31,7 @@ export async function SiteFooter() {
   return (
     <footer className={styles.footer} data-theme="night">
       <div className={styles.inner}>
-        <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية" data-motion="draw-logo">
+        <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية">
           <BrandMark kind="logo" tone="mono" width={200} />
         </Link>
 

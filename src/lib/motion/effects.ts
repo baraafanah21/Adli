@@ -3,7 +3,7 @@
  * none of this is in the first-load bundle. The golden rule: the page is complete and readable before GSAP arrives.
  * An effect hides something only if it is still under the screen at that moment (`belowFold`); whatever is already
  * in view stays exactly as it is. Every effect hooks onto server-rendered markup by a data attribute, never changes
- * the DOM React owns for longer than its animation (SplitText reverts when done; the logo overlay is removed), and
+ * the DOM React owns for longer than its animation (SplitText reverts when done), and
  * returns a cleanup. Colours come from tokens (currentColor, --shade).
  *
  *   data-layer            hero and each section layer, in page order: dims (--cover, --shade) as the next one rises
@@ -12,15 +12,13 @@
  *   data-motion="parallax"  a photo frame: the photo drifts inside it
  *   data-motion="price-list"  the price board: each leader is drawn ([data-leader]), then the price counts up
  *   data-count            a number that counts up (its text keeps its format; the width is held while it counts)
- *   data-motion="draw-logo"   the footer logo: its outline is drawn, then it fills
  *   data-magnetic         a booking button: leans toward the pointer (mouse only)
  */
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 
-gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 // Phones: the address bar showing / hiding resizes the screen; don't recompute every trigger for it.
 ScrollTrigger.config({ ignoreMobileResize: true });
 
@@ -182,91 +180,6 @@ export function counters(root: ParentNode): Cleanup {
     ScrollTrigger.create({ trigger: el, start: "top 90%", once: true, onEnter: () => count.tween.play() });
   });
   return () => restores.forEach((r) => r());
-}
-
-/**
- * The footer logo draws itself, then fills. The outline is read at runtime from the same file BrandMark masks with
- * (its --mark-file), never copied: an SVG overlay is built from its paths, drawn (DrawSVG), filled, then removed, and
- * the mask is shown again, so the end state is the untouched BrandMark. On wide screens the footer waits behind the page
- * (sticky), so the cue is the page's bottom edge rising past the logo, not the footer's own position.
- */
-export function footerLogo(root: ParentNode, safe: Safe): Cleanup {
-  const link = root.querySelector<HTMLElement>("[data-motion~='draw-logo']");
-  const mark = link?.querySelector<HTMLElement>(".ad-mark");
-  const footer = link?.closest("footer");
-  const page = document.querySelector<HTMLElement>(".ad-page");
-  if (!link || !mark || !footer || !page) return;
-  // Wide screens: the footer waits behind the page (sticky) and is uncovered as the page's bottom edge rises.
-  // Phones: an ordinary block after the page, scrolled to.
-  const behind = () => getComputedStyle(footer).position === "sticky";
-  const seen = behind()
-    ? page.getBoundingClientRect().bottom <= window.innerHeight
-    : link.getBoundingClientRect().top < window.innerHeight;
-  if (seen) return; // already in view: leave it
-  const file = getComputedStyle(mark).getPropertyValue("--mark-file").match(/url\(["']?([^"')]+)["']?\)/)?.[1];
-  if (!file) return;
-
-  const ctrl = new AbortController();
-  let overlay: SVGSVGElement | null = null;
-  let tl: gsap.core.Timeline | null = null;
-  const done = () => {
-    overlay?.remove();
-    overlay = null;
-    mark.style.removeProperty("visibility");
-  };
-
-  const build = safe((text: string) => {
-    const doc = new DOMParser().parseFromString(text, "image/svg+xml");
-    const source = doc.documentElement;
-    const viewBox = source.getAttribute("viewBox");
-    const ds = [...source.querySelectorAll("path")].map((p) => p.getAttribute("d")).filter(Boolean) as string[];
-    if (!viewBox || ds.length === 0 || !mark.isConnected) return;
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", viewBox);
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("class", "ad-draw-logo");
-    // About 1.2 screen pixels, whatever size the logo is shown at.
-    const unitsPerPx = Number(viewBox.split(/\s+/)[2]) / Math.max(1, mark.clientWidth);
-    for (const d of ds) {
-      const path = document.createElementNS(ns, "path");
-      path.setAttribute("d", d);
-      path.setAttribute("fill-rule", "evenodd");
-      path.setAttribute("stroke-width", String(unitsPerPx * 1.2));
-      svg.append(path);
-    }
-    link.append(svg);
-    overlay = svg;
-    mark.style.visibility = "hidden";
-
-    const paths = svg.querySelectorAll("path");
-    // Where the page's bottom edge is when 60% of the logo is in view.
-    const revealLine = () => {
-      const offset = link.getBoundingClientRect().top - footer.getBoundingClientRect().top;
-      const shown = offset + link.offsetHeight * 0.6;
-      return behind() ? window.innerHeight - footer.offsetHeight + shown : window.innerHeight - shown;
-    };
-    tl = gsap
-      .timeline({
-        scrollTrigger: { trigger: page, start: () => `bottom ${revealLine()}px`, once: true },
-        onComplete: done,
-      })
-      .from(paths, { drawSVG: 0, duration: 1.8, ease: "power1.inOut", stagger: 0.12 })
-      .to(paths, { fillOpacity: 1, duration: 0.8, ease: "power2.out" }, "-=0.6")
-      .to(paths, { strokeOpacity: 0, duration: 0.5 }, "<0.3");
-  });
-
-  fetch(file, { signal: ctrl.signal })
-    .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
-    .then(build)
-    .catch(() => done());
-
-  return () => {
-    ctrl.abort();
-    tl?.scrollTrigger?.kill();
-    tl?.kill();
-    done();
-  };
 }
 
 /** Booking buttons lean toward the pointer, at most 6px, and settle back (fine pointer only, see MotionRoot). */

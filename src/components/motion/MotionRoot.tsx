@@ -5,7 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import {
   counters,
-  footerLogo,
   headingWords,
   magnetic,
   photoParallax,
@@ -39,7 +38,6 @@ export default function MotionRoot() {
           priceLists(root),
           counters(root),
           photoParallax(root),
-          footerLogo(root, safe),
           fine ? magnetic(root, safe) : undefined,
         ];
 
