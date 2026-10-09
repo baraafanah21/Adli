@@ -8,6 +8,7 @@ import { ADMIN_STATUS_LABEL, ON_CALENDAR, reminderUrl, type BookingDay, type Day
 import { formatTime } from "@/lib/salon";
 import { BookingSheet, type SheetState } from "./BookingSheet";
 import styles from "./bookings.module.css";
+import { formatDate, formatDayMonth } from "@/lib/dates";
 
 export type PendingBooking = {
   id: string;
@@ -67,7 +68,6 @@ const subscribe = (onChange: () => void) => {
 const currentMinute = () => Math.floor(Date.now() / 60_000);
 const noMinute = () => null;
 
-const flagDate = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "medium" });
 
 /**
  * The day for the whole salon: one column per barber, bookings and closed times on a timeline. Built for a phone in
@@ -165,9 +165,7 @@ export function BookingsBoard({ data, today, week, newIds, isOwner, pending, ser
         </nav>
         <p className={styles.dayTitle}>
           {label.name === "اليوم" || label.name === "بكرا" ? `${label.name}، ` : ""}
-          {new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(
-            new Date(`${data.day}T12:00:00Z`),
-          )}
+          {formatDayMonth(new Date(`${data.day}T12:00:00Z`), { timeZone: "UTC", weekday: true })}
           {data.hours ? ` · ${formatTime(data.hours.open)} – ${formatTime(data.hours.close)}` : " · الصالون مغلق"}
         </p>
       </div>
@@ -368,7 +366,7 @@ export function BookingsBoard({ data, today, week, newIds, isOwner, pending, ser
                     <strong>{f.full_name ?? f.email}</strong>
                   </Link>
                   <span className={styles.rowMeta}>
-                    منذ {flagDate.format(new Date(f.flagged_at))}
+                    منذ {formatDate(f.flagged_at)}
                     {f.booking_code ? ` · ${f.booking_code}` : ""}
                   </span>
                 </span>

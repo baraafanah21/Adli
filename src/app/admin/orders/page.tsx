@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
 import { ORDER_STATUSES, STATUS_LABEL, isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import styles from "./orders.module.css";
+import { formatDayMonthTime } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "الطلبات" };
 
@@ -23,13 +24,6 @@ type Row = {
   total_count: number;
 };
 
-const timeFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", {
-  timeZone: "Asia/Hebron",
-  day: "numeric",
-  month: "short",
-  hour: "numeric",
-  minute: "2-digit",
-});
 
 const isDate = (s: string | undefined): s is string => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
 
@@ -151,7 +145,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
                       {STATUS_LABEL[o.status]}
                     </span>
                   </td>
-                  <td className={styles.time}>{timeFmt.format(new Date(o.created_at))}</td>
+                  <td className={styles.time}>{formatDayMonthTime(o.created_at)}</td>
                 </tr>
               ))}
             </tbody>
@@ -174,7 +168,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
                   </span>
                   <span className={styles.cardBottom}>
                     <span className={styles.muted}>
-                      {timeFmt.format(new Date(o.created_at))} · {o.item_count} قطعة
+                      {formatDayMonthTime(o.created_at)} · {o.item_count} قطعة
                     </span>
                     <span className={styles.total}>{formatPrice(o.total_ils)}</span>
                   </span>

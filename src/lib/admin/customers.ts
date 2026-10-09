@@ -1,5 +1,6 @@
 import type { BookingStatus } from "@/lib/bookings";
 import type { OrderStatus } from "@/lib/order-status";
+import { formatDate } from "@/lib/dates";
 
 /*
   «الزبائن» (E3.2): every account that isn't staff, from admin_customers() / admin_customer(). Each order's amount is
@@ -66,5 +67,4 @@ export type CustomerDetail = {
 export const customerName = (c: { full_name: string | null; email: string | null }) =>
   c.full_name?.trim() || c.email || "زبون بلا اسم";
 
-const shortDate = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", day: "numeric", month: "short", year: "numeric" });
-export const formatShortDate = (iso: string) => shortDate.format(new Date(iso));
+export const formatShortDate = (iso: string) => formatDate(iso);

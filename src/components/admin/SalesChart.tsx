@@ -10,6 +10,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { formatPrice } from "@/lib/format";
 import styles from "./SalesChart.module.css";
+import { formatDayMonth } from "@/lib/dates";
 
 export type DailySales = { day: string; sales: number; orders: number };
 
@@ -17,7 +18,8 @@ const H = 220;
 const PAD = { top: 24, bottom: 28, start: 8, end: 52 }; // `end` holds the y-axis labels (right side in RTL)
 const BAR_MAX = 24;
 
-const dayFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+/** A sales day (UTC midnight of its date): «الجمعة، 9 أكتوبر». */
+const dayLabel = (d: Date) => formatDayMonth(d, { timeZone: "UTC", weekday: true });
 const asDate = (d: string) => new Date(`${d}T00:00:00Z`);
 
 /** A clean top for the axis: 1, 2, 2.5 or 5 × 10^k. */
@@ -152,11 +154,11 @@ export function SalesChart({ days }: { days: DailySales[] }) {
           >
             <strong>{formatPrice(a.sales)}</strong>
             <span>{ordersWord(a.orders)}</span>
-            <span>{dayFmt.format(asDate(a.day))}</span>
+            <span>{dayLabel(asDate(a.day))}</span>
           </div>
         )}
         <span className="sr-only" aria-live="polite">
-          {a ? `${dayFmt.format(asDate(a.day))}: ${formatPrice(a.sales)}، ${ordersWord(a.orders)}` : ""}
+          {a ? `${dayLabel(asDate(a.day))}: ${formatPrice(a.sales)}، ${ordersWord(a.orders)}` : ""}
         </span>
       </div>
 
@@ -173,7 +175,7 @@ export function SalesChart({ days }: { days: DailySales[] }) {
           <tbody>
             {[...days].reverse().map((d) => (
               <tr key={d.day}>
-                <th scope="row">{dayFmt.format(asDate(d.day))}</th>
+                <th scope="row">{dayLabel(asDate(d.day))}</th>
                 <td>{formatPrice(d.sales)}</td>
                 <td>{d.orders}</td>
               </tr>
