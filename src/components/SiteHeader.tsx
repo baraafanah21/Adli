@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { CartButton } from "@/components/cart/CartButton";
 import { AccountMenu } from "@/components/account/AccountMenu";
+import { SearchButton } from "@/components/search/SearchButton";
 import { getCatalog } from "@/lib/catalog";
 import styles from "./SiteHeader.module.css";
 
@@ -21,6 +22,7 @@ export async function SiteHeader() {
         </Link>
         {categories.length > 0 && <CategoryNav categories={categories} />}
         <div className={styles.actions}>
+          <SearchButton />
           <ThemeToggle />
           <AccountMenu />
           <CartButton />
