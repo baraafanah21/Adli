@@ -33,6 +33,15 @@ export function SunIcon({ size = 22 }: IconProps) {
   );
 }
 
+export function SearchIcon({ size = 22 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 5 5" />
+    </svg>
+  );
+}
+
 export function UserIcon({ size = 22 }: IconProps) {
   return (
     <svg {...base(size)}>

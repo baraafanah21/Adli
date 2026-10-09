@@ -17,3 +17,86 @@
 .empty p {
   margin: 0;
 }
+
+/* The search on /products: one wide field above the chips, the magnifier at its start. */
+.search {
+  position: relative;
+  margin-bottom: var(--space-4);
+}
+
+.searchIcon {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--space-4);
+  display: grid;
+  place-items: center;
+  height: 48px;
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 48px;
+  padding-inline: calc(var(--space-4) + 20px + var(--space-3)) 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  /* 16px or more: iOS doesn't zoom into the field. */
+  font-size: 17px;
+}
+
+/* The browser's clear button is hidden: ours (×) is in the brand's colours. */
+.searchInput::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
+.searchClear {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.searchClear:hover {
+  color: var(--brass);
+}
+
+.searchInput::placeholder {
+  color: var(--ink-muted);
+  opacity: 0.8;
+}
+
+.searchInput:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.searchStatus {
+  margin: var(--space-2) var(--space-4) 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.searchStatus:empty {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .search {
+    max-width: 560px;
+  }
+}

@@ -6,3 +6,11 @@ export function setCategoryParam(slug: string | null, hash = "") {
   url.hash = hash;
   window.history.replaceState(null, "", url);
 }
+
+/** Sets ?q= (the search on /products) the same way: replaced, so typing adds no history entries. Browser only. */
+export function setQueryParam(q: string) {
+  const url = new URL(window.location.href);
+  if (q) url.searchParams.set("q", q);
+  else url.searchParams.delete("q");
+  window.history.replaceState(null, "", url);
+}

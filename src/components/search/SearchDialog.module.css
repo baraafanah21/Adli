@@ -1,0 +1,273 @@
+/* The header search. Phones: the whole screen, sliding down from the header. From 720px: a panel near the top of
+   the screen over the dimmed page. Tokens only; the motion stops with reduced motion. */
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--ground);
+  color: var(--ink);
+  overscroll-behavior: contain;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--dur-panel) var(--ease-out), transform var(--dur-panel) var(--ease-out),
+    overlay var(--dur-panel) allow-discrete, display var(--dur-panel) allow-discrete;
+}
+
+.dialog:not([open]) {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-4)));
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-4)));
+  }
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--forest) 70%, transparent);
+  transition: opacity var(--dur-panel) var(--ease-out), overlay var(--dur-panel) allow-discrete,
+    display var(--dur-panel) allow-discrete;
+}
+
+.dialog:not([open])::backdrop {
+  opacity: 0;
+}
+
+@starting-style {
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-3) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+@media (min-width: 720px) {
+  .dialog {
+    inset: var(--space-16) 0 auto;
+    width: min(640px, calc(100vw - 2 * var(--space-8)));
+    height: auto;
+    max-height: calc(100dvh - 2 * var(--space-16));
+    margin-inline: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .panel {
+    height: auto;
+    max-height: calc(100dvh - 2 * var(--space-16));
+    padding: var(--space-4);
+  }
+}
+
+/* The field and «إغلاق» on one line. The browser's own clear button is hidden: ours (×) is in the brand's colours. */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding-block: 0;
+  padding-inline: var(--space-4) 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  /* 16px or more: iOS doesn't zoom into the field. */
+  font-size: 17px;
+}
+
+.input::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
+.clear {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.clear:hover {
+  color: var(--brass);
+}
+
+.input::placeholder {
+  color: var(--ink-muted);
+  opacity: 0.8;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.close {
+  flex: none;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--ink);
+}
+
+.status,
+.hint {
+  margin: var(--space-3) var(--space-2) var(--space-2);
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.status:empty {
+  display: none;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list[hidden] {
+  display: none;
+}
+
+/* One product: the 4:5 thumbnail, name and family, price. 60px tall, well over the 44px touch target. */
+.row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2);
+  border-radius: var(--radius-hair);
+  cursor: pointer;
+}
+
+.row[aria-selected="true"] {
+  background: var(--surface-sunk);
+}
+
+@media (min-width: 720px) {
+  .row[aria-selected="true"] {
+    background: var(--ground);
+  }
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-hair);
+  background: var(--surface-sunk);
+  color: var(--line-strong);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text {
+  display: grid;
+  min-width: 0;
+}
+
+.name,
+.meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.name {
+  font-weight: 500;
+}
+
+.meta {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.price {
+  color: var(--brass);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.out {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.all {
+  display: block;
+  margin-top: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--brass);
+  font-weight: 500;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .dialog::backdrop {
+    transition: none;
+  }
+}
