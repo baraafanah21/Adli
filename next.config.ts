@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     // Categories, products, prices, photos, availability: every admin write (and every stock movement from an order
     // or «المخزون») calls updateTag("catalog"). Safety net for anything else: 5 minutes, plus one visit.
     catalog: { stale: 60, revalidate: 300, expire: 86400 },
+    // «من الكرسي»: changes only from the admin's gallery page, which calls updateTag("gallery") at once. Safety net
+    // for a change made elsewhere: at most an hour, plus one visit.
+    gallery: { stale: 300, revalidate: 3600, expire: 86400 },
   },
   images: {
     remotePatterns: supabaseUrl ? [new URL(`${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/products/**`)] : [],
