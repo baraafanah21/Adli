@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createProduct } from "@/app/admin/products/actions";
 import styles from "./forms.module.css";
 
@@ -9,12 +9,13 @@ type Props = { categories: { id: string; name_ar: string }[]; defaultKind: "simp
 /** The minimum to create a product; everything else is on its page after. It starts hidden. */
 export function NewProductForm({ categories, defaultKind }: Props) {
   const [state, action, pending] = useActionState(createProduct, null);
+  const [kind, setKind] = useState(defaultKind);
   return (
     <form action={action} className={styles.section}>
       <div className={styles.grid}>
         <div className="ad-field">
           <label htmlFor="np-kind">النوع</label>
-          <select id="np-kind" name="kind" defaultValue={defaultKind}>
+          <select id="np-kind" name="kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
             <option value="simple">منتج</option>
             <option value="bundle">بكجة هدية</option>
           </select>
@@ -42,6 +43,13 @@ export function NewProductForm({ categories, defaultKind }: Props) {
           <label htmlFor="np-price">السعر (₪)</label>
           <input id="np-price" name="price" required type="number" inputMode="numeric" min={0} step={1} dir="ltr" />
         </div>
+        {kind === "simple" && (
+          <div className="ad-field">
+            <label htmlFor="np-qty">الكمية الأولية (اختياري)</label>
+            <input id="np-qty" name="initialQty" type="number" inputMode="numeric" min={0} max={100000} step={1} dir="ltr" placeholder="0" />
+            <span className="ad-field__hint">كم قطعة عندك الآن. فاضي = صفر. للمنتج بخيارات (مقاس، لون): بعد «ولّد النسخ».</span>
+          </div>
+        )}
       </div>
       <p className={`ad-notice ${state?.ok ? "ad-notice--ok" : "ad-notice--error"}`} role="alert">
         {state?.message ?? ""}
@@ -51,7 +59,9 @@ export function NewProductForm({ categories, defaultKind }: Props) {
           {pending ? "جارٍ الإنشاء…" : "أنشئ المنتج"}
         </button>
       </div>
-      <p className={styles.muted}>يبدأ المنتج مخفياً ومخزونه 0. أكمل الصورة والخيارات، ثم أظهره من صفحته.</p>
+      <p className={styles.muted}>
+        يبدأ المنتج مخفياً{kind === "simple" ? "، ومخزونه الكمية الأولية (أو 0)" : ""}. أكمل الصورة والخيارات، ثم أظهره من صفحته.
+      </p>
     </form>
   );
 }

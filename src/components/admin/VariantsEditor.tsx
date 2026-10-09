@@ -1,5 +1,5 @@
 import { ActionForm } from "@/components/admin/ActionForm";
-import { updateVariant } from "@/app/admin/products/actions";
+import { setInitialStock, updateVariant } from "@/app/admin/products/actions";
 import type { StockState } from "@/lib/catalog";
 import styles from "./forms.module.css";
 import own from "./VariantsEditor.module.css";
@@ -18,6 +18,8 @@ export type EditorVariant = {
   is_active: boolean;
   sort: number;
   option_count: number;
+  /** No stock movement yet: it can take «الكمية الأولية». */
+  fresh: boolean;
 };
 
 const STATE = { in: "متوفر", low: "كمية محدودة", out: "نفد" } as const;
@@ -28,11 +30,13 @@ type Props = { productId: string; productPrice: number; variants: EditorVariant[
 export function VariantsEditor({ productId, productPrice, variants, optionCount }: Props) {
   const visible = variants.filter((v) => v.is_active);
   const hidden = variants.filter((v) => !v.is_active);
+  const fresh = visible.filter((v) => v.fresh);
+  const variantName = (v: EditorVariant) => v.label ?? (v.option_count === 0 ? "النسخة الأساسية" : v.sku);
 
   const row = (v: EditorVariant) => (
     <li key={v.id} className={own.variant}>
       <div className={own.top}>
-        <span className={own.name}>{v.label ?? (v.option_count === 0 ? "النسخة الأساسية" : v.sku)}</span>
+        <span className={own.name}>{variantName(v)}</span>
         <span className={own.stock} data-state={v.stock_state}>
           المخزون {v.stock_quantity} · {STATE[v.stock_state]}
         </span>
@@ -87,6 +91,35 @@ export function VariantsEditor({ productId, productPrice, variants, optionCount 
       <h2 id="var-title">النسخ</h2>
       {optionCount > 0 && visible.length === 0 && (
         <p className={styles.muted}>لا نسخ ظاهرة بعد. أضف القيم ثم اضغط «ولّد النسخ».</p>
+      )}
+      {fresh.length > 0 && (
+        <div className={own.initial}>
+          <h3 className={own.initialTitle}>الكمية الأولية</h3>
+          <p className={styles.muted}>
+            كم قطعة عندك الآن من كل نسخة. فاضي = صفر. تُسجَّل كاستلام بضاعة («رصيد أولي»)، ومن بعدها يتغيّر المخزون من «المخزون».
+          </p>
+          <ActionForm action={setInitialStock} submit="سجّل الكمية الأولية" pendingLabel="جارٍ التسجيل…">
+            <input type="hidden" name="productId" value={productId} />
+            <div className={styles.grid}>
+              {fresh.map((v) => (
+                <div key={v.id} className="ad-field">
+                  <label htmlFor={`qty-${v.id}`}>{variantName(v)}</label>
+                  <input
+                    id={`qty-${v.id}`}
+                    name={`qty:${v.id}`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={100000}
+                    step={1}
+                    dir="ltr"
+                    placeholder="0"
+                  />
+                </div>
+              ))}
+            </div>
+          </ActionForm>
+        </div>
       )}
       <ul className={own.list}>{visible.map(row)}</ul>
       {hidden.length > 0 && (

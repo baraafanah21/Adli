@@ -63,6 +63,13 @@ export default async function EditProductPage({ params, searchParams }: PageProp
   const p = data as unknown as ProductRow;
 
   const qty = new Map(((stock.data ?? []) as { variant_id: string; stock_quantity: number }[]).map((s) => [s.variant_id, s.stock_quantity]));
+  // Variants with no stock movement yet can take «الكمية الأولية» (staff read stock_movements through RLS).
+  const { data: moved, error: movedError } =
+    p.kind === "bundle" || p.product_variants.length === 0
+      ? { data: [], error: null }
+      : await supabase.from("stock_movements").select("variant_id").in("variant_id", p.product_variants.map((v) => v.id));
+  if (movedError) throw new Error(`product editor: ${movedError.code}`);
+  const hasMovement = new Set((moved ?? []).map((m) => m.variant_id as string));
   const label = new Map(((labels.data ?? []) as { variant_id: string; label_ar: string | null }[]).map((l) => [l.variant_id, l.label_ar]));
 
   const options: EditorOption[] = [...p.product_options].sort(bySort).map((o) => ({
@@ -84,6 +91,7 @@ export default async function EditProductPage({ params, searchParams }: PageProp
     is_active: v.is_active,
     sort: v.sort,
     option_count: v.option_value_ids.length,
+    fresh: !hasMovement.has(v.id),
   }));
   const usedValueIds = [...new Set(p.product_variants.flatMap((v) => v.option_value_ids))];
 
@@ -152,6 +160,11 @@ export default async function EditProductPage({ params, searchParams }: PageProp
       {sp.created === "1" && (
         <p className="ad-notice ad-notice--ok" role="status">
           أُنشئ المنتج. أضف صورته{p.kind === "bundle" ? " ومحتواه" : " وخياراته إن وُجدت"}، ثم أظهره من «التفاصيل».
+        </p>
+      )}
+      {sp.stock === "failed" && (
+        <p className="ad-notice ad-notice--error" role="alert">
+          لم تُسجَّل الكمية الأولية. اكتبها مرة أخرى في «النسخ» تحت.
         </p>
       )}
       {p.archived_at ? (
