@@ -252,14 +252,14 @@ function PhotoStep({ file, position, aspects, look, titleId, hasDone, requestClo
     setTouched(false);
   };
 
-  async function finish(make: () => HTMLCanvasElement, edited: boolean) {
+  async function finish(make: () => HTMLCanvasElement, edited: boolean, chosen: number) {
     if (busy) return;
     setBusy(true);
     setSaveError(null);
     let canvas: HTMLCanvasElement | null = null;
     try {
       canvas = make();
-      const result = await toJpeg(canvas, edited);
+      const result = await toJpeg(canvas, edited, chosen);
       release(canvas);
       canvas = null;
       onNext(result);
@@ -271,10 +271,15 @@ function PhotoStep({ file, position, aspects, look, titleId, hasDone, requestClo
     }
   }
   const save = () => {
-    if (photo && media && frame) void finish(() => renderCrop(photo, { media, frame, crop, zoom, deg }), true);
+    if (photo && media && frame) void finish(() => renderCrop(photo, { media, frame, crop, zoom, deg }), true, aspect);
   };
   const asIs = () => {
-    if (photo) void finish(() => renderWhole(photo), false);
+    // Kept as it is: recorded with the allowed aspect nearest its own (the server crops the centre to it).
+    if (photo) {
+      const own = photo.width / photo.height;
+      const nearest = aspects.reduce((a, b) => (Math.abs(Math.log(b.value / own)) < Math.abs(Math.log(a.value / own)) ? b : a));
+      void finish(() => renderWhole(photo), false, nearest.value);
+    }
   };
 
   // «إلغاء»: nothing is uploaded. After a change (or with photos already done) ask first.
