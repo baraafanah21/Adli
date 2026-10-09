@@ -1,0 +1,357 @@
+/* The image editor (ImageEditor.tsx). Full screen on a phone, a centred window from 720px. The stage is always dark
+   (data-theme="night") so the photo reads the same in both themes. */
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--ground);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--forest) 80%, transparent);
+}
+
+.shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.count {
+  margin-inline-start: auto;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.head > :last-child {
+  margin-inline-start: auto;
+}
+
+.count + :last-child {
+  margin-inline-start: 0;
+}
+
+/* ---------- The stage (LTR). react-easy-crop's own stylesheet is off (disableAutomaticStylesInjection): the same
+   layout rules here, with the colours from tokens. ---------- */
+.stage {
+  position: relative;
+  min-height: 260px;
+  background: var(--surface-sunk);
+  overflow: hidden;
+}
+
+.stage :global(.reactEasyCrop_Container) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.stage :global(.reactEasyCrop_Container:active) {
+  cursor: grabbing;
+}
+
+.stage :global(.reactEasyCrop_Image) {
+  max-width: unset;
+  will-change: transform;
+}
+
+.stage :global(.reactEasyCrop_Contain) {
+  position: absolute;
+  inset: 0;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+}
+
+/* The frame: everything outside it is dimmed. */
+.frame {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--cream) 70%, transparent);
+  box-shadow: 0 0 0 9999em color-mix(in srgb, var(--surface-sunk) 78%, transparent);
+  overflow: hidden;
+}
+
+.frame:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* Rule of thirds, shown while dragging (showGrid). */
+.stage :global(.reactEasyCrop_CropAreaGrid)::before,
+.stage :global(.reactEasyCrop_CropAreaGrid)::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--cream) 55%, transparent);
+  pointer-events: none;
+}
+
+.stage :global(.reactEasyCrop_CropAreaGrid)::before {
+  inset-block: 0;
+  inset-inline: 33.33%;
+  border-block: 0;
+}
+
+.stage :global(.reactEasyCrop_CropAreaGrid)::after {
+  inset-block: 33.33%;
+  inset-inline: 0;
+  border-inline: 0;
+}
+
+/* "card": the frame is the photo inside the shop's card (inner radius, brass hairline); the outer ring and the seal
+   are drawn by .cardDress just outside and inside it. */
+.frameCard {
+  border-color: var(--brass);
+  border-radius: calc(var(--radius-md) - var(--space-1));
+}
+
+.cardDress {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.cardDress::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--space-1) + 1px) * -1);
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-md);
+}
+
+/* Bottom-left, as on the RTL shop's card (inset-inline-end there); this stage is LTR. */
+.seal {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-start: var(--space-2);
+}
+
+.loading,
+.processing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.processing {
+  z-index: 2;
+  background: color-mix(in srgb, var(--surface-sunk) 70%, transparent);
+  color: var(--ink);
+}
+
+/* ---------- Controls ---------- */
+.controls {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.aspects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.aspects [aria-checked="true"] {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--on-brass);
+}
+
+.tools {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color var(--dur-press) var(--ease-out), color var(--dur-press) var(--ease-out);
+}
+
+.tool:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tools .tool:last-child {
+  margin-inline-start: auto;
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.slider input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--brass);
+}
+
+.sliderName {
+  color: var(--ink-muted);
+}
+
+.tiltValue {
+  min-width: 4.5em;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.tiltValue:disabled {
+  color: var(--ink-muted);
+  cursor: default;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* ---------- Save / keep as is / cancel ---------- */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+}
+
+.foot > * {
+  flex: 1 1 auto;
+  min-height: 48px;
+}
+
+.foot > :first-child {
+  flex-basis: 100%;
+}
+
+/* ---------- «تتجاهل التعديل؟» ---------- */
+.confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-4);
+  background: color-mix(in srgb, var(--ground) 94%, transparent);
+  text-align: center;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 720px) {
+  .dialog {
+    inset: 0;
+    width: min(960px, calc(100vw - var(--space-16)));
+    height: min(880px, calc(100dvh - var(--space-16)));
+    margin: auto;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .foot > :first-child {
+    flex-basis: auto;
+    order: 1;
+  }
+
+  .foot {
+    justify-content: flex-end;
+  }
+
+  .foot > * {
+    flex: 0 0 auto;
+    min-width: 9em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool {
+    transition: none;
+  }
+}
