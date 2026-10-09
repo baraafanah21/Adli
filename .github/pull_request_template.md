@@ -28,6 +28,6 @@ Closes #
 - [ ] بدون أسرار أو مفاتيح بأي ملف أو لقطة
 - [ ] بدون `salon-media/` ولا `.github/tmp/` ولا `.claude/settings.json`
 - [ ] الملفات مضافة بالاسم (لا `git add -A` ولا `git add .`)
-- [ ] كل كوميت فيه `Co-authored-by: ahmadshanti <ahmad9shanti@gmail.com>` وبدون أي Co-Authored-By ثاني
+- [ ] الكوميتات بدون أي سطر `Co-authored-by`
 - [ ] منطق الحجوزات والطلبات وصلاحيات الأدمن ما تغيّر (أو مشروح فوق)
 - [ ] `prefers-reduced-motion` والثيمين والجوال مفحوصين
