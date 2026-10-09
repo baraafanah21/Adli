@@ -35,6 +35,8 @@ export type AdminGalleryItem = {
   durationMs: number | null;
   published: boolean;
   featured: boolean;
+  /** «خلفية»: shown behind the section on the home page (when published), not in the row. Photos only. */
+  backdrop: boolean;
 };
 
 /** «صورتان»، «3 صور»، «11 صورة»: the count with the right Arabic form. */
@@ -46,6 +48,7 @@ const CSS_ASPECT: Record<GalleryAspect, string> = { "9:16": "9 / 16", "4:5": "4 
 export type GalleryActions = {
   setPublished: (id: string, published: boolean) => Promise<ActionState>;
   setFeatured: (id: string | null) => Promise<ActionState>;
+  setBackdrop: (id: string, backdrop: boolean) => Promise<ActionState>;
   reorder: (ids: string[]) => Promise<ActionState>;
   remove: (id: string) => Promise<ActionState>;
   prepareVideo: () => Promise<{ ok: true; id: string; path: string } | { ok: false; message: string }>;
@@ -307,6 +310,7 @@ export function GalleryManager({ items, actions }: { items: AdminGalleryItem[]; 
                     </span>
                   )}
                   {item.featured && <span className={styles.mirror}>في المرآة</span>}
+                  {item.backdrop && <span className={styles.mirror}>خلفية</span>}
                 </div>
 
                 <div className={styles.meta}>
@@ -334,6 +338,20 @@ export function GalleryManager({ items, actions }: { items: AdminGalleryItem[]; 
                     <button type="button" className="ad-btn ad-btn--ghost" disabled={busy} onClick={() => run(item.id, () => actions.setFeatured(null))}>
                       أوقف المرآة
                     </button>
+                  )}
+                  {item.kind === "image" && (
+                    <label className={styles.backdropCheck}>
+                      <input
+                        type="checkbox"
+                        checked={item.backdrop}
+                        disabled={busy}
+                        onChange={(e) => {
+                          const on = e.target.checked;
+                          void run(item.id, () => actions.setBackdrop(item.id, on));
+                        }}
+                      />
+                      خلفية
+                    </label>
                   )}
                   <button type="button" className={`ad-btn ad-btn--ghost ${styles.danger}`} disabled={busy} onClick={() => askDelete(item)}>
                     احذف

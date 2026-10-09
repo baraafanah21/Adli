@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GalleryManager, type AdminGalleryItem } from "@/components/admin/gallery/GalleryManager";
-import { deleteGalleryItem, prepareGalleryVideo, reorderGallery, setGalleryFeatured, setGalleryPublished } from "./actions";
+import { deleteGalleryItem, prepareGalleryVideo, reorderGallery, setGalleryBackdrop, setGalleryFeatured, setGalleryPublished } from "./actions";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { galleryFileUrl, type GalleryAspect } from "@/lib/gallery";
@@ -19,6 +19,7 @@ type Row = {
   duration_ms: number | null;
   is_published: boolean;
   is_featured: boolean;
+  is_backdrop: boolean;
 };
 
 /** «المعرض» (U5.3, owner only): what «زبايننا المرتّبين» on the home page shows, in this order. */
@@ -37,15 +38,17 @@ export default async function AdminGalleryPage() {
     durationMs: r.duration_ms,
     published: r.is_published,
     featured: r.is_featured,
+    backdrop: r.is_backdrop,
   }));
-  const published = items.filter((i) => i.published).length;
+  const published = items.filter((i) => i.published && !i.backdrop).length;
 
   return (
     <main className={styles.page}>
       <h1 className="title">المعرض</h1>
       <p className={formStyles.lede}>
         صور الصالون وفيديوهاته في «زبايننا المرتّبين» على الرئيسية، بالترتيب الذي تراه هنا. يظهر القسم حين يكون فيه 3 عناصر منشورة أو
-        أكثر (الآن: {published}). الفيديو صامت دائماً، ولا يُكتب على العناصر شيء.
+        أكثر في الصف (الآن: {published}). الصورة المعلَّمة «خلفية» تظهر خلف القسم بدل الصف، إذا كانت منشورة. الفيديو صامت دائماً، ولا يُكتب على
+        العناصر شيء.
       </p>
       {error && (
         <p className="ad-notice ad-notice--error" role="alert">
@@ -57,6 +60,7 @@ export default async function AdminGalleryPage() {
         actions={{
           setPublished: setGalleryPublished,
           setFeatured: setGalleryFeatured,
+          setBackdrop: setGalleryBackdrop,
           reorder: reorderGallery,
           remove: deleteGalleryItem,
           prepareVideo: prepareGalleryVideo,

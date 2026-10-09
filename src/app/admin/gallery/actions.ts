@@ -55,6 +55,16 @@ export async function setGalleryFeatured(id: string | null): Promise<ActionState
   return done(id ? "صار هذا الفيديو في المرآة." : "أُزيل الفيديو من المرآة.");
 }
 
+/** «خلفية»: a photo behind the section on the home page instead of a card in the row (published ones only show). */
+export async function setGalleryBackdrop(id: string, backdrop: boolean): Promise<ActionState> {
+  await owner();
+  if (!uuid.safeParse(id).success) return { ok: false, message: "حدّث الصفحة وحاول مرة أخرى." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_gallery_set_backdrop", { p_id: id, p_backdrop: backdrop });
+  if (error) return fail(error, "admin_gallery_set_backdrop");
+  return done(backdrop ? "صارت هذه الصورة خلفية للقسم." : "رجعت الصورة لصف الصور.");
+}
+
 /** Every item, once, in the new order. */
 export async function reorderGallery(ids: string[]): Promise<ActionState> {
   await owner();

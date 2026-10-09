@@ -31,6 +31,8 @@ export type GalleryItem = {
   durationMs: number | null;
   /** The one video in «مرآة الصالون». */
   featured: boolean;
+  /** «خلفية»: a photo shown behind the section (GalleryBackdrop), not as a card in the row. */
+  backdrop: boolean;
 };
 
 type Row = {
@@ -44,6 +46,7 @@ type Row = {
   height: number;
   duration_ms: number | null;
   is_featured: boolean;
+  is_backdrop: boolean;
 };
 
 /** A file in the public `gallery` bucket. */
@@ -57,7 +60,7 @@ async function galleryData(): Promise<GalleryItem[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("gallery_items")
-    .select("id, kind, aspect, storage_path, poster_path, sm_path, width, height, duration_ms, is_featured")
+    .select("id, kind, aspect, storage_path, poster_path, sm_path, width, height, duration_ms, is_featured, is_backdrop")
     .order("sort_order")
     .order("created_at");
   if (error) {
@@ -75,6 +78,7 @@ async function galleryData(): Promise<GalleryItem[]> {
     height: r.height,
     durationMs: r.duration_ms,
     featured: r.is_featured,
+    backdrop: r.is_backdrop,
   }));
 }
 

@@ -2,7 +2,6 @@
 
 /* Inside a home page layer: the dark mirror keeps to the layer's rounded top (clip doesn't stop sticky). */
 .section {
-  padding-block: 0 var(--space-16);
   border-radius: inherit;
   overflow: clip;
 }
@@ -97,10 +96,106 @@
   scale: calc(1 + (1 - var(--veil)) * 0.08);
 }
 
+/* ---------- The title and the row, over the photos (GalleryBackdrop) when there are any ---------- */
+.body {
+  position: relative;
+  isolation: isolate;
+  padding-block: var(--space-12) var(--space-16);
+}
+
+/* With photos behind: the night tokens (cream text), the forest under them while the first photo loads. */
+.body[data-theme="night"] {
+  background: var(--forest);
+  color: var(--ink);
+}
+
+.head,
+.row {
+  position: relative;
+  z-index: 1;
+}
+
+/* Two layers at most; each covers the box at its own ratio (--w / --h from GalleryBackdrop), centred by the grid, and
+   drifts along its longer side (--dx / --dy) with a zoom of 1 → 1.08: transform only. Paused unless running. */
+.backdropFill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template: 100% / 100%;
+  place-items: center;
+  overflow: hidden;
+}
+
+.backdropFill picture {
+  display: contents;
+}
+
+.backdropImg {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--fade, 1200ms) ease-in-out;
+}
+
+.backdropImg[data-front] {
+  opacity: 1;
+}
+
+.backdropImg[data-fit] {
+  width: var(--w);
+  height: var(--h);
+  max-width: none;
+  object-fit: fill;
+  animation: backdrop-drift var(--run) cubic-bezier(0.45, 0, 0.55, 1) both;
+  animation-play-state: paused;
+}
+
+.backdropFill[data-running] .backdropImg[data-fit] {
+  animation-play-state: running;
+}
+
+@keyframes backdrop-drift {
+  from {
+    translate: calc(var(--dx) / -2) calc(var(--dy) / 2);
+    scale: 1;
+  }
+  to {
+    translate: calc(var(--dx) / 2) calc(var(--dy) / -2);
+    scale: 1.08;
+  }
+}
+
+/* A light forest tint: the photo stays clearly seen, a little deeper under the title and at the bottom edge where
+   the next layer rises. The title's contrast is the tint plus its own shadow (.body[data-theme] .head h2): over 60%
+   forest even a white wall stays above 3:1 for cream at display size. No blur. */
+.backdropTint {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--forest) 62%, transparent) 0%,
+    color-mix(in srgb, var(--forest) 58%, transparent) 16%,
+    color-mix(in srgb, var(--forest) 30%, transparent) 34%,
+    color-mix(in srgb, var(--forest) 25%, transparent) 70%,
+    color-mix(in srgb, var(--forest) 55%, transparent) 100%
+  );
+  pointer-events: none;
+}
+
+.body[data-theme="night"] .head h2 {
+  text-shadow:
+    0 1px 2px color-mix(in srgb, var(--forest) 80%, transparent),
+    0 2px 24px color-mix(in srgb, var(--forest) 90%, transparent);
+}
+
 /* ---------- The title ---------- */
 .head {
   max-width: 1200px;
-  margin: var(--space-12) auto var(--space-2);
+  margin: 0 auto var(--space-2);
   padding-inline: var(--space-4);
 }
 
@@ -138,6 +233,14 @@
 .cell {
   flex: none;
   scroll-snap-align: center;
+}
+
+/* A short row (a computer, few items: ChairGallery sets data-fits when every card fits): no half-screen padding
+   (that is only there so the first and last card can reach the middle), the cards in the middle. A row that
+   overflows keeps its padding and scrolls as before. */
+.row[data-fits] {
+  justify-content: center;
+  padding-inline: var(--space-4);
 }
 
 /* --near: 1 in the middle, 0 a card away (ChairGallery); --lean: the scroll's speed; --tilt-*: the pointer. */
@@ -202,6 +305,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .backdropImg {
+    transition: none;
+  }
+
   .card {
     transform: none;
     transition: none;
