@@ -10,9 +10,10 @@ type NavCategory = { slug: string; name_ar: string; icon: string | null };
 type Props = { categories: NavCategory[] };
 
 const hrefOf = (slug: string) => `/c/${slug}`;
+const ALL = "/products";
 
 /**
- * Desktop (≥ 720px): «الفئات» opens a grid of the categories with their icons.
+ * Desktop (≥ 720px): «المنتجات» (every product, /products), then «الفئات», which opens a grid of the categories with their icons.
  * Arrow keys move between them (RTL: ArrowLeft is next), Home/End jump, Esc closes and returns focus to the button.
  * Closes on an outside click, when focus leaves it, and after choosing a category.
  */
@@ -89,12 +90,15 @@ export function CategoryNav({ categories }: Props) {
     <nav
       ref={root}
       className={styles.catMenu}
-      aria-label="الفئات"
+      aria-label="المنتجات"
       onKeyDown={onKeyDown}
       onBlur={(e) => {
         if (open && !root.current?.contains(e.relatedTarget as Node)) setOpen(false);
       }}
     >
+      <Link href={ALL} className={styles.catButton} aria-current={pathname === ALL ? "page" : undefined}>
+        المنتجات
+      </Link>
       <button
         ref={button}
         type="button"
@@ -127,7 +131,10 @@ export function CategoryNav({ categories }: Props) {
   );
 }
 
-/** Phones (< 720px): one row of categories under the header, scrolling sideways. The current one scrolls into view. */
+/**
+ * Phones (< 720px): one row under the header, scrolling sideways: «كل المنتجات» (/products), then the categories.
+ * The current one scrolls into view.
+ */
 export function CategoryStrip({ categories }: Props) {
   const pathname = usePathname();
   const list = useRef<HTMLUListElement>(null);
@@ -144,8 +151,13 @@ export function CategoryStrip({ categories }: Props) {
   }, [pathname]);
 
   return (
-    <nav className={styles.strip} aria-label="الفئات">
+    <nav className={styles.strip} aria-label="المنتجات">
       <ul ref={list}>
+        <li>
+          <Link href={ALL} aria-current={pathname === ALL ? "page" : undefined}>
+            كل المنتجات
+          </Link>
+        </li>
         {categories.map((c) => (
           <li key={c.slug}>
             <Link href={hrefOf(c.slug)} aria-current={pathname === hrefOf(c.slug) ? "page" : undefined}>

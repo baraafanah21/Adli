@@ -32,3 +32,11 @@ export function joinAnd(items: string[]) {
   if (items.length === 1) return items[0];
   return `${items.slice(0, -1).join("، ")} و${items[items.length - 1]}`;
 }
+
+/** «منتج واحد»، «منتجان»، «3 منتجات»، «11 منتجاً». */
+export function productCount(n: number) {
+  if (n === 1) return "منتج واحد";
+  if (n === 2) return "منتجان";
+  if (n <= 10) return `${n} منتجات`;
+  return `${n} منتجاً`;
+}

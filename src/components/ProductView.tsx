@@ -42,7 +42,7 @@ export function ProductView({
   const initial = initialVariant(product);
   return (
     <main className={styles.page}>
-      <Link className={styles.back} href={category ? `/c/${category.slug}` : "/#shelf"}>
+      <Link className={styles.back} href={category ? `/c/${category.slug}` : "/products"}>
         <ArrowBackIcon />
         {category ? category.name_ar : "كل المنتجات"}
       </Link>

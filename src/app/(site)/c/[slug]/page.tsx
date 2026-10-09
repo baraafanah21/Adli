@@ -6,6 +6,7 @@ import { ComingSoon } from "@/components/ComingSoon";
 import { SealStage } from "@/components/SealStage";
 import { ArrowBackIcon, CategoryIcon } from "@/components/icons";
 import { getCatalog, getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
+import { productCount } from "@/lib/format";
 import styles from "./page.module.css";
 
 /** Every active category is prerendered; one added later is built on its first visit (cached the same way). */
@@ -20,14 +21,6 @@ export async function generateMetadata({ params }: PageProps<"/c/[slug]">): Prom
   const category = data?.category;
   if (!category) return {};
   return { title: category.name_ar, description: category.description_ar ?? undefined };
-}
-
-/** «منتج واحد»، «منتجان»، «3 منتجات»، «11 منتجاً». */
-function productCount(n: number) {
-  if (n === 1) return "منتج واحد";
-  if (n === 2) return "منتجان";
-  if (n <= 10) return `${n} منتجات`;
-  return `${n} منتجاً`;
 }
 
 /**
@@ -60,7 +53,7 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
 
   return (
     <main className={styles.page}>
-      <Link className={styles.back} href="/#shelf">
+      <Link className={styles.back} href="/products">
         <ArrowBackIcon />
         كل المنتجات
       </Link>
@@ -84,7 +77,7 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
         </ul>
       ) : (
         <ComingSoon category={category} headingLevel="h2">
-          <Button variant="ghost" href="/#shelf">
+          <Button variant="ghost" href="/products">
             تصفّح كل المنتجات
           </Button>
         </ComingSoon>

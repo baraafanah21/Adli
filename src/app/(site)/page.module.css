@@ -87,6 +87,16 @@
   margin: 0 0 var(--space-6);
 }
 
+.shelfGrid {
+  margin-top: var(--space-8);
+}
+
+.shelfMore {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-12);
+}
+
 .error {
   display: grid;
   justify-items: center;

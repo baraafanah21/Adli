@@ -63,7 +63,7 @@ export default async function MyOrdersPage() {
       ) : orders.length === 0 ? (
         <div className={styles.empty}>
           <p>لا توجد طلبات على حسابك بعد. الطلبات التي أرسلتها كضيف لا تظهر هنا.</p>
-          <Link className="ad-btn ad-btn--ghost" href="/#shelf">
+          <Link className="ad-btn ad-btn--ghost" href="/products">
             تصفّح المنتجات
           </Link>
         </div>

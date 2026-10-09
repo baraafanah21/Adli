@@ -13,7 +13,7 @@ export function NotFoundBody() {
       <h1 className="display-md">لم نجد هذه الصفحة</h1>
       <p className="body">ربما تغيّر الرابط أو لم يعد المنتج متوفراً.</p>
       <div className={styles.actions}>
-        <Button variant="primary" href="/#shelf">
+        <Button variant="primary" href="/products">
           تصفّح المنتجات
         </Button>
         <Button variant="ghost" href="/booking">

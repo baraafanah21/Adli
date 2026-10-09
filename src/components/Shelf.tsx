@@ -9,15 +9,21 @@ import { setCategoryParam } from "@/lib/category-param";
 import type { Category, ProductCard } from "@/lib/catalog";
 import styles from "./Shelf.module.css";
 
-type Props = { categories: Category[]; products: ProductCard[] };
+type Props = {
+  categories: Category[];
+  products: ProductCard[];
+  /** Preload the first card's photo (the page's LCP on a phone: /products). */
+  preloadFirst?: boolean;
+};
 
 /**
  * Only categories with products are chips (U2): an empty one stays in the header's «الفئات» with «قريباً», and ?c= on
  * it still shows its «قريباً» panel.
  * `requested` is the ?c= slug; the home page renders <ShelfFromUrl> inside <Suspense> with this as the fallback,
- * so the prerendered page shows the whole shelf and ?c= applies on the client.
+ * so the prerendered page shows the whole shelf and ?c= applies on the client. Used by /products (the home page
+ * shows its first cards only, without chips).
  */
-export function Shelf({ categories, products, requested = null }: Props & { requested?: string | null }) {
+export function Shelf({ categories, products, preloadFirst = false, requested = null }: Props & { requested?: string | null }) {
   const activeCategory = categories.find((c) => c.slug === requested) ?? null;
 
   const nameById = new Map(categories.map((c) => [c.id, c.name_ar]));
@@ -36,9 +42,9 @@ export function Shelf({ categories, products, requested = null }: Props & { requ
       />
       {visible.length > 0 ? (
         <ul className={`ad-shelf ${styles.grid}`}>
-          {visible.map((p) => (
+          {visible.map((p, i) => (
             <li key={p.id}>
-              <SealStage product={p} categoryName={nameById.get(p.category_id)} />
+              <SealStage product={p} categoryName={nameById.get(p.category_id)} preload={preloadFirst && i === 0} />
             </li>
           ))}
         </ul>
