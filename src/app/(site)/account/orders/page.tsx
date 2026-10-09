@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
 import styles from "./orders.module.css";
+import { formatDateTime } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "طلباتي", robots: { index: false } };
 
@@ -33,7 +34,6 @@ type Row = {
   }[];
 };
 
-const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "long", timeStyle: "short" });
 
 export default async function MyOrdersPage() {
   const user = await requireUser("/account/orders");
@@ -77,7 +77,7 @@ export default async function MyOrdersPage() {
                   {STATUS[o.status] ?? o.status}
                 </span>
               </div>
-              <p className={styles.date}>{dateFmt.format(new Date(o.created_at))}</p>
+              <p className={styles.date}>{formatDateTime(o.created_at)}</p>
               <ul className={styles.items}>
                 {o.order_items.map((i) => (
                   <li key={i.id}>

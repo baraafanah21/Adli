@@ -1,3 +1,5 @@
+import { formatWeekdayTime } from "@/lib/dates";
+
 /*
   Errors from the admin_* functions → Arabic that says what to do. Used by every admin Server Action.
   Codes: supabase/migrations/20261007000200_admin_products.sql (and 0000 / 0100 for orders, 0700 / 0800 for bookings,
@@ -125,12 +127,6 @@ export function adminErrorMessage(error: DbError): string {
   }
 }
 
-const conflictTime = new Intl.DateTimeFormat("ar-PS-u-nu-latn", {
-  timeZone: "Asia/Hebron",
-  weekday: "long",
-  hour: "numeric",
-  minute: "2-digit",
-});
 
 /** P0026: the bookings in the way, by code and time, so the salon knows what to move first. */
 function conflictMessage(details?: string | null) {
@@ -140,7 +136,7 @@ function conflictMessage(details?: string | null) {
   } catch {}
   const shown = list
     .slice(0, 5)
-    .map((c) => `${c.code} (${[c.customer_name, c.barber_name_ar, conflictTime.format(new Date(c.starts_at))].filter(Boolean).join("، ")})`);
+    .map((c) => `${c.code} (${[c.customer_name, c.barber_name_ar, formatWeekdayTime(c.starts_at)].filter(Boolean).join("، ")})`);
   const more = list.length > 5 ? ` و${list.length - 5} غيرها` : "";
   return `يتعارض مع مواعيد قائمة: ${shown.join("، ")}${more}. ألغها أو انقلها أولاً، أو اختر وقتاً آخر.`;
 }

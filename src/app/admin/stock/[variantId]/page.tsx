@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { REASON_LABEL, STOCK_STATE_LABEL, type StockReason } from "@/lib/admin/stock";
 import styles from "./variant.module.css";
+import { formatDateTime } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "تعديل المخزون" };
 
@@ -21,7 +22,6 @@ type Movement = {
   balance: number;
 };
 
-const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "medium", timeStyle: "short" });
 
 export default async function StockVariantPage({ params }: PageProps<"/admin/stock/[variantId]">) {
   const { variantId } = await params;
@@ -116,7 +116,7 @@ export default async function StockVariantPage({ params }: PageProps<"/admin/sto
                   )}
                   {m.note && <span className={styles.note}>{m.note}</span>}
                   <span className={styles.muted}>
-                    {dateFmt.format(new Date(m.created_at))}
+                    {formatDateTime(m.created_at)}
                     {m.actor_name ? ` · ${m.actor_name}` : ""}
                   </span>
                 </span>

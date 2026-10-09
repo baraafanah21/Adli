@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/format";
 import { STATUS_LABEL, type OrderStatus } from "@/lib/order-status";
 import { whatsappDigits } from "@/lib/phone";
 import styles from "../order.module.css";
+import { formatDateTime } from "@/lib/dates";
 
 type Detail = {
   id: string;
@@ -32,7 +33,6 @@ type Detail = {
   events: { from_status: OrderStatus | null; to_status: OrderStatus; note: string | null; created_at: string; actor_name: string | null }[];
 };
 
-const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "medium", timeStyle: "short" });
 
 export async function generateMetadata({ params }: PageProps<"/admin/orders/[code]">): Promise<Metadata> {
   const { code } = await params;
@@ -64,7 +64,7 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/order
         <span className="ad-status" data-status={order.status}>
           {STATUS_LABEL[order.status]}
         </span>
-        <p className={styles.muted}>{dateFmt.format(new Date(order.created_at))}</p>
+        <p className={styles.muted}>{formatDateTime(order.created_at)}</p>
       </header>
 
       <OrderActions orderId={order.id} status={order.status} />
@@ -152,7 +152,7 @@ export default async function AdminOrderPage({ params }: PageProps<"/admin/order
                   : "وصل الطلب من الموقع"}
               </span>
               <span className={styles.muted}>
-                {dateFmt.format(new Date(e.created_at))}
+                {formatDateTime(e.created_at)}
                 {e.from_status ? ` · ${e.actor_name ?? "عضو سابق في الطاقم"}` : e.actor_name ? ` · ${e.actor_name}` : " · ضيف"}
               </span>
               {e.note && <span className={styles.note}>{e.note}</span>}

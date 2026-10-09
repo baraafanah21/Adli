@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { removeStaff, updateStaff } from "@/app/admin/staff/actions";
 import styles from "./forms.module.css";
 import own from "./StaffMember.module.css";
+import { formatDate } from "@/lib/dates";
 
 export type Member = {
   user_id: string;
@@ -15,7 +16,6 @@ export type Member = {
   granted_by_name: string | null;
 };
 
-const dateFmt = new Intl.DateTimeFormat("ar-PS-u-nu-latn", { timeZone: "Asia/Hebron", dateStyle: "medium" });
 
 /** One person: the role; removal asks first, inside the page. Barbers are linked in «الصالون». */
 export function StaffMember({ member: m, isSelf }: { member: Member; isSelf: boolean }) {
@@ -39,7 +39,7 @@ export function StaffMember({ member: m, isSelf }: { member: Member; isSelf: boo
           {m.email}
         </span>
         <span className={own.meta}>
-          منذ {dateFmt.format(new Date(m.since))}
+          منذ {formatDate(m.since)}
           {m.granted_by_name ? ` · أضافه ${m.granted_by_name}` : ""}
         </span>
       </div>
