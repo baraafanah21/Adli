@@ -13,7 +13,6 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { BRAND, SCENE } from "@/lib/brand";
-import { watchHeroCover } from "@/lib/hero-cover";
 
 type Props = {
   className?: string;
@@ -319,21 +318,14 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
     let carved = false;
     let disposed = false;
     let inView = true;
-    // Drawing stops entirely while the hero is off screen, covered, or in a hidden tab, and resumes when it shows again.
-    let covered = false;
-    const sync = () => renderer.setAnimationLoop(carved && inView && !covered && !document.hidden ? frame : null);
+    // Drawing stops entirely while the hero is off screen or in a hidden tab, and resumes when it shows again.
+    const sync = () => renderer.setAnimationLoop(carved && inView && !document.hidden ? frame : null);
     const io = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       sync();
     });
     io.observe(host);
     document.addEventListener("visibilitychange", sync);
-
-    // Covered by the sections rising over the pinned hero (src/lib/hero-cover.ts).
-    const stopCover = watchHeroCover((c) => {
-      covered = c;
-      sync();
-    });
 
     fetch(SEAL_SVG)
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${SEAL_SVG}: ${r.status}`))))
@@ -361,7 +353,6 @@ export default function HeroBottle({ className, onReady, onError }: Props) {
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", sync);
-      stopCover();
       canvas.removeEventListener("webglcontextlost", onLost);
       controls.dispose();
 

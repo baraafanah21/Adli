@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { watchHeroCover } from "@/lib/hero-cover";
 import styles from "./ShearsTurntable.module.css";
 
 /*
@@ -38,7 +37,7 @@ type Props = {
   /** Turning speed, degrees a second (default 14). */
   degPerS?: number;
   /** In the hero (U5.1): f000 appears only after the page's load event, so it never competes with the bottle's
-   *  poster (the LCP); and drawing stops while the sections cover the pinned hero. */
+   *  poster (the LCP). */
   inHero?: boolean;
 };
 
@@ -123,11 +122,10 @@ export function ShearsTurntable({
       raf = requestAnimationFrame(loop);
     }
 
-    let covered = false;
     function sync() {
       cancelAnimationFrame(raf);
       raf = 0;
-      if (ready && inView && !covered && !document.hidden) {
+      if (ready && inView && !document.hidden) {
         prev = performance.now();
         raf = requestAnimationFrame(loop);
       }
@@ -165,12 +163,6 @@ export function ShearsTurntable({
     );
     io.observe(stage);
     document.addEventListener("visibilitychange", sync);
-    const stopCover = inHero
-      ? watchHeroCover((c) => {
-          covered = c;
-          sync();
-        })
-      : () => {};
     const ro = new ResizeObserver(() => {
       if (ready) {
         size();
@@ -217,7 +209,6 @@ export function ShearsTurntable({
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
-      stopCover();
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", sync);

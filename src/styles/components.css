@@ -554,18 +554,6 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
 [data-parallax="on"] img { scale: 1.12; translate: 0 var(--drift, 0); }
 [data-magnetic-on] { translate: calc(var(--mag-x, 0) * 1px) calc(var(--mag-y, 0) * 1px); }
 
-/* The layer being covered dims as the next one rises over it (--cover 0 → 1). */
-[data-shade]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: calc(var(--z-content) + 1);
-  border-radius: inherit;
-  background: var(--shade);
-  opacity: var(--cover, 0);
-  pointer-events: none;
-}
-
 /* The gallery's reels viewer is open: the body is fixed (ReelViewer), the page keeps its scrollbar's room (no shift)
    and no pull-to-refresh or scroll chaining starts from it. */
 html[data-reel-open] { overflow-y: scroll; overscroll-behavior: none; }
