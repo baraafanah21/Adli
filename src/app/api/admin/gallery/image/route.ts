@@ -4,6 +4,7 @@ import { adminErrorMessage, isExpectedAdminError } from "@/lib/admin/errors";
 import { MAX_UPLOAD, framedWebp, ownerGate, reply } from "@/lib/admin/gallery-files";
 import { aspectValue } from "@/lib/gallery-aspects";
 import { expireGalleryNow } from "@/lib/gallery-cache";
+import { keptNote, removeFiles } from "@/lib/storage-files";
 
 /*
   A gallery photo (owner only). The browser's ImageEditor has framed it (9:16, 4:5 or 1:1) and sends a JPEG of at
@@ -44,12 +45,18 @@ export async function POST(request: Request) {
   const upload = (key: string, body: Buffer) =>
     bucket.upload(key, body, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
 
+  const both = [paths.large, paths.small];
   const uploads = await Promise.all([upload(paths.large, framed.large), upload(paths.small, framed.small)]);
   const failed = uploads.find((u) => u.error);
+  // Cleaning up after a failure: only what did get uploaded, and say so if it couldn't be removed.
+  const cleanUp = async (message: string, status: number) => {
+    const done = both.filter((_, i) => !uploads[i].error);
+    const removed = await removeFiles(supabase, "gallery", done, "gallery-image cleanup");
+    return reply({ ok: false, message: removed.ok ? message : `${message} ${keptNote(removed.kept.length)}` }, status);
+  };
   if (failed) {
     console.error("gallery-image: upload", failed.error?.message);
-    await bucket.remove([paths.large, paths.small]);
-    return reply({ ok: false, message: "تعذّر رفع الصورة. تأكد من الاتصال وحاول مرة أخرى." }, 502);
+    return cleanUp("تعذّر رفع الصورة. تأكد من الاتصال وحاول مرة أخرى.", 502);
   }
 
   const { error } = await supabase.rpc("admin_gallery_add", {
@@ -66,8 +73,7 @@ export async function POST(request: Request) {
   });
   if (error) {
     if (!isExpectedAdminError(error.code)) console.error("admin_gallery_add image", error.code, error.message);
-    await bucket.remove([paths.large, paths.small]);
-    return reply({ ok: false, message: adminErrorMessage(error) }, 400);
+    return cleanUp(adminErrorMessage(error), 400);
   }
 
   // A Route Handler can't use updateTag; revalidateTag with expire 0 has the same effect (no stale copy served).

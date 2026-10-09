@@ -108,7 +108,8 @@ export function VideoAdder({ file, prepare, onClose }: Props) {
       return;
     }
     const { createClient } = await import("@/lib/supabase/client");
-    const bucket = createClient().storage.from("gallery");
+    const client = createClient();
+    const bucket = client.storage.from("gallery");
     const { error: uploadError } = await bucket.upload(prep.path, file, {
       contentType: "video/mp4",
       cacheControl: "31536000",
@@ -134,9 +135,10 @@ export function VideoAdder({ file, prepare, onClose }: Props) {
         setStep("poster");
       }
     } catch {
-      // The request didn't come back: the server may not have seen it. Don't leave the file behind.
-      await bucket.remove([prep.path]);
-      setError("تعذّر حفظ الفيديو. تأكد من الاتصال وحاول مرة أخرى.");
+      // The request didn't come back: the server may not have seen it. Don't leave the file behind (and say if it stays).
+      const { removeFiles, keptNote } = await import("@/lib/storage-files");
+      const removed = await removeFiles(client, "gallery", [prep.path], "gallery video upload abandoned");
+      setError(`تعذّر حفظ الفيديو. تأكد من الاتصال وحاول مرة أخرى.${removed.ok ? "" : ` ${keptNote(removed.kept.length)}`}`);
       setStep("poster");
     }
   }

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { adminErrorMessage, isExpectedAdminError } from "@/lib/admin/errors";
 import { productImagePaths } from "@/lib/format";
 import { expireCatalogNow } from "@/lib/catalog-cache";
+import { keptNote, removeFiles } from "@/lib/storage-files";
 
 /*
   A product photo, from the admin's image picker. The browser has already decoded the photo (HEIC included on an
@@ -26,7 +27,8 @@ const MAX_BYTES = 4.4 * 1024 * 1024;
 const MAX_PIXELS = 40_000_000;
 const FORMATS = new Set(["jpeg", "png", "webp"]);
 
-type Body = { ok: true; path: string } | { ok: false; message: string };
+/** `warning`: saved, but the previous photo's files couldn't be removed (said, not swallowed). */
+type Body = { ok: true; path: string; warning?: string } | { ok: false; message: string };
 const reply = (body: Body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 
 function sameOrigin(request: Request) {
@@ -90,29 +92,31 @@ export async function POST(request: Request) {
 
   const uploads = await Promise.all([upload(paths.large, large), upload(paths.small, small)]);
   const failed = uploads.find((u) => u.error);
+  // Cleaning up after a failure: only what did get uploaded, and say so if it couldn't be removed.
+  const cleanUp = async (message: string, status: number) => {
+    const done = [paths.large, paths.small].filter((_, i) => !uploads[i].error);
+    const removed = await removeFiles(supabase, "products", done, "product-image cleanup");
+    return reply({ ok: false, message: removed.ok ? message : `${message} ${keptNote(removed.kept.length)}` }, status);
+  };
   if (failed) {
     console.error("product-image: upload", failed.error?.message);
-    await bucket.remove([paths.large, paths.small]);
-    return reply({ ok: false, message: "تعذّر رفع الصورة. تأكد من الاتصال وحاول مرة أخرى." }, 502);
+    return cleanUp("تعذّر رفع الصورة. تأكد من الاتصال وحاول مرة أخرى.", 502);
   }
 
   const { error } = await supabase.rpc("admin_set_product_image", { p_id: productId, p_path: path });
   if (error) {
     if (!isExpectedAdminError(error.code)) console.error("admin_set_product_image", error.code, error.message);
-    await bucket.remove([paths.large, paths.small]);
-    return reply({ ok: false, message: adminErrorMessage(error) }, 400);
+    return cleanUp(adminErrorMessage(error), 400);
   }
 
-  // The previous photo (only one that lives in Storage; the demo SVGs are in public/).
+  // The previous photo (only one that lives in Storage; the demo SVGs are in public/). The new one is saved either way.
   const old = productImagePaths((before as { image_path: string | null } | null)?.image_path ?? null);
-  if (old) {
-    const { error: removeError } = await bucket.remove([old.large, old.small]);
-    if (removeError) console.error("product-image: old files kept", removeError.message);
-  }
+  const removedOld = old ? await removeFiles(supabase, "products", [old.large, old.small], `product-image old ${productId}`) : null;
+  const warning = removedOld && !removedOld.ok ? `الصورة القديمة: ${keptNote(removedOld.kept.length)}` : undefined;
 
   // A Route Handler can't use updateTag; revalidateTag with expire 0 has the same effect (no stale copy served).
   expireCatalogNow();
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${productId}`);
-  return reply({ ok: true, path });
+  return reply({ ok: true, path, warning });
 }

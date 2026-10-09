@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { removeFiles } from "@/lib/storage-files";
 import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib/admin/errors";
 
 /*
@@ -118,8 +119,9 @@ const owner = (next: string) => requireRole(["owner"], next);
 
 /**
  * admin_delete_product decides: refused while in a shown bundle (P0014), archived when the product has history,
- * otherwise deleted. After a real delete its photo files go from Storage too (Postgres can't remove them); if that
- * fails the product is still gone and only orphan files stay, so it is logged, not shown.
+ * otherwise deleted. After a real delete its photo files go from Storage too (Postgres can't remove them): the folder
+ * is listed and removed, and what came back is checked (removeFiles). If any stay, the product is still gone; it is
+ * logged and the list says so (files=<n>), instead of «مع صوره».
  */
 export async function deleteProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
   const id = String(form.get("id") ?? "");
@@ -130,16 +132,20 @@ export async function deleteProduct(_prev: ActionState, form: FormData): Promise
   if (error) return fail(error, "admin_delete_product");
   const { outcome, name_ar } = data as { outcome: "deleted" | "archived"; name_ar: string };
 
+  let kept = 0;
   if (outcome === "deleted") {
-    const bucket = supabase.storage.from("products");
-    const { data: files, error: listError } = await bucket.list(id, { limit: 100 });
-    const paths = (files ?? []).map((f) => `${id}/${f.name}`);
-    const removed = paths.length ? await bucket.remove(paths) : { error: null };
-    if (listError || removed.error) console.error("deleteProduct: files kept", id, (listError ?? removed.error)?.message);
+    const { data: files, error: listError } = await supabase.storage.from("products").list(id, { limit: 1000 });
+    if (listError) {
+      console.error("deleteProduct: folder not listed", id, listError.message);
+      kept = -1; // unknown: said as «files may be left»
+    } else {
+      const removed = await removeFiles(supabase, "products", (files ?? []).map((f) => `${id}/${f.name}`), `deleteProduct ${id}`);
+      if (!removed.ok) kept = removed.kept.length;
+    }
   }
 
   revalidateCatalog();
-  redirect(`/admin/products?${outcome}=${encodeURIComponent(name_ar)}`);
+  redirect(`/admin/products?${outcome}=${encodeURIComponent(name_ar)}${kept ? `&files=${kept}` : ""}`);
 }
 
 /** Back in the admin lists, still hidden: the owner checks it and shows it from «التفاصيل». */

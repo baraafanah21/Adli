@@ -10,6 +10,7 @@
     "media:compress": "node scripts/media/compress.mjs",
     "check:crop": "node --experimental-strip-types --no-warnings scripts/crop-check.mjs",
     "check:mp4": "node --experimental-strip-types --no-warnings scripts/mp4-check.mjs",
+    "storage:orphans": "node scripts/storage-orphans.mjs",
     "check:gallery-files": "node --experimental-strip-types --no-warnings scripts/gallery-files-check.mjs",
     "check:phone": "node --experimental-strip-types --no-warnings scripts/phone-check.mjs"
   },

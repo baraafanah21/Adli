@@ -63,15 +63,21 @@ export function ImageUploader({ productId, current, name }: { productId: string;
     body.set("productId", productId);
     body.set("file", photo.blob, "photo.jpg");
     let result: ActionState;
+    let stored = false; // the new photo is saved (even with a warning about the old one's files)
     try {
       const res = await fetch("/api/admin/product-image", { method: "POST", body });
-      const json = (await res.json()) as { ok: boolean; message?: string };
-      result = json.ok ? { ok: true, message: "حُفظت الصورة." } : { ok: false, message: json.message ?? "تعذّر حفظ الصورة." };
+      const json = (await res.json()) as { ok: boolean; message?: string; warning?: string };
+      stored = json.ok;
+      result = json.ok
+        ? json.warning
+          ? { ok: false, message: `حُفظت الصورة. ${json.warning}` }
+          : { ok: true, message: "حُفظت الصورة." }
+        : { ok: false, message: json.message ?? "تعذّر حفظ الصورة." };
     } catch {
       result = { ok: false, message: "تعذّر رفع الصورة. تأكد من الاتصال وحاول مرة أخرى." };
     }
     setState(result);
-    if (result?.ok) {
+    if (stored) {
       setDone(true);
       router.refresh();
     } else setUploading(null);
