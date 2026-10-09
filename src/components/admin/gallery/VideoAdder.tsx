@@ -11,7 +11,7 @@
        WebCodecs / H.264 is told to open the page in a recent Chrome or Safari (scripts/media/compress.mjs still works
        on a computer).
     2. The poster, required: a frame of the video (a slider to choose the moment, then a canvas grab) or a photo file.
-    3. The ImageEditor frames it (9:16 by default, 4:5, 1:1): the aspect chosen is the item's.
+    3. The ImageEditor frames it (9:16 by default or 1:1): the aspect chosen is the item's.
     4. The MP4 goes straight from the browser to Storage (a 5 MB request can't pass through Vercel), at the path
        prepareGalleryVideo() hands out (`prepare`); then /api/admin/gallery/video reads it back and checks it again, makes the
        poster's WebP files and records the item (hidden until published).
@@ -304,7 +304,9 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
 
   const uploading = step === "uploading";
   const percent = Math.floor(progress.fraction * 100);
+  // Hidden (not unmounted) while the editor is open: a phone can draw a <video> above the editor's buttons.
   const showPoster = step === "poster" || step === "editing" || step === "uploading";
+  const posterHidden = step === "editing";
 
   return (
     <section className={styles.adder} aria-labelledby={titleId}>
@@ -415,7 +417,7 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
       )}
 
       {showPoster && url && (
-        <>
+        <div className={styles.posterStep} hidden={posterHidden}>
           <p className={styles.hint}>صورة الغلاف إلزامية: تظهر قبل أن يعمل الفيديو. اختر لحظة منه، أو ارفع صورة.</p>
           <div className={styles.adderBody}>
             <video
@@ -471,7 +473,7 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {uploading && (

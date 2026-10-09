@@ -9,7 +9,7 @@
     is tilted, so it is switched off (restrictPosition={false}) and src/lib/image-crop.ts keeps the whole frame on the
     photo: a zoom floor per angle (minZoomFor) and a clamp on every position (clampPosition). Both are applied while
     rendering, so the view on screen is always a legal one; zoom 0 in state means "fit" (the floor).
-  - Only the aspects given (`aspects`, the first is the default): products 4:5, the gallery 9:16 / 4:5 / 1:1,
+  - Only the aspects given (`aspects`, the first is the default): products 4:5, the gallery 9:16 / 1:1,
     posters 9:16. Never a free crop. `look="card"` dresses the frame as the shop's card (brass rings, the seal).
   - Several photos: one at a time («2 من 5»), each in its own <PhotoStep key>, so nothing carries over; «تخطي» keeps
     a photo as it is.

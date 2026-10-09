@@ -4,7 +4,7 @@
   «المعرض» (U5.3, owner only): add photos and videos, order them by dragging, publish or hide, choose the one video in
   «مرآة الصالون», delete. No text anywhere: the gallery is pictures only.
 
-  - Photos: picked (several at once) → ImageEditor (9:16 by default, 4:5, 1:1; the aspect chosen is recorded) →
+  - Photos: picked (several at once) → ImageEditor (9:16 by default or 1:1; the aspect chosen is recorded) →
     /api/admin/gallery/image one by one, «يُرفع 2 من 5».
   - A video: VideoAdder (checks it, then a poster from a frame or a file, then the editor, then the upload).
   - Order: drag the grip (mouse or finger) or use «قدّم» / «أخّر»; saved once, when the drag ends. The whole order is
@@ -251,7 +251,7 @@ export function GalleryManager({ items, actions }: { items: AdminGalleryItem[]; 
         />
       </div>
       <p className={styles.hint}>
-        الصور تُقص قبل الرفع (9:16 أو 4:5 أو 1:1). الفيديو MP4 حتى 20 ثانية و5 ميغابايت، بلا صوت عند العرض.
+        الصور تُقص قبل الرفع (9:16 أو 1:1). الفيديو MP4 حتى 20 ثانية و5 ميغابايت، بلا صوت عند العرض.
       </p>
 
       {progress && (

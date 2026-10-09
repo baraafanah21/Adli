@@ -10,8 +10,14 @@ export const GALLERY_ASPECTS: { label: GalleryAspect; value: number; name: strin
   { label: "1:1", value: 1, name: "1:1 مربع" },
 ];
 
-/** The ImageEditor's frames for the gallery (photos and posters): 9:16 first, the default. */
-export const GALLERY_EDITOR_ASPECTS = GALLERY_ASPECTS.map((a) => ({ value: a.value, label: a.name }));
+/**
+  The ImageEditor's frames for new gallery items (photos and posters): 9:16 first, the default, then 1:1. 4:5 is no
+  longer offered; items already saved at 4:5 keep it (it stays a valid label above).
+*/
+export const GALLERY_EDITOR_ASPECTS = GALLERY_ASPECTS.filter((a) => a.label !== "4:5").map((a) => ({
+  value: a.value,
+  label: a.name,
+}));
 
 /** The label for a ratio the editor returned (always one of the three). */
 export function aspectLabel(value: number): GalleryAspect | null {
