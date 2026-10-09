@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 
 /*
-  «من الكرسي» (U5.3): the published gallery, photos and short silent videos, in the owner's order. Display only:
+  «زبايننا المرتّبين» (U5.3): the published gallery, photos and short silent videos, in the owner's order. Display only:
   no caption, no name. Read as anon (createPublicClient), so RLS returns published rows only, the same for every
   visitor; named columns only (created_by is never granted).
 
@@ -12,6 +12,9 @@ import { createPublicClient } from "@/lib/supabase/public";
 */
 
 export type GalleryAspect = "9:16" | "4:5" | "1:1";
+
+/** The home page shows the section only from this many published items. */
+export const GALLERY_MIN = 3;
 
 export type GalleryItem = {
   id: string;

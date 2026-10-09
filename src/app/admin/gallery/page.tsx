@@ -21,7 +21,7 @@ type Row = {
   is_featured: boolean;
 };
 
-/** «المعرض» (U5.3, owner only): what «من الكرسي» on the home page shows, in this order. */
+/** «المعرض» (U5.3, owner only): what «زبايننا المرتّبين» on the home page shows, in this order. */
 export default async function AdminGalleryPage() {
   await requireRole(["owner"], "/admin/gallery");
   const supabase = await createClient();
@@ -44,7 +44,7 @@ export default async function AdminGalleryPage() {
     <main className={styles.page}>
       <h1 className="title">المعرض</h1>
       <p className={formStyles.lede}>
-        صور الصالون وفيديوهاته في «من الكرسي» على الرئيسية، بالترتيب الذي تراه هنا. يظهر القسم حين يكون فيه 3 عناصر منشورة أو
+        صور الصالون وفيديوهاته في «زبايننا المرتّبين» على الرئيسية، بالترتيب الذي تراه هنا. يظهر القسم حين يكون فيه 3 عناصر منشورة أو
         أكثر (الآن: {published}). الفيديو صامت دائماً، ولا يُكتب على العناصر شيء.
       </p>
       {error && (

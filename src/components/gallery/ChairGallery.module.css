@@ -1,0 +1,213 @@
+/* «زبايننا المرتّبين» (ChairGallery). Tokens only. The mirror's stage is dark in both themes (data-theme="night"). */
+
+/* Inside a home page layer: the dark mirror keeps to the layer's rounded top (clip doesn't stop sticky). */
+.section {
+  padding-block: 0 var(--space-16);
+  border-radius: inherit;
+  overflow: clip;
+}
+
+/* ---------- A. مرآة الصالون ---------- */
+.mirror {
+  position: relative;
+}
+
+/* Open (server-rendered, reduced motion, already scrolled past): a full-bleed stage, the video filling it. */
+.stage {
+  --r: 150vmax;
+  --veil: 0;
+  --seal-size: min(72vw, 60svh);
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--forest);
+}
+
+/* Scrubbed (gallery-motion.ts): a tall wrapper, the stage sticky inside it; --r and --veil follow the scroll. */
+.mirror[data-mirror="scrub"] {
+  height: 260svh;
+}
+
+.mirror[data-mirror="scrub"] .stage {
+  position: sticky;
+  top: 0;
+}
+
+.clip {
+  position: absolute;
+  inset: 0;
+  clip-path: circle(calc(var(--r) - 1px) at 50% 50%);
+}
+
+.mirrorVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.backdrop {
+  display: none;
+}
+
+/* A wide screen: the 9:16 video stands in the middle over a blurred copy of its poster (an image, not a second video). */
+@media (min-width: 840px) and (min-aspect-ratio: 1/1) {
+  .backdrop {
+    display: block;
+    position: absolute;
+    inset: -6%;
+    width: 112%;
+    height: 112%;
+    object-fit: cover;
+    filter: blur(36px) saturate(1.2) brightness(0.55);
+  }
+
+  .mirrorVideo {
+    inset: 0;
+    width: auto;
+    height: 100%;
+    margin-inline: auto;
+    aspect-ratio: 9 / 16;
+  }
+}
+
+/* The seal over the video (the logo file as a mask in cream: the video shows through the ع and between the rings),
+   and the brass ring around it. Both fade with --veil. */
+.seal,
+.ring {
+  position: absolute;
+  inset: 0;
+  margin: auto; /* centred both ways, whatever the direction */
+  height: auto;
+  aspect-ratio: 1;
+  opacity: var(--veil);
+  pointer-events: none;
+}
+
+.seal {
+  width: var(--seal-size);
+  color: var(--cream);
+}
+
+.ring {
+  width: calc(var(--seal-size) + var(--space-8));
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-seal);
+  scale: calc(1 + (1 - var(--veil)) * 0.08);
+}
+
+/* ---------- The title ---------- */
+.head {
+  max-width: 1200px;
+  margin: var(--space-12) auto var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+.head h2 {
+  margin: 0;
+}
+
+@media (min-width: 720px) {
+  .head {
+    padding-inline: var(--space-8);
+  }
+}
+
+/* ---------- B. The row ---------- */
+.row {
+  --card-h: min(66svh, 540px);
+  --lean: 0;
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding-block: var(--space-8);
+  padding-inline: calc(50% - var(--card-h) * 9 / 32);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  perspective: 1200px;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.cell {
+  flex: none;
+  scroll-snap-align: center;
+}
+
+/* --near: 1 in the middle, 0 a card away (ChairGallery); --lean: the scroll's speed; --tilt-*: the pointer. */
+.card {
+  position: relative;
+  display: block;
+  height: var(--card-h);
+  aspect-ratio: var(--ratio);
+  padding: 0;
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-sunk);
+  cursor: pointer;
+  transform: rotateY(calc((var(--lean) + var(--tilt-y, 0)) * 1deg)) rotateX(calc(var(--tilt-x, 0) * 1deg))
+    scale(calc(0.92 + 0.08 * var(--near, 1)));
+  transition: box-shadow var(--dur-panel) var(--ease-out);
+}
+
+.card:hover,
+.card:focus-visible {
+  box-shadow: var(--shadow-glow);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}
+
+.poster,
+.cardVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardVideo {
+  opacity: 0;
+  transition: opacity var(--dur-panel) var(--ease-out);
+}
+
+.cardVideo[data-on] {
+  opacity: 1;
+}
+
+/* Photos drift slowly (Ken Burns). */
+@media (prefers-reduced-motion: no-preference) {
+  .card[data-kind="image"] .poster {
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.02) translate(0, 0);
+  }
+  to {
+    transform: scale(1.12) translate(-2%, -3%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transform: none;
+    transition: none;
+  }
+
+  .cardVideo {
+    transition: none;
+  }
+}

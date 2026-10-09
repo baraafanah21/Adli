@@ -1,0 +1,287 @@
+/* «زبايننا المرتّبين»'s reels viewer (ReelViewer). Dark in both themes (data-theme="night"). Tokens only. */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.viewer::backdrop {
+  background: transparent;
+}
+
+.viewer:focus {
+  outline: none;
+}
+
+/* The item's colour comes here (sampled from its poster); forest until then. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--forest);
+}
+
+/* One item per screen, native snap: a finger is followed 1:1, with the system's own momentum. */
+.list {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  display: grid;
+  place-items: center;
+  height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* --ratio: the item's own aspect; the frame fills the screen's width or height, whichever comes first.
+   --hairline: the brass line of the row's card, melting away as the card becomes the frame (and back). */
+.frame {
+  --hairline: 0;
+  position: relative;
+  width: min(100vw, 100dvh * var(--ratio));
+  aspect-ratio: var(--ratio);
+  overflow: hidden;
+  background: var(--surface-sunk);
+}
+
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--brass);
+  border-radius: inherit;
+  opacity: var(--hairline);
+  pointer-events: none;
+}
+
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+/* The three reused videos, each over its item's slide (--i). */
+.slot {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(var(--i) * 100dvh);
+  display: grid;
+  place-items: center;
+  height: 100dvh;
+  pointer-events: none;
+}
+
+.slot video {
+  width: min(100vw, 100dvh * var(--ratio));
+  aspect-ratio: var(--ratio);
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--dur-panel) var(--ease-out);
+}
+
+.slot video[data-on] {
+  opacity: 1;
+}
+
+/* ---------- Controls ---------- */
+/* Its opacity belongs to GSAP (in, out, a pull down, a long press): no CSS transition on it. */
+.chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.chrome > * {
+  pointer-events: auto;
+}
+
+.count,
+.close,
+.steps button {
+  background: color-mix(in srgb, var(--forest) 62%, transparent);
+  color: var(--cream);
+}
+
+.count {
+  position: absolute;
+  inset-block-start: calc(env(safe-area-inset-top) + var(--space-4));
+  inset-inline-start: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  position: absolute;
+  inset-block-start: calc(env(safe-area-inset-top) + var(--space-2));
+  inset-inline-end: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:focus-visible,
+.steps button:focus-visible,
+.progress:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ↑ / ↓ beside the frame, on a computer. */
+.steps {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .steps {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(50% + min(50vw, 100dvh * 9 / 32) + var(--space-6));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  .steps button {
+    width: 48px;
+    height: 48px;
+    border: 1px solid color-mix(in srgb, var(--cream) 25%, transparent);
+    border-radius: var(--radius-pill);
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .steps button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+/* The progress line: thin, with a tall invisible hit area; fills from the start of the line (right, RTL). */
+.progress {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: env(safe-area-inset-bottom);
+  height: var(--space-6);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.progress::before,
+.fill {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--space-2);
+  height: 2px;
+}
+
+.progress::before {
+  background: color-mix(in srgb, var(--cream) 25%, transparent);
+}
+
+.fill {
+  background: var(--brass);
+  transform: scaleX(0);
+  transform-origin: right center;
+}
+
+/* A tap: the play / pause sign pulses and fades. */
+.pulse {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: auto;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--forest) 55%, transparent);
+  color: var(--cream);
+  font-size: 28px;
+  pointer-events: none;
+  animation: pulse 700ms var(--ease-out) forwards;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0;
+    scale: 0.7;
+  }
+  25% {
+    opacity: 1;
+    scale: 1.05;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.3;
+  }
+}
+
+/* Loading: the seal, and the brass ring drawing itself around it (DrawSVG). */
+.loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: auto;
+  color: var(--cream);
+  pointer-events: none;
+}
+
+.loader svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.loader circle {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation-duration: 1ms;
+  }
+
+  .slot video {
+    transition: none;
+  }
+}
