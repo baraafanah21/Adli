@@ -28,6 +28,9 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
     minimumCacheTTL: 2678400,
   },
+  // The hero's DrawnLogo reads public/brand/adli-logo-mono.svg on the server (src/lib/brand-paths.ts): keep the file
+  // in every server bundle, so a page rebuilt after a revalidation finds it too.
+  outputFileTracingIncludes: { "/*": ["./public/brand/adli-logo-mono.svg"] },
   async headers() {
     return [
       // Hero frames are versioned by folder (public/hero/v1, v2…): a new set gets a new path.
