@@ -15,6 +15,9 @@ import { NextResponse, type NextRequest } from "next/server";
   /admin/products/[id]/preview). Answers are remembered per instance: a slug found for 5 minutes, a missing one for
   60 seconds (so a bot trying random links doesn't reach the database on every request, and a product just shown
   is found within a minute). At most 2000 answers are kept; the oldest go first.
+
+  /?c=<slug> (the home page's chips before /products) is sent on to /products?c=<slug>, so a shared link still opens
+  that category's shelf.
 */
 
 const PROTECTED = ["/account", "/admin"];
@@ -71,6 +74,12 @@ async function catalogSlugExists(kind: "p" | "c", slug: string): Promise<boolean
 }
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("c")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/products";
+    return NextResponse.redirect(url, 308);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

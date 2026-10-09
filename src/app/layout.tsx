@@ -23,6 +23,11 @@ const readex = Readex_Pro({
 });
 
 export const metadata: Metadata = {
+  // Absolute canonical URLs (/products). Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deployment, so Preview
+  // pages point at the live site too; locally it is the dev server.
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000",
+  ),
   title: {
     default: "عدلي | صالون حلاقة وعطور",
     template: "%s | عدلي",

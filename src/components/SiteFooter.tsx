@@ -11,7 +11,7 @@ import styles from "./SiteFooter.module.css";
 const CREDIT = "تصميم وبرمجة: براء عفانة ‏&‏ أحمد شنطي";
 
 const PAGES = [
-  { href: "/#shelf", label: "المنتجات" },
+  { href: "/products", label: "المنتجات" },
   { href: "/booking", label: "احجز موعد" },
   { href: "/#location", label: "الموقع" },
   { href: "/account", label: "حسابي" },

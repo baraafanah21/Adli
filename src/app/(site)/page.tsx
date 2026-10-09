@@ -1,8 +1,7 @@
 import Image from "next/image";
-import { Suspense } from "react";
 import { HeroStage } from "@/components/HeroStage";
 import { SalonLocation } from "@/components/SalonLocation";
-import { Shelf, ShelfFromUrl } from "@/components/Shelf";
+import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
 import { getCatalog } from "@/lib/catalog";
@@ -13,8 +12,12 @@ import { SALON, hoursRows } from "@/lib/salon";
 import { getServices, getWeek } from "@/lib/salon-data";
 import styles from "./page.module.css";
 
+/** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
+const HOME_SHELF = 8;
+
 export default async function Home() {
   const [catalog, week, services, gallery] = await Promise.all([getCatalog(), getWeek(), getServices(), getGallery()]);
+  const categoryName = new Map((catalog.data?.categories ?? []).map((c) => [c.id, c.name_ar]));
 
   return (
     <main>
@@ -49,9 +52,28 @@ export default async function Home() {
           منتجات الصالون
         </h2>
         {catalog.data ? (
-          <Suspense fallback={<Shelf categories={catalog.data.categories} products={catalog.data.products} />}>
-            <ShelfFromUrl categories={catalog.data.categories} products={catalog.data.products} />
-          </Suspense>
+          catalog.data.products.length > 0 ? (
+            <>
+              <ul className={`ad-shelf ${styles.shelfGrid}`}>
+                {catalog.data.products.slice(0, HOME_SHELF).map((p) => (
+                  <li key={p.id}>
+                    <SealStage product={p} categoryName={categoryName.get(p.category_id)} />
+                  </li>
+                ))}
+              </ul>
+              {catalog.data.products.length > HOME_SHELF && (
+                <div className={styles.shelfMore}>
+                  <Button variant="ghost" href="/products">
+                    كل المنتجات ({catalog.data.products.length})
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={styles.error} role="status">
+              <p className="body">لا توجد منتجات حالياً.</p>
+            </div>
+          )
         ) : (
           <div className={styles.error} role="alert">
             <p className="body">تعذّر تحميل المنتجات الآن. حاول مرة أخرى بعد قليل.</p>

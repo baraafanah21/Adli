@@ -209,7 +209,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
           <div className="ad-sheet__empty">
             <BrandMark kind="bottle" tone="mono" height={48} className="ad-sheet__empty-mark" />
             <p className="body">سلتك فارغة. اختر من الرف، ثم أرسل الطلب على واتساب.</p>
-            <Button variant="ghost" href="/#shelf" onClick={close}>
+            <Button variant="ghost" href="/products" onClick={close}>
               تصفّح المنتجات
             </Button>
           </div>
