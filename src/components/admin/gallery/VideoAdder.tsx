@@ -79,6 +79,7 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const trimVideo = useRef<HTMLVideoElement>(null);
   const frameCanvas = useRef<HTMLCanvasElement>(null);
+  const playVideo = useRef<HTMLVideoElement>(null); // the clip while it is prepared (and recorded, by playback)
   const probe = useRef<Probe | null>(null);
   const abort = useRef<AbortController | null>(null);
   // The file that is uploaded: the one picked when it is ready as it is, else the one made here.
@@ -156,12 +157,17 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
     setStep("compressing");
     const ctrl = new AbortController();
     abort.current = ctrl;
-    const { compressVideo } = await loadCompressor();
+    const { compressVideo, isWebKit } = await loadCompressor();
+    // The «compressing» step renders the <video>: wait for it to be in the page.
+    for (let i = 0; i < 10 && !playVideo.current; i++) await new Promise((r) => requestAnimationFrame(r));
     const out = await compressVideo(picked, {
       start,
       end,
       signal: ctrl.signal,
       onProgress: (fraction, pass) => setProgress({ fraction, pass }),
+      playback: playVideo.current,
+      // Safari / iPhone and HDR: WebCodecs frames come out black when redrawn; a playing <video> doesn't.
+      preferPlayback: isWebKit() || (probe.current?.hdr ?? false),
     });
     if (ctrl.signal.aborted) return;
     abort.current = null;
@@ -174,7 +180,13 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
         setCutLength(Math.max(1, Math.min(MAX_CUT, (end - start) * 0.7)));
         setStep("trim");
       } else {
-        setError(out.reason === "undecodable" ? `هذا المتصفح لا يقرأ ترميز هذا الفيديو. ${BROWSER}` : "تعذّر تجهيز الفيديو. حاول مرة أخرى.");
+        setError(
+          out.reason === "undecodable"
+            ? `هذا المتصفح لا يقرأ ترميز هذا الفيديو. ${BROWSER}`
+            : out.reason === "black"
+              ? "خرج الفيديو أسود بعد التجهيز. جرّب مرة أخرى، أو جهّزه من الكمبيوتر بسكربت الضغط."
+              : "تعذّر تجهيز الفيديو. حاول مرة أخرى.",
+        );
         back();
       }
       return;
@@ -387,6 +399,8 @@ export function VideoAdder({ file: picked, prepare, onClose }: Props) {
 
       {step === "compressing" && (
         <div className={styles.compress} role="status">
+          {/* The clip as it is prepared: by playback (Safari, HDR) it plays here and each frame is recorded. */}
+          <video ref={playVideo} className={styles.preview} src={pickedUrl} muted playsInline preload="auto" aria-hidden="true" />
           <p>
             {progress.pass > 1 ? "جارٍ تجهيز نسخة أصغر…" : "جارٍ تجهيز الفيديو…"} {percent}٪
           </p>
