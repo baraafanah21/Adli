@@ -4,7 +4,9 @@ import { HeroStage } from "@/components/HeroStage";
 import { SalonLocation } from "@/components/SalonLocation";
 import { Shelf, ShelfFromUrl } from "@/components/Shelf";
 import { Button } from "@/components/Button";
+import { ChairGallery } from "@/components/gallery/ChairGallery";
 import { getCatalog } from "@/lib/catalog";
+import { GALLERY_MIN, getGallery } from "@/lib/gallery";
 import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
@@ -12,7 +14,7 @@ import { getServices, getWeek } from "@/lib/salon-data";
 import styles from "./page.module.css";
 
 export default async function Home() {
-  const [catalog, week, services] = await Promise.all([getCatalog(), getWeek(), getServices()]);
+  const [catalog, week, services, gallery] = await Promise.all([getCatalog(), getWeek(), getServices(), getGallery()]);
 
   return (
     <main>
@@ -61,6 +63,13 @@ export default async function Home() {
       </section>
 
       </div>
+
+      {/* زبايننا المرتّبين (U5.3, the gallery): the salon's photos and silent videos, from 3 published items. */}
+      {gallery && gallery.length >= GALLERY_MIN && (
+        <div className={styles.curtain} data-covers-hero data-layer="rise">
+          <ChairGallery items={gallery} />
+        </div>
+      )}
 
       <div className={`${styles.curtain} ${styles.curtainSunk}`} data-covers-hero data-layer="rise">
       <section id="salon" className={styles.salon} aria-labelledby="salon-title">

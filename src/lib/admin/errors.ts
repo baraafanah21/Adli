@@ -107,7 +107,7 @@ export function adminErrorMessage(error: DbError): string {
       return "هذه الخدمة أو هذا الحلاق غير متاح. اختر غيره.";
     case "P0028":
       return "تغيّرت حالة هذا الموعد، أو هذه الخطوة غير ممكنة الآن. حدّث الصفحة.";
-    // «من الكرسي» (admin_gallery_*)
+    // «زبايننا المرتّبين» (admin_gallery_*)
     case "P0031":
       return "المرآة تعرض فيديو فقط. اختر فيديو.";
     case "P0032":
