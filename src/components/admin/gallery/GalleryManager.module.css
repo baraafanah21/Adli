@@ -1,0 +1,276 @@
+/* «المعرض» in the admin (GalleryManager, VideoAdder). Tokens only. */
+
+.wrap {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.add label[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--line-strong);
+}
+
+.empty p {
+  margin: 0;
+  font-size: 17px;
+  color: var(--ink-muted);
+}
+
+/* ---------- The items, in order ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
+  align-items: start;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  transition: box-shadow var(--dur-press) var(--ease-out), opacity var(--dur-press) var(--ease-out);
+}
+
+.card[data-dragging] {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-glow);
+}
+
+.card[data-hidden] .thumb img {
+  opacity: 0.55;
+}
+
+/* The brass hairline of the shop's frames, around a picture at its own aspect. */
+.thumb {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--brass);
+  border-radius: calc(var(--radius-md) - var(--space-1));
+  background: var(--surface-sunk);
+}
+
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+.kind {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-start: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--forest) 80%, transparent);
+  color: var(--cream);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one video in «مرآة الصالون»: a clear brass badge. */
+.mirror {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--brass);
+  color: var(--on-brass);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.on,
+.off {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+}
+
+.on {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.off {
+  color: var(--ink-muted);
+}
+
+.aspect {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.actions :global(.ad-btn) {
+  width: 100%;
+  min-height: 40px;
+  padding-inline: var(--space-2);
+  font-size: 14px;
+}
+
+.danger {
+  color: var(--oud);
+}
+
+.dangerFill {
+  background: var(--oud);
+  border-color: var(--oud);
+  color: var(--cream);
+}
+
+/* Order: the grip (drag with a finger or the mouse) and two steps for keyboards and small moves. */
+.order {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr;
+  gap: var(--space-1);
+}
+
+.grip,
+.step {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hair);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.grip {
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.grip:active {
+  cursor: grabbing;
+}
+
+.grip:hover:not(:disabled),
+.step:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.grip:disabled,
+.step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- A new video ---------- */
+.adder {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.adder h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.adderBody {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.preview {
+  width: 100%;
+  max-height: 60svh;
+  border-radius: calc(var(--radius-md) - var(--space-1));
+  background: var(--surface-sunk);
+  object-fit: contain;
+}
+
+.adderControls {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.moment {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 3.5em;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.moment input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--brass);
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+@media (min-width: 720px) {
+  .adderBody {
+    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

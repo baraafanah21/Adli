@@ -7,6 +7,7 @@ import { signOut } from "@/app/(site)/auth/actions";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BoxIcon, CalendarIcon, GridIcon, HomeIcon, MoreIcon, PerfumeIcon, ReceiptIcon, ScissorsIcon, UserIcon, UsersIcon } from "@/components/icons";
+import { GalleryIcon } from "@/components/admin/editor-icons";
 import styles from "@/app/admin/admin.module.css";
 
 /**
@@ -48,6 +49,7 @@ export function AdminNav({ role, newOrders, newBookings, pendingBookings }: Prop
     role === "owner"
       ? [
           { href: "/admin/salon", label: "الصالون", icon: ScissorsIcon },
+          { href: "/admin/gallery", label: "المعرض", icon: GalleryIcon },
           { href: "/admin/categories", label: "الفئات", icon: GridIcon },
           { href: "/admin/staff", label: "الطاقم", icon: UsersIcon },
         ]

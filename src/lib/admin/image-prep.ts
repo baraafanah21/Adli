@@ -22,7 +22,8 @@ const BUDGET = 4 * 1024 * 1024;
 
 /** The photo to draw from (upright, ≤ 3000px) and the file's object URL for the editor to show. */
 export type Photo = { source: ImageBitmap | HTMLCanvasElement; width: number; height: number; url: string };
-export type Edited = { blob: Blob; width: number; height: number; edited: boolean };
+/** `aspect`: the frame chosen (width / height), or for a photo kept as it is the allowed aspect nearest its own. */
+export type Edited = { blob: Blob; width: number; height: number; edited: boolean; aspect: number };
 
 export const isHeic = (file: File) => /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
 
@@ -132,7 +133,7 @@ export function renderWhole(photo: Photo): HTMLCanvasElement {
 }
 
 /** JPEG at 0.92, lower only if needed to stay under the upload budget. */
-export async function toJpeg(canvas: HTMLCanvasElement, edited: boolean): Promise<Edited> {
+export async function toJpeg(canvas: HTMLCanvasElement, edited: boolean, aspect: number): Promise<Edited> {
   let quality = 0.92;
   let blob = await encode(canvas, quality);
   while (blob && blob.size > BUDGET && quality > 0.5) {
@@ -140,5 +141,5 @@ export async function toJpeg(canvas: HTMLCanvasElement, edited: boolean): Promis
     blob = await encode(canvas, quality);
   }
   if (!blob || blob.size > BUDGET) throw new Error("too large");
-  return { blob, width: canvas.width, height: canvas.height, edited };
+  return { blob, width: canvas.width, height: canvas.height, edited, aspect };
 }
