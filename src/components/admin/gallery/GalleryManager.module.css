@@ -274,3 +274,19 @@
     transition: none;
   }
 }
+
+/* Making a video ready (VideoAdder): the percentage, the bar, «أوقف التجهيز». */
+.compress {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.compress p {
+  margin: 0;
+}
+
+.compress progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--brass);
+}
