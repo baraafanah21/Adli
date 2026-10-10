@@ -144,6 +144,16 @@
   color: var(--ink-muted);
 }
 
+/* The English line under it: small, in the text font, aligned with the Arabic paragraph's start. */
+.salon .salonTextEn {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--ink-muted);
+  text-align: end;
+}
+
 .salonGrid {
   display: grid;
   gap: var(--space-12);

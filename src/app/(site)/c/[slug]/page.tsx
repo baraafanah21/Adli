@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ComingSoon } from "@/components/ComingSoon";
+import { JsonLd } from "@/components/JsonLd";
 import { SealStage } from "@/components/SealStage";
 import { ArrowBackIcon, CategoryIcon } from "@/components/icons";
 import { getCatalog, getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
 import { productCount } from "@/lib/format";
+import { breadcrumbJsonLd, clampDescription, pageMeta } from "@/lib/seo";
 import styles from "./page.module.css";
 
 /** Every active category is prerendered; one added later is built on its first visit (cached the same way). */
@@ -20,7 +22,15 @@ export async function generateMetadata({ params }: PageProps<"/c/[slug]">): Prom
   const { data } = await getCategoryShelf(slug);
   const category = data?.category;
   if (!category) return {};
-  return { title: category.name_ar, description: category.description_ar ?? undefined };
+  return pageMeta({
+    title: category.name_ar,
+    description: clampDescription(
+      category.description_ar
+        ? `صالون عدلي في قلقيلية: ${category.description_ar}`
+        : `${category.name_ar} من صالون عدلي، صالون حلاقة رجالية في قلقيلية. اطلبها برسالة واتساب واستلمها من الصالون.`,
+    ),
+    path: `/c/${category.slug}`,
+  });
 }
 
 /**
@@ -53,6 +63,12 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
 
   return (
     <main className={styles.page}>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "المنتجات", path: "/products" },
+          { name: category.name_ar, path: `/c/${category.slug}` },
+        ])}
+      />
       <Link className={styles.back} href="/products">
         <ArrowBackIcon />
         كل المنتجات

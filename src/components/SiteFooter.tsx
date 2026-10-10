@@ -31,9 +31,15 @@ export async function SiteFooter() {
   return (
     <footer className={styles.footer} data-theme="night">
       <div className={styles.inner}>
-        <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية">
-          <BrandMark kind="logo" tone="mono" width={200} />
-        </Link>
+        <div className={styles.brand}>
+          <Link href="/" className={styles.logo} aria-label="عدلي، الصفحة الرئيسية">
+            <BrandMark kind="logo" tone="mono" width={200} />
+          </Link>
+          {/* The salon's name as search engines get it (src/lib/seo.ts), the same spelling. */}
+          <p className={styles.tagline}>
+            {SALON.name} ({SALON.owner}) للحلاقة الرجالية والعطور في {SALON.city}
+          </p>
+        </div>
 
         <div className={styles.columns}>
           <section aria-labelledby="footer-hours">
@@ -111,7 +117,7 @@ export async function SiteFooter() {
         </div>
 
         <div className={styles.base}>
-          <p>© عدلي، {SALON.city}</p>
+          <p>© {SALON.name}، {SALON.city}</p>
           <p dir="rtl" className={styles.credit}>
             {CREDIT}
           </p>

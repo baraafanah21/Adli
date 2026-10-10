@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { HeroStage } from "@/components/HeroStage";
 import { SalonLocation } from "@/components/SalonLocation";
 import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
+import { JsonLd } from "@/components/JsonLd";
 import { DrawnLogo } from "@/components/brand/DrawnLogo";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
 import { getCatalog } from "@/lib/catalog";
@@ -12,7 +14,10 @@ import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
 import { getServices, getWeek } from "@/lib/salon-data";
+import { SITE_DESCRIPTION, pageMeta, salonJsonLd } from "@/lib/seo";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = pageMeta({ description: SITE_DESCRIPTION, path: "/" });
 
 /** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
 const HOME_SHELF = 4;
@@ -23,6 +28,9 @@ export default async function Home() {
 
   return (
     <main>
+      {/* The salon for search engines: address, hours from salon_hours, prices from the services, and the products this
+          page shows as its offers (structured data describes what is on the page). */}
+      <JsonLd data={salonJsonLd(week, services, catalog.data?.products.slice(0, HOME_SHELF) ?? null)} />
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
       <section className={styles.hero} data-theme="night" aria-labelledby="hero-title">
         <div className={styles.heroText}>
@@ -30,7 +38,7 @@ export default async function Home() {
           <h1 id="hero-title" className={styles.logo}>
             <DrawnLogo label="عدلي" />
           </h1>
-          <p className={`body-lg ${styles.lede}`}>صالون حلاقة رجالي، وعطور وكريمات تختارها هنا وتثبّت طلبها على واتساب.</p>
+          <p className={`body-lg ${styles.lede}`}>صالون حلاقة رجالي في قلقيلية، وعطور وكريمات تختارها هنا وتثبّت طلبها على واتساب.</p>
           <Button variant="ghost" href="#shelf">
             تصفّح المنتجات
           </Button>
@@ -101,8 +109,12 @@ export default async function Home() {
             الصالون
           </h2>
           <p className={`body-lg ${styles.salonText} ad-reveal`}>
-            صالون عدلي للحلاقة الرجالية. العطور والكريمات التي تراها هنا هي ما نستعمله ونثق به، وتطلبها برسالة واتساب
-            وتستلمها من الصالون.
+            {SALON.name} ({SALON.owner}) للحلاقة الرجالية والعطور في {SALON.city}. العطور والكريمات التي تراها هنا هي ما
+            نستعمله ونثق به، وتطلبها برسالة واتساب وتستلمها من الصالون.
+          </p>
+          {/* The English name beside the Arabic, for the people (and searches) that know the salon in English. */}
+          <p className={`${styles.salonTextEn} ad-reveal`} lang="en" dir="ltr">
+            Adli ({SALON.ownerEn}) — men&rsquo;s barber &amp; perfumes in {SALON.cityEn}
           </p>
         </div>
 
