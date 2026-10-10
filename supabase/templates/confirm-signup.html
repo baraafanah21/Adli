@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>أكّد بريدك</title>
+<title>رمز تأكيد بريدك</title>
 </head>
 <body style="margin:0;padding:0;background:#F5F5DB;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="background:#F5F5DB;">
@@ -26,18 +26,31 @@
         </tr>
         <tr>
           <td dir="rtl" style="padding:16px 32px 0;text-align:right;font-family:Tahoma,'Segoe UI',Arial,sans-serif;color:#0B300F;">
-            <h1 style="margin:0 0 12px;font-size:22px;line-height:1.5;font-weight:bold;">أكّد بريدك</h1>
-            <p style="margin:0;font-size:16px;line-height:1.8;">شكراً لتسجيلك في عدلي. اضغط الزر لتأكيد بريدك، فيُفعَّل حسابك وتدخل إليه مباشرة.</p>
+            <h1 style="margin:0 0 12px;font-size:22px;line-height:1.5;font-weight:bold;">رمز تأكيد بريدك</h1>
+            <p style="margin:0;font-size:16px;line-height:1.8;">شكراً لتسجيلك في عدلي. اكتب هذا الرمز في صفحة التسجيل لتأكيد بريدك، فيُفعَّل حسابك وتدخل إليه مباشرة.</p>
           </td>
         </tr>
         <tr>
-          <td align="center" style="padding:24px 32px;">
+          <td align="center" style="padding:24px 32px 4px;font-family:Tahoma,'Segoe UI',Arial,sans-serif;">
+            <p style="margin:0 0 8px;font-size:14px;color:#4A5E48;">رمز التأكيد</p>
+            <!-- The code reads left to right; the right padding is smaller because letter-spacing also trails the last digit. -->
+            <div dir="ltr" style="display:inline-block;padding:14px 8px 14px 20px;border:1px solid #C9A24A;border-radius:12px;background:#F5F5DB;font-family:'Courier New',Courier,monospace;font-size:34px;line-height:1.2;font-weight:bold;letter-spacing:12px;color:#0B300F;">{{ .Token }}</div>
+            <p style="margin:12px 0 0;font-size:14px;line-height:1.7;color:#0B300F;">الرمز صالح لمدة 10 دقائق ولمرة واحدة.</p>
+          </td>
+        </tr>
+        <tr>
+          <td dir="rtl" style="padding:20px 32px 0;text-align:center;font-family:Tahoma,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.7;color:#4A5E48;">
+            أو اضغط الزر من هذا الجهاز:
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:16px 32px 24px;">
             <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="display:inline-block;padding:14px 28px;border-radius:999px;background:#C9A24A;color:#0B300F;font-family:Tahoma,'Segoe UI',Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;">أكّد بريدي</a>
           </td>
         </tr>
         <tr>
           <td dir="rtl" style="padding:0 32px 28px;text-align:right;font-family:Tahoma,'Segoe UI',Arial,sans-serif;font-size:13px;line-height:1.7;color:#4A5E48;">
-            <p style="margin:0 0 8px;">الرابط صالح لمدة ساعة ويُستعمل مرة واحدة. إذا لم تنشئ حساباً في عدلي، تجاهل هذه الرسالة ولن يحدث شيء.</p>
+            <p style="margin:0 0 8px;">الزر كذلك صالح لمدة 10 دقائق ولمرة واحدة. إذا لم تنشئ حساباً في عدلي، تجاهل هذه الرسالة ولن يحدث شيء.</p>
             <p style="margin:0;">إذا لم يعمل الزر، انسخ هذا الرابط في المتصفح:</p>
             <p dir="ltr" style="margin:4px 0 0;text-align:left;word-break:break-all;font-size:12px;"><a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="color:#4A5E48;">{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email</a></p>
           </td>
