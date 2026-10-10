@@ -45,9 +45,11 @@
   }
 }
 
+/* The bottle at 75% (P-E): the whole stage, so the poster and the live scene stay one picture (the fade from one to
+   the other doesn't jump); its forest ground is the hero's, so the smaller stage has no visible edge. */
 .heroStage {
-  width: 100%;
-  max-width: 520px;
+  width: 75%;
+  max-width: 390px;
   margin-inline: auto;
 }
 

@@ -59,38 +59,11 @@
   }
 }
 
-/* ---------- The shears beside the bottle (2D, above the canvas) ----------
-   Wide screens: standing on the plinth's edge. Phones (the text sits above the stage, so only the stage's top part is
-   in the first screen): higher and a little bigger, beside the cap, whole within the first screen. */
-.shearsOnPlinth {
-  position: absolute;
-  inset-inline-end: 1%;
-  top: 3%;
-  width: 40%;
-  transform: rotate(-16deg) perspective(800px) rotateY(calc(var(--mx, 0) * 8deg)) rotateX(calc(var(--my, 0) * -6deg));
-  transition: transform var(--dur-panel) var(--ease-out);
-}
-
-@media (min-width: 840px) {
-  .shearsOnPlinth {
-    inset-inline-end: 3%;
-    top: auto;
-    bottom: 13%;
-    width: 34%;
-  }
-}
-
 /* ---------- Depth while scrolling: each layer moves at its own speed (CSS scroll timeline, where supported) ---------- */
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
     .stage {
       animation: depth-stage linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 100svh;
-    }
-
-    .shearsOnPlinth {
-      animation: depth-shears linear both;
       animation-timeline: scroll(root);
       animation-range: 0 100svh;
     }
@@ -103,15 +76,8 @@
   }
 }
 
-@keyframes depth-shears {
-  to {
-    translate: 0 -38%;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .stage,
-  .shearsOnPlinth {
+  .stage {
     transform: none;
     transition: none;
   }
