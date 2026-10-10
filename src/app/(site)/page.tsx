@@ -79,7 +79,7 @@ export default async function Home() {
           catalog.data.products.length > 0 ? (
             <>
               <ul className={`ad-shelf ${styles.shelfGrid}`}>
-                {homeShelf(catalog.data.products).map((p) => (
+                {homeShelf(catalog.data.products, catalog.data.home).map((p) => (
                   <li key={p.id}>
                     <SealStage product={p} categoryName={categoryName.get(p.category_id)} />
                   </li>

@@ -74,9 +74,16 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
     <main className={styles.page}>
       <div className={styles.head}>
         <h1 className="title">المنتجات</h1>
-        <Link className="ad-btn ad-btn--primary" href="/admin/products/new">
-          منتج جديد
-        </Link>
+        <div className="ad-form-actions">
+          {isOwner && (
+            <Link className="ad-btn ad-btn--ghost" href="/admin/products/home">
+              منتجات الرئيسية
+            </Link>
+          )}
+          <Link className="ad-btn ad-btn--primary" href="/admin/products/new">
+            منتج جديد
+          </Link>
+        </div>
       </div>
 
       <nav className={`ad-chips ${styles.chips}`} aria-label="الحالة">

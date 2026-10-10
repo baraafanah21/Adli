@@ -137,7 +137,12 @@ async function availabilityFor(supabase: SupabaseClient, productIds: string[]) {
 
 class CatalogReadError extends Error {}
 
-type Catalog = { categories: Category[]; products: ProductCard[] };
+type Catalog = {
+  categories: Category[];
+  products: ProductCard[];
+  /** The products the owner chose for the home page, in slot order (ids; home_products, active products only). */
+  home: string[];
+};
 
 /** Active categories and products, as anon: the same for every visitor (staff included). */
 async function catalogData(): Promise<Catalog> {
@@ -145,16 +150,17 @@ async function catalogData(): Promise<Catalog> {
   cacheTag("catalog");
   cacheLife("catalog");
   const supabase = createPublicClient();
-  const [categories, products] = await Promise.all([
+  const [categories, products, home] = await Promise.all([
     supabase.from("categories").select("id, slug, name_ar, icon, description_ar").eq("is_active", true).order("sort"),
     supabase
       .from("products")
       .select(`${PRODUCT_COLUMNS}, product_variants!product_variants_product_id_fkey (${VARIANT_COLUMNS}), product_options (name_ar, sort)`)
       .eq("is_active", true)
       .order("sort"),
+    supabase.from("home_products").select("slot, product_id").order("slot"),
   ]);
-  if (categories.error || products.error) {
-    console.error("getCatalog", categories.error ?? products.error);
+  if (categories.error || products.error || home.error) {
+    console.error("getCatalog", categories.error ?? products.error ?? home.error);
     throw new CatalogReadError("catalog");
   }
 
@@ -195,7 +201,11 @@ async function catalogData(): Promise<Catalog> {
       };
     });
 
-  return { categories: categories.data as Category[], products: cards };
+  return {
+    categories: categories.data as Category[],
+    products: cards,
+    home: (home.data as { slot: number; product_id: string }[]).map((h) => h.product_id),
+  };
 }
 
 export async function getCatalog(): Promise<Result<Catalog>> {
@@ -316,11 +326,19 @@ export async function getProduct(slug: string): Promise<Result<ProductDetail | n
 export const HOME_SHELF = 4;
 
 /**
- * The home shelf: one product from each category in turn (categories in their order), so it's never four of one kind
- * while others exist; in each category, products in stock first, then catalog order. Fewer categories than places:
- * the round goes on to each category's second product, and so on.
+ * The home shelf: first the products the owner chose («منتجات الرئيسية», home_products) in their order, those still
+ * on the shop; then, for any place left, one product from each category in turn (categories in their order), so it's
+ * never four of one kind while others exist; in each category, products in stock first, then catalog order.
  */
-export function homeShelf(products: ProductCard[], n = HOME_SHELF): ProductCard[] {
+export function homeShelf(products: ProductCard[], chosen: string[] = [], n = HOME_SHELF): ProductCard[] {
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const picked = chosen.flatMap((id) => byId.get(id) ?? []).slice(0, n);
+  const taken = new Set(picked.map((p) => p.id));
+  return [...picked, ...mixedShelf(products.filter((p) => !taken.has(p.id)), n - picked.length)];
+}
+
+/** One product from each category in turn, in-stock first: the automatic part of the home shelf. */
+function mixedShelf(products: ProductCard[], n: number): ProductCard[] {
   const byCategory = new Map<string, ProductCard[]>();
   for (const p of products) {
     const list = byCategory.get(p.category_id);
