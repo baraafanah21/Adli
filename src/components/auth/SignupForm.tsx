@@ -3,16 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD } from "@/lib/auth/errors";
+import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD, OTP_LENGTH } from "@/lib/auth/errors";
+import { useOtpPending } from "@/lib/auth/otp-session";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { confirmUrl } from "@/components/auth/LoginForm";
+import { OtpStep } from "@/components/auth/OtpStep";
 import styles from "./auth.module.css";
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "busy" }
-  | { kind: "error"; message: string; contact?: boolean }
-  | { kind: "sent"; email: string };
+type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string; contact?: boolean };
 
 export function SignupForm({ next }: { next: string }) {
   const router = useRouter();
@@ -21,6 +19,7 @@ export function SignupForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const otp = useOtpPending("signup");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -36,6 +35,7 @@ export function SignupForm({ next }: { next: string }) {
     const { data, error } = await createClient().auth.signUp({
       email: em,
       password,
+      // The redirect is only for the email's fallback link (/auth/confirm); the code is the main way in.
       options: { data: { full_name: n.slice(0, 80) }, emailRedirectTo: confirmUrl(next) },
     });
     if (error) {
@@ -50,16 +50,38 @@ export function SignupForm({ next }: { next: string }) {
       router.refresh();
       return;
     }
-    // Confirmation on: the email carries the link. Same answer whether or not the email already had an account.
-    setStatus({ kind: "sent", email: em });
+    // Confirmation on: the email carries a six-digit code. Same answer whether or not the email already had an account.
+    setStatus({ kind: "idle" });
+    otp.save(em, "signup");
   }
 
-  if (status.kind === "sent") {
+  if (otp.pending) {
+    const sentTo = otp.pending.email;
     return (
-      <p className={styles.notice} role="status">
-        أرسلنا رابط التأكيد إلى <bdi dir="ltr">{status.email}</bdi>. افتح الرسالة واضغط الرابط لتفعيل حسابك، ثم تدخل
-        مباشرة. لم تصل؟ انظر في مجلد الرسائل غير المرغوب فيها.
-      </p>
+      <OtpStep
+        email={sentTo}
+        type="email"
+        sentAt={otp.pending.sentAt}
+        what="confirm"
+        lede={
+          <>
+            أرسلنا رمزاً من {OTP_LENGTH} أرقام إلى <bdi dir="ltr">{sentTo}</bdi>. اكتبه هنا لتفعيل حسابك.
+          </>
+        }
+        resend={async () =>
+          (await createClient().auth.resend({ type: "signup", email: sentTo, options: { emailRedirectTo: confirmUrl(next) } })).error
+        }
+        onResent={() => otp.save(sentTo, "signup")}
+        onVerified={() => {
+          otp.clear();
+          router.replace(next);
+          router.refresh();
+        }}
+        onChangeEmail={() => {
+          setEmail(sentTo);
+          otp.clear();
+        }}
+      />
     );
   }
 

@@ -9,8 +9,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure } from "@/lib/auth/errors";
+import { authMessage, EMAIL_INCOMPLETE, isCompleteEmail, OTP_LENGTH, sendFailure } from "@/lib/auth/errors";
+import { useOtpPending } from "@/lib/auth/otp-session";
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { OtpStep } from "@/components/auth/OtpStep";
 import { EMAIL_ENABLED } from "@/lib/auth/email";
 import { whatsappUrl } from "@/lib/whatsapp";
 import styles from "./auth.module.css";
@@ -18,18 +20,26 @@ import styles from "./auth.module.css";
 type Status =
   | { kind: "idle" }
   | { kind: "busy" }
-  | { kind: "error"; message: string; contact?: boolean; canResend?: boolean }
-  | { kind: "sent"; message: string };
+  | { kind: "error"; message: string; contact?: boolean; canResend?: boolean };
 
+/** Where the emails' fallback links land (/auth/confirm verifies them); the six-digit code is the main way in. */
 export const confirmUrl = (next: string) => `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`;
 
 export function LoginForm({ next }: { next: string }) {
   const router = useRouter();
-  const ids = { email: useId(), password: useId(), linkEmail: useId() };
+  const ids = { email: useId(), password: useId() };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [linkStatus, setLinkStatus] = useState<Status>({ kind: "idle" });
+  const [codeStatus, setCodeStatus] = useState<Status>({ kind: "idle" });
+  const otp = useOtpPending("login");
+
+  // A sign-in code never creates an account by accident; sign-up has its own page.
+  const sendLoginCode = async (target: string) =>
+    (await createClient().auth.signInWithOtp({ email: target, options: { shouldCreateUser: false, emailRedirectTo: confirmUrl(next) } }))
+      .error;
+  const sendConfirmCode = async (target: string) =>
+    (await createClient().auth.resend({ type: "signup", email: target, options: { emailRedirectTo: confirmUrl(next) } })).error;
 
   async function signIn(e: FormEvent) {
     e.preventDefault();
@@ -47,53 +57,64 @@ export function LoginForm({ next }: { next: string }) {
     router.refresh();
   }
 
+  /** «لم تؤكد بريدك»: a new sign-up code, then the code step (verify type "email" signs them in). */
   async function resendConfirmation() {
+    const target = email.trim();
     setStatus({ kind: "busy" });
-    const { error } = await createClient().auth.resend({
-      type: "signup",
-      email: email.trim(),
-      options: { emailRedirectTo: confirmUrl(next) },
-    });
-    setStatus(
-      !error
-        ? { kind: "sent", message: "أرسلنا رسالة تأكيد جديدة. افتحها من بريدك ثم ادخل." }
-        : isEmailSendFailure(error)
-          ? { kind: "error", ...emailSendFailure("confirm") }
-          : { kind: "error", message: authMessage(error) },
-    );
+    const failure = sendFailure(await sendConfirmCode(target), "confirm");
+    if (failure) return setStatus({ kind: "error", ...failure });
+    setStatus({ kind: "idle" });
+    otp.save(target, "confirm");
   }
 
-  async function sendLink(e: FormEvent) {
+  async function sendCode(e: FormEvent) {
     e.preventDefault();
     const target = email.trim();
-    if (!target) {
-      setLinkStatus({ kind: "error", message: "اكتب بريدك أولاً." });
-      return;
-    }
-    if (!isCompleteEmail(target)) {
-      setLinkStatus({ kind: "error", message: EMAIL_INCOMPLETE });
-      return;
-    }
-    setLinkStatus({ kind: "busy" });
-    const { error } = await createClient().auth.signInWithOtp({
-      email: target,
-      // A link never creates an account by accident; sign-up has its own page.
-      options: { shouldCreateUser: false, emailRedirectTo: confirmUrl(next) },
-    });
-    // Rate limits are worth telling; "no such account" is not (it would reveal who has an account).
-    if (error && (error.status === 429 || error.code?.startsWith("over_"))) {
-      setLinkStatus({ kind: "error", message: authMessage(error) });
-      return;
-    }
-    // The send itself failed (500 unexpected_failure): say so instead of a «sent» that never arrives.
-    if (error && isEmailSendFailure(error)) {
-      setLinkStatus({ kind: "error", ...emailSendFailure("login") });
-      return;
-    }
-    setLinkStatus({
-      kind: "sent",
-      message: `إذا كان لـ ${target} حساب عندنا، فقد أرسلنا إليه رابط دخول. افتح الرسالة واضغط الرابط خلال ساعة.`,
-    });
+    if (!target) return setCodeStatus({ kind: "error", message: "اكتب بريدك أولاً." });
+    if (!isCompleteEmail(target)) return setCodeStatus({ kind: "error", message: EMAIL_INCOMPLETE });
+    setCodeStatus({ kind: "busy" });
+    // Rate limits and a failed send are told; «no such account» never is.
+    const failure = sendFailure(await sendLoginCode(target), "login");
+    if (failure) return setCodeStatus({ kind: "error", ...failure });
+    setCodeStatus({ kind: "idle" });
+    otp.save(target, "login");
+  }
+
+  if (otp.pending) {
+    const { email: sentTo, flow } = otp.pending;
+    const confirming = flow === "confirm";
+    return (
+      <OtpStep
+        email={sentTo}
+        type="email"
+        sentAt={otp.pending.sentAt}
+        what={confirming ? "confirm" : "login"}
+        lede={
+          confirming ? (
+            <>
+              أرسلنا رمز تأكيد من {OTP_LENGTH} أرقام إلى <bdi dir="ltr">{sentTo}</bdi>. اكتبه هنا فيتأكد بريدك وتدخل.
+            </>
+          ) : (
+            <>
+              إذا كان لـ <bdi dir="ltr">{sentTo}</bdi> حساب عندنا، فقد أرسلنا إليه رمز دخول من {OTP_LENGTH} أرقام. اكتبه هنا
+              فتدخل.
+            </>
+          )
+        }
+        resend={() => (confirming ? sendConfirmCode(sentTo) : sendLoginCode(sentTo))}
+        onResent={() => otp.save(sentTo, flow)}
+        onVerified={() => {
+          otp.clear();
+          router.replace(next);
+          router.refresh();
+        }}
+        onChangeEmail={() => {
+          setEmail(sentTo);
+          setStatus({ kind: "idle" });
+          otp.clear();
+        }}
+      />
+    );
   }
 
   const busy = status.kind === "busy";
@@ -146,14 +167,9 @@ export function LoginForm({ next }: { next: string }) {
           )}
         </div>
         {status.kind === "error" && <AuthAlert error={status} />}
-        {status.kind === "sent" && (
-          <p className={styles.notice} role="status">
-            {status.message}
-          </p>
-        )}
         {status.kind === "error" && status.canResend && EMAIL_ENABLED && (
           <button type="button" className="ad-btn ad-btn--ghost ad-btn--block" onClick={resendConfirmation}>
-            أرسل رسالة التأكيد من جديد
+            أرسل لي رمز تأكيد جديداً
           </button>
         )}
         <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={busy}>
@@ -165,18 +181,12 @@ export function LoginForm({ next }: { next: string }) {
         <>
           <p className={styles.divider}>أو بدون كلمة مرور</p>
 
-          <form className={styles.form} onSubmit={sendLink} noValidate>
-            <p className={styles.lede}>نرسل لك رابطاً على بريدك، تضغطه فتدخل مباشرة.</p>
-            {linkStatus.kind === "error" && <AuthAlert error={linkStatus} />}
-            {linkStatus.kind === "sent" ? (
-              <p className={styles.notice} role="status">
-                {linkStatus.message}
-              </p>
-            ) : (
-              <button type="submit" className="ad-btn ad-btn--ghost ad-btn--block" disabled={linkStatus.kind === "busy"}>
-                {linkStatus.kind === "busy" ? "جارٍ الإرسال…" : "أرسل لي رابط دخول"}
-              </button>
-            )}
+          <form className={styles.form} onSubmit={sendCode} noValidate>
+            <p className={styles.lede}>نرسل لك رمزاً من {OTP_LENGTH} أرقام على بريدك، تكتبه هنا فتدخل.</p>
+            {codeStatus.kind === "error" && <AuthAlert error={codeStatus} />}
+            <button type="submit" className="ad-btn ad-btn--ghost ad-btn--block" disabled={codeStatus.kind === "busy"}>
+              {codeStatus.kind === "busy" ? "جارٍ الإرسال…" : "أرسل لي رمز دخول"}
+            </button>
           </form>
         </>
       )}

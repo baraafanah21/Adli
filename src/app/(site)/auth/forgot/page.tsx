@@ -31,7 +31,7 @@ export default function ForgotPage() {
   return (
     <AuthShell
       title="نسيت كلمة المرور"
-      lede="اكتب بريدك، ونرسل لك رابطاً تعيّن منه كلمة مرور جديدة."
+      lede="اكتب بريدك، ونرسل لك رمزاً من 6 أرقام تعيّن به كلمة مرور جديدة."
       footer={<Link href="/login">رجوع إلى الدخول</Link>}
     >
       <ForgotForm />
