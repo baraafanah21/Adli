@@ -5,11 +5,17 @@ import { Button } from "@/components/Button";
 import { ComingSoon } from "@/components/ComingSoon";
 import { JsonLd } from "@/components/JsonLd";
 import { SealStage } from "@/components/SealStage";
-import { ArrowBackIcon, CategoryIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CategoryIcon } from "@/components/icons";
 import { getCatalog, getCatalogSlugs, getCategoryShelf } from "@/lib/catalog";
 import { productCount } from "@/lib/format";
+import { SALON } from "@/lib/salon";
 import { breadcrumbJsonLd, clampDescription, pageMeta } from "@/lib/seo";
 import styles from "./page.module.css";
+
+/** The category's own words (categories.description_ar), or one plain line when the owner hasn't written any. */
+const categoryLede = (c: { name_ar: string; description_ar: string | null }) =>
+  c.description_ar?.trim() || `${c.name_ar} من ${SALON.name} في ${SALON.city}، تطلبها برسالة واتساب وتستلمها من الصالون.`;
 
 /** Every active category is prerendered; one added later is built on its first visit (cached the same way). */
 export async function generateStaticParams() {
@@ -22,13 +28,10 @@ export async function generateMetadata({ params }: PageProps<"/c/[slug]">): Prom
   const { data } = await getCategoryShelf(slug);
   const category = data?.category;
   if (!category) return {};
+  // «عطور في قلقيلية | صالون عدلي»: what the page is, where, and whose (under 60 characters for every category).
   return pageMeta({
-    title: category.name_ar,
-    description: clampDescription(
-      category.description_ar
-        ? `صالون عدلي في قلقيلية: ${category.description_ar}`
-        : `${category.name_ar} من صالون عدلي، صالون حلاقة رجالية في قلقيلية. اطلبها برسالة واتساب واستلمها من الصالون.`,
-    ),
+    fullTitle: `${category.name_ar} في ${SALON.city} | ${SALON.name}`,
+    description: clampDescription(`${category.name_ar} في ${SALON.city} من ${SALON.name}: ${categoryLede(category)} اطلبها برسالة واتساب واستلمها من الصالون.`),
     path: `/c/${category.slug}`,
   });
 }
@@ -69,16 +72,15 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
           { name: category.name_ar, path: `/c/${category.slug}` },
         ])}
       />
-      <Link className={styles.back} href="/products">
-        <ArrowBackIcon />
-        كل المنتجات
-      </Link>
+      <Breadcrumbs trail={[{ name: "المنتجات", path: "/products" }]} />
       <header className={styles.head}>
         <span className={styles.icon} aria-hidden="true">
           <CategoryIcon name={category.icon} size={28} />
         </span>
-        <h1 className="display-lg">{category.name_ar}</h1>
-        {category.description_ar && products.length > 0 && <p className={`body-lg ${styles.lede}`}>{category.description_ar}</p>}
+        <h1 className="display-lg">
+          {category.name_ar} <span className={styles.city}>في {SALON.city}</span>
+        </h1>
+        <p className={`body-lg ${styles.lede}`}>{categoryLede(category)}</p>
         {products.length > 0 && <p className={styles.count}>{productCount(products.length)}</p>}
       </header>
 
@@ -87,12 +89,13 @@ export default async function CategoryPage({ params }: PageProps<"/c/[slug]">) {
           {/* The first card's photo is the page's LCP on a phone: preload it, and only it. */}
           {products.map((p, i) => (
             <li key={p.id}>
-              <SealStage product={p} categoryName={category.name_ar} preload={i === 0} />
+              <SealStage product={p} categoryName={category.name_ar} preload={i === 0} nameAs="h2" />
             </li>
           ))}
         </ul>
       ) : (
-        <ComingSoon category={category} headingLevel="h2">
+        // The description is already under the h1; ComingSoon only says «قريباً».
+        <ComingSoon category={{ ...category, description_ar: null }} headingLevel="h2">
           <Button variant="ghost" href="/products">
             تصفّح كل المنتجات
           </Button>

@@ -7,10 +7,10 @@
   color: var(--ink);
 }
 
-/* Only where all of it fits on the screen (≥ 900px wide: one row of columns, about 520px tall). A footer taller than
+/* Only where all of it fits on the screen (≥ 900px wide: one row of columns and the «الأقسام» line, about 640px tall; ≥ 700px tall). A footer taller than
    the screen, stuck to its bottom, would keep its top (the logo, the hours) behind the page for good: on phones and
    tablets it is an ordinary block, scrolled to like any section. */
-@media (prefers-reduced-motion: no-preference) and (min-width: 900px) and (min-height: 600px) {
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) and (min-height: 700px) {
   .footer {
     position: sticky;
     bottom: 0;
@@ -131,6 +131,13 @@
   text-decoration-color: var(--brass);
 }
 
+/* «الأقسام»: one row of links under the four columns, wrapping on a phone. */
+.categories .links {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-6);
+}
+
 .base {
   display: grid;
   justify-items: center;
@@ -173,6 +180,19 @@
 
   .columns > :first-child {
     grid-column: auto;
+  }
+
+  /* One line beside its heading, so the whole footer (about 640px) still fits the reveal's 700px. */
+  .categories {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--space-6);
+  }
+
+  .categories .heading {
+    margin: 0;
   }
 
   .base {

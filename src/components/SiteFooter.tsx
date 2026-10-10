@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { OpenNow } from "@/components/OpenNow";
 import { SALON, hoursRows } from "@/lib/salon";
+import { getCatalog } from "@/lib/catalog";
 import { getWeek } from "@/lib/salon-data";
 import { salonTelUrl, whatsappChatUrl } from "@/lib/whatsapp";
 import styles from "./SiteFooter.module.css";
@@ -21,12 +22,14 @@ const PAGES = [
 /**
  * The public site's footer, on every page in SiteChrome (never in /admin, no admin links). Dark in both themes.
  * The full logo (adli-logo-mono.svg) large in cream, then four columns: hours (salon_hours, «مفتوح الآن»), location,
- * contact, pages; the credit line at the very bottom. On wide screens it sits behind the page (sticky bottom) so the
+ * contact, pages; then «الأقسام» (a link to every category with products) and the credit line at the very bottom. On wide screens it sits behind the page (sticky bottom) so the
  * content rises off it at the end (SiteChrome); where it is taller than the screen it is an ordinary block. Reads only
- * cached salon data (getWeek), never the session.
+ * cached salon and catalog data (getWeek, getCatalog), never the session.
  */
 export async function SiteFooter() {
-  const week = await getWeek();
+  const [week, catalog] = await Promise.all([getWeek(), getCatalog()]);
+  // «الأقسام»: the categories that have products, in the shop's order (the same cached catalog as the shelf).
+  const categories = (catalog.data?.categories ?? []).filter((c) => catalog.data!.products.some((p) => p.category_id === c.id));
   const place = SALON.address ?? SALON.city;
 
   return (
@@ -116,6 +119,21 @@ export async function SiteFooter() {
             </ul>
           </nav>
         </div>
+
+        {categories.length > 0 && (
+          <nav className={styles.categories} aria-labelledby="footer-categories">
+            <h2 id="footer-categories" className={styles.heading}>
+              الأقسام
+            </h2>
+            <ul className={styles.links}>
+              {categories.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/c/${c.slug}`}>{c.name_ar}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         <div className={styles.base}>
           <p>© {SALON.name}، {SALON.city}</p>

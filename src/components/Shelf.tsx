@@ -82,7 +82,7 @@ export function ShelfControls({
         <ul id={SHELF_FOUND_ID} className={`ad-shelf ${styles.grid}`}>
           {visible.map((p) => (
             <li key={p.id}>
-              <SealStage product={p} categoryName={nameById.get(p.category_id)} />
+              <SealStage product={p} categoryName={nameById.get(p.category_id)} nameAs="h2" />
             </li>
           ))}
         </ul>

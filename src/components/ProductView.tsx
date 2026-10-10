@@ -3,8 +3,9 @@ import type { ReactNode } from "react";
 import { SealStage } from "@/components/SealStage";
 import { Button } from "@/components/Button";
 import { BundleContents } from "@/components/BundleContents";
-import { ArrowBackIcon } from "@/components/icons";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import type { ProductCard, ProductDetail } from "@/lib/catalog";
+import { SALON } from "@/lib/salon";
 import styles from "./ProductView.module.css";
 
 /** The first in stock, otherwise the first: the variant a product page opens on (?v=sku is applied on the client). */
@@ -42,10 +43,10 @@ export function ProductView({
   const initial = initialVariant(product);
   return (
     <main className={styles.page}>
-      <Link className={styles.back} href={category ? `/c/${category.slug}` : "/products"}>
-        <ArrowBackIcon />
-        {category ? category.name_ar : "كل المنتجات"}
-      </Link>
+      {/* Up to the product's category (a visible link to it); the product itself is the h1 below. */}
+      <Breadcrumbs
+        trail={[{ name: "المنتجات", path: "/products" }, ...(category ? [{ name: category.name_ar, path: `/c/${category.slug}` }] : [])]}
+      />
       {note && (
         <p className={styles.hidden} role="note">
           {note}
@@ -57,7 +58,7 @@ export function ProductView({
         size="lg"
         preload
         purchase={purchase}
-        after="تثبّت الطلب على واتساب، وتستلمه من الصالون."
+        after={`${product.stock_state === "out" ? "من" : "متوفر في"} ${SALON.name}، ${SALON.city}. تثبّت الطلب على واتساب، وتستلمه من الصالون.`}
       >
         {product.description_ar && <p className={`body-lg ${styles.description}`}>{product.description_ar}</p>}
         {product.bundle && <BundleContents lines={product.bundle} bundlePrice={initial?.price_ils ?? product.price_ils} />}

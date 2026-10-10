@@ -21,7 +21,7 @@ export function ShelfGrid({ categories, products }: Props) {
         const category = byId.get(p.category_id);
         return (
           <li key={p.id} data-cat={category?.slug}>
-            <SealStage product={p} categoryName={category?.name_ar} preload={i === 0} />
+            <SealStage product={p} categoryName={category?.name_ar} preload={i === 0} nameAs="h2" />
           </li>
         );
       })}
