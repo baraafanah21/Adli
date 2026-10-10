@@ -80,8 +80,9 @@
   --dur-panel: 420ms;
   --dur-camera: 900ms;
 
-  /* set by next/font in layout.tsx */
-  --font-amiri: var(--font-amiri-loaded), "Readex Pro", serif;
+  /* set by next/font in layout.tsx (self-hosted, so the families have generated names: the fallback to Readex is its
+     variable, not "Readex Pro"). Amiri's Latin letters first: see the comment on amiriLatin there. */
+  --font-amiri: var(--font-amiri-latin-loaded), var(--font-amiri-loaded), var(--font-readex-loaded), serif;
   --font-sans: var(--font-readex-loaded), "Segoe UI", Tahoma, sans-serif;
 }
 
