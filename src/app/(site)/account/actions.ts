@@ -4,7 +4,7 @@ import { refresh, revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
-import { normalizeMobile } from "@/lib/phone";
+import { PHONE_MESSAGES, normalizeMobile, phoneProblem } from "@/lib/phone";
 
 export type ProfileState = { ok?: boolean; error?: string; field?: "full_name" | "area" | "phone" };
 
@@ -27,12 +27,13 @@ export async function updateProfile(_prev: ProfileState, form: FormData): Promis
     phone: form.get("phone") ?? "",
   });
   if (!parsed.success) {
+    const phone = String(form.get("phone") ?? "");
     const field = parsed.error.issues[0]?.path[0] as ProfileState["field"];
     const error =
       field === "full_name"
         ? "اكتب اسمك (حتى 80 حرفاً)."
         : field === "phone"
-          ? "اكتب رقم الجوال: 9 أرقام تبدأ بـ 5 واختر المقدمة \u2066+970\u2069 أو \u2066+972\u2069، أو اتركه فارغاً."
+          ? `${PHONE_MESSAGES[phoneProblem(phone) ?? "number"]} الرقم اختياري، فتقدر تتركه فارغاً.`
           : "المنطقة طويلة. اكتبها في 80 حرفاً على الأكثر.";
     return { error, field };
   }

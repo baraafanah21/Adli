@@ -13,6 +13,8 @@ export type DayBooking = {
   barber_id: string;
   service_name_ar: string;
   price_ils: number;
+  /** What was paid: completed bookings only (filled with the price at «حضر», editable after). */
+  paid_ils: number | null;
   duration_min: number;
   starts_at: string;
   ends_at: string;

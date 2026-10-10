@@ -1,13 +1,16 @@
 /*
   Mobile numbers (E3.1). In Palestine one number can be on WhatsApp under +970 or +972 only, so the person chooses
-  the prefix beside the field (PhoneField) and types the local number; nothing is ever guessed from the first digits.
+  the prefix beside the field (PhoneField) and types the local number; nothing is ever guessed from the first digits,
+  and no prefix is chosen for them: the field starts empty and the prefix is required (a saved number fills both).
   Saved form, everywhere: +9705XXXXXXXX or +9725XXXXXXXX. private.normalize_mobile() in the database has the last word
   and accepts that full form only.
 */
 
 export type Prefix = "970" | "972";
 export const PREFIXES: Prefix[] = ["970", "972"];
-export const DEFAULT_PREFIX: Prefix = "970";
+
+/** The example every phone message shows. */
+export const PHONE_EXAMPLE = "0591234567";
 
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
@@ -48,6 +51,26 @@ export function normalizeMobile(phone: string): string | null {
   const p = parseMobile(phone);
   return p ? `+${p.prefix}${p.local}` : null;
 }
+
+export type PhoneProblem = "empty" | "prefix" | "number";
+
+/**
+ * What is wrong with a submitted value, or null when it is a full number. PhoneField sends the bare local number when
+ * no prefix is chosen, so «prefix» can be told apart from a wrong number, in the browser and on the server alike.
+ */
+export function phoneProblem(submitted: string): PhoneProblem | null {
+  if (normalizeMobile(submitted)) return null;
+  const v = clean(submitted);
+  if (v === "") return "empty";
+  return localMobile(v) ? "prefix" : "number";
+}
+
+/** The Arabic message for a problem (the same words in every form and on the server). */
+export const PHONE_MESSAGES: Record<PhoneProblem, string> = {
+  empty: `اكتب رقم جوالك كاملاً، مثل ${PHONE_EXAMPLE}.`,
+  prefix: "اختر مقدمة رقمك \u2066+970\u2069 أو \u2066+972\u2069، حسب الرقم الذي عليه واتساب.",
+  number: `رقم الجوال غير صحيح. اكتبه كاملاً، 10 أرقام تبدأ بـ 05، مثل ${PHONE_EXAMPLE}.`,
+};
 
 /**
  * A saved phone → the digits wa.me wants, used as is: +970… / +972… without the "+". Anything else has no reliable

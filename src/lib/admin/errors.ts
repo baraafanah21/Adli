@@ -1,4 +1,5 @@
 import { formatWeekdayTime } from "@/lib/dates";
+import { PHONE_MESSAGES } from "@/lib/phone";
 
 /*
   Errors from the admin_* functions → Arabic that says what to do. Used by every admin Server Action.
@@ -51,9 +52,11 @@ const RAISED: Record<string, string> = {
   not_a_bundle: "هذا المنتج ليس بكجة.",
   not_a_simple_product: "توليد النسخ للمنتجات العادية فقط، لا للبكجات.",
   kind_invalid: "اختر نوع المنتج: منتج أو بكجة.",
-  phone_invalid: "اكتب رقم الجوال: 9 أرقام تبدأ بـ 5 واختر المقدمة \u2066+970\u2069 أو \u2066+972\u2069، أو اتركه فارغاً.",
+  phone_invalid: `${PHONE_MESSAGES.number} الرقم اختياري، فتقدر تتركه فارغاً.`,
   start_off_grid: "اختر وقتاً على رأس 5 دقائق، مثل 4:05 أو 4:10.",
   reason_required: "اكتب السبب، فهو يظهر للزبون.",
+  paid_invalid: "اكتب المبلغ المدفوع بالشيكل، رقماً من 0 إلى 10000.",
+  not_completed: "المبلغ يُعدَّل للمواعيد المسجّلة «حضر» فقط. حدّث الصفحة.",
   range_invalid: "وقت النهاية يجب أن يكون بعد البداية، ولمدة 31 يوماً على الأكثر.",
   weekly_invalid: "اختر اليوم، ووقت نهاية بعد البداية.",
   hours_invalid: "وقت الإغلاق يجب أن يكون بعد الفتح.",

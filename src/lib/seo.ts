@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ProductCard, ProductDetail } from "@/lib/catalog";
+import type { ProductDetail } from "@/lib/catalog";
 import { productImageSrc } from "@/lib/format";
 import { SALON, type Week, type Weekday } from "@/lib/salon";
 import type { SalonService } from "@/lib/salon-data";
@@ -164,30 +164,10 @@ export function websiteJsonLd(): Thing {
  * `salon_hours` (getWeek()): a weekday with no row is closed and left out, as schema.org expects. The products the
  * page shows are its offers (`hasOfferCatalog`), from the same cached catalog as the shelf (live products only).
  */
-export function salonJsonLd(
-  week: Week | null,
-  services: SalonService[] | null,
-  products: ProductCard[] | null,
-  photos: { url: string }[] = [],
-): Thing {
+export function salonJsonLd(week: Week | null, services: SalonService[] | null, photos: { url: string }[] = []): Thing {
   const telephone = salonTelephone();
   const range = priceRange(services);
   const logo = absolute("/brand/icons/icon-512.png");
-  const catalogs = [
-    services?.length && { "@type": "OfferCatalog", name: "الخدمات والأسعار", itemListElement: serviceOffers(services) },
-    products?.length && {
-      "@type": "OfferCatalog",
-      name: "عطور وكريمات",
-      url: absolute("/products"),
-      itemListElement: products.map((p) => ({
-        "@type": "Offer",
-        itemOffered: { "@type": "Product", name: p.name_ar, url: absolute(`/p/${p.slug}`) },
-        priceCurrency: "ILS",
-        price: p.price_ils,
-        availability: AVAILABILITY[p.stock_state],
-      })),
-    },
-  ].filter(Boolean);
   return {
     "@context": "https://schema.org",
     "@type": ["HairSalon", "Store"],
@@ -219,8 +199,10 @@ export function salonJsonLd(
     ...(range && { priceRange: range }),
     currenciesAccepted: "ILS",
     ...(SALON.instagram && { sameAs: [SALON.instagram] }),
-    ...(catalogs.length && {
-      hasOfferCatalog: { "@type": "OfferCatalog", name: SALON.name, itemListElement: catalogs },
+    // The services only. The home shelf's products are left out: a Product there has no offers of its own, so Search
+    // Console reads each one as an incomplete product snippet; every product has its full Product + Offer on /p/.
+    ...(services?.length && {
+      hasOfferCatalog: { "@type": "OfferCatalog", name: "الخدمات والأسعار", itemListElement: serviceOffers(services) },
     }),
   };
 }

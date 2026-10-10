@@ -5,6 +5,8 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { adminErrorMessage, isExpectedAdminError, type ActionState } from "@/lib/admin/errors";
+import { PHONE_MESSAGES, phoneProblem } from "@/lib/phone";
+import { formatPrice } from "@/lib/format";
 
 /*
   The calendar's actions. Every one re-checks the role here; the database checks it again (and, for closures,
@@ -53,6 +55,20 @@ export async function setBookingStatus(_prev: ActionState, form: FormData): Prom
     return { ok: false, message: "اكتب السبب، فهو يظهر للزبون." };
   }
   const supabase = await createClient();
+
+  // «حضر» carries the amount paid (filled with the price, editable); the database fills the price when it's absent.
+  if (s.status === "completed") {
+    const paid = paidAmount(form.get("paid"));
+    if (Number.isNaN(paid)) return { ok: false, message: PAID_INVALID };
+    const { error } = await supabase.rpc("admin_complete_booking", {
+      p_booking_id: s.bookingId,
+      p_paid_ils: paid,
+      p_note: s.note || null,
+    });
+    if (error) return fail(error, "admin_complete_booking");
+    return done(paid === null ? STATUS_DONE.completed : `سُجّل «حضر»، والمدفوع ${formatPrice(paid)}.`);
+  }
+
   const { error } = await supabase.rpc("admin_set_booking_status", {
     p_booking_id: s.bookingId,
     p_status: s.status,
@@ -60,6 +76,29 @@ export async function setBookingStatus(_prev: ActionState, form: FormData): Prom
   });
   if (error) return fail(error, "admin_set_booking_status");
   return done(STATUS_DONE[s.status]);
+}
+
+/** Arabic-Indic digits → 0-9; "" → null; anything not a whole number of shekels 0–10000 → NaN. */
+function paidAmount(v: FormDataEntryValue | null): number | null {
+  const raw = String(v ?? "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).trim();
+  if (raw === "") return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 && n <= 10000 ? n : NaN;
+}
+
+const PAID_INVALID = "اكتب المبلغ المدفوع بالشيكل، رقماً من 0 إلى 10000.";
+
+/** «عدّل المبلغ» on a completed booking (a relative who paid less, a mistake). Logged in the booking's events. */
+export async function setBookingPaid(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await staff();
+  const bookingId = z.uuid().safeParse(form.get("bookingId"));
+  const paid = paidAmount(form.get("paid"));
+  if (!bookingId.success) return { ok: false, message: "تعذّر قراءة البيانات. حدّث الصفحة وحاول مرة أخرى." };
+  if (paid === null || Number.isNaN(paid)) return { ok: false, message: PAID_INVALID };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_booking_paid", { p_booking_id: bookingId.data, p_paid_ils: paid });
+  if (error) return fail(error, "admin_set_booking_paid");
+  return done(`حُفظ المبلغ المدفوع: ${formatPrice(paid)}.`);
 }
 
 export async function addWalkIn(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -82,6 +121,9 @@ export async function addWalkIn(_prev: ActionState, form: FormData): Promise<Act
     return { ok: false, message: "الاسم 80 حرفاً على الأكثر." };
   }
   const s = parsed.data;
+  // Optional, but a number that's there must be whole (PhoneField sends the bare number when no prefix is chosen).
+  const phoneIssue = s.phone ? phoneProblem(s.phone) : null;
+  if (phoneIssue) return { ok: false, message: `${PHONE_MESSAGES[phoneIssue]} الجوال اختياري، فتقدر تتركه فارغاً.` };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("admin_add_walk_in", {
     p_barber_id: s.barberId,

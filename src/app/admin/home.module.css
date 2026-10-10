@@ -255,3 +255,74 @@ a.tile:hover {
   font-size: 11px;
   font-weight: 600;
 }
+
+/* ---------- «الإيرادات» (owner) ---------- */
+/* The filters: one row on a computer, two columns on a phone (the button takes a whole row). */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 0 var(--space-3);
+}
+
+.filters > .ad-field {
+  margin-bottom: var(--space-3);
+}
+
+.filters > button {
+  grid-column: 1 / -1;
+  margin-bottom: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .filters {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .filters > button {
+    grid-column: auto;
+  }
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table caption {
+  text-align: start;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--line);
+  text-align: start;
+}
+
+.table thead th {
+  border-top: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.table tbody th {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* The count and the amount: narrow, at the end of the row. */
+.table th + th,
+.table td {
+  width: 1%;
+  padding-inline-start: var(--space-4);
+  white-space: nowrap;
+  text-align: end;
+}

@@ -3,13 +3,15 @@
 import { useActionState, useId } from "react";
 import { updateProfile, type ProfileState } from "@/app/(site)/account/actions";
 import { PhoneField } from "@/components/PhoneField";
+import { isSingleWord } from "@/lib/person-name";
 import styles from "@/components/auth/auth.module.css";
 
 type Props = { email: string | null; profile: { full_name: string | null; area: string | null; phone: string | null } };
 
 export function ProfileForm({ email, profile }: Props) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(updateProfile, {});
-  const ids = { name: useId(), area: useId(), phone: useId(), err: useId() };
+  const ids = { name: useId(), nameHint: useId(), area: useId(), phone: useId(), err: useId() };
+  const oneWord = isSingleWord(profile.full_name);
   const err = (f: ProfileState["field"]) => state.field === f;
 
   return (
@@ -21,7 +23,22 @@ export function ProfileForm({ email, profile }: Props) {
       )}
       <div className="ad-field">
         <label htmlFor={ids.name}>الاسم</label>
-        <input id={ids.name} name="full_name" autoComplete="name" maxLength={80} required defaultValue={profile.full_name ?? ""} aria-invalid={err("full_name") || undefined} />
+        <input
+          id={ids.name}
+          name="full_name"
+          autoComplete="name"
+          maxLength={80}
+          required
+          defaultValue={profile.full_name ?? ""}
+          aria-invalid={err("full_name") || undefined}
+          aria-describedby={oneWord ? ids.nameHint : undefined}
+        />
+        {/* A gentle nudge, never a block: booking and ordering work the same with one word. */}
+        {oneWord && (
+          <span className="ad-field__hint" id={ids.nameHint}>
+            اسمك المحفوظ كلمة واحدة. أضف اسم العائلة بعده، ليظهر اسمك كاملاً على مواعيدك وطلباتك.
+          </span>
+        )}
       </div>
       <div className="ad-field">
         <label htmlFor={ids.area}>المنطقة (اختياري)</label>

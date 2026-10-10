@@ -25,6 +25,33 @@
   color: var(--ink-muted);
 }
 
+/* «احجز موعدك» (brass, the main action) and «تصفّح المنتجات», side by side; full width each on a narrow phone. */
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.heroNote {
+  margin-top: var(--space-3);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+@media (min-width: 840px) {
+  .heroActions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 400px) {
+  .heroActions {
+    flex-direction: column;
+    align-self: stretch;
+  }
+}
+
 /* «مفتوح الآن» under the button: the salon's state at a glance (client-side, no layout shift). */
 .heroOpen {
   margin-top: var(--space-4);
