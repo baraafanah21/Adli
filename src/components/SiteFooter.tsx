@@ -15,6 +15,7 @@ const PAGES = [
   { href: "/booking", label: "احجز موعد" },
   { href: "/#location", label: "الموقع" },
   { href: "/account", label: "حسابي" },
+  { href: "/privacy", label: "سياسة الخصوصية" },
 ];
 
 /**
