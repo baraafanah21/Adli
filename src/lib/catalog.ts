@@ -57,6 +57,8 @@ export type ProductCard = {
   only_variant: OrderableVariant | null;
   /** «المقاس», «اللون»: the card asks the customer to choose these on the product page. */
   option_names: string[];
+  /** The product row's last change (the sitemap's lastModified). */
+  updated_at: string;
 };
 
 export type OptionValue = { id: string; label_ar: string; hex: string | null };
@@ -86,7 +88,7 @@ type Result<T> = { data: T; error: null } | { data: null; error: string };
 type RawVariant = { id: string; sku: string; option_value_ids: string[]; price_ils: number | null; is_active: boolean; sort: number };
 type Availability = { variant_id: string; stock_state: StockState; label_ar: string | null };
 
-const PRODUCT_COLUMNS = "id, slug, name_ar, family_ar, price_ils, volume_ml, image_path, category_id, kind, sort";
+const PRODUCT_COLUMNS = "id, slug, name_ar, family_ar, price_ils, volume_ml, image_path, category_id, kind, sort, updated_at";
 // FK hints: bundle_items / order_items link products and variants too, so plain embeds would be ambiguous.
 const VARIANT_COLUMNS = "id, sku, option_value_ids, price_ils, is_active, sort";
 
@@ -158,7 +160,7 @@ async function catalogData(): Promise<Catalog> {
 
   type Row = {
     id: string; slug: string; name_ar: string; family_ar: string | null; price_ils: number; volume_ml: number | null;
-    image_path: string | null; category_id: string; kind: "simple" | "bundle"; sort: number;
+    image_path: string | null; category_id: string; kind: "simple" | "bundle"; sort: number; updated_at: string;
     product_variants: RawVariant[]; product_options: { name_ar: string; sort: number }[];
   };
   const rows = products.data as Row[];
@@ -189,6 +191,7 @@ async function catalogData(): Promise<Catalog> {
         ...summarize(variants, p.price_ils),
         only_variant: single && { id: single.id, sku: single.sku, label_ar: single.label_ar, price_ils: single.price_ils, stock_state: single.stock_state },
         option_names: optionNames,
+        updated_at: p.updated_at,
       };
     });
 
@@ -247,7 +250,7 @@ export async function loadProduct(supabase: SupabaseClient, by: { slug: string }
 
   type Row = {
     id: string; slug: string; name_ar: string; family_ar: string | null; price_ils: number; volume_ml: number | null;
-    image_path: string | null; category_id: string; kind: "simple" | "bundle"; description_ar: string | null;
+    image_path: string | null; category_id: string; kind: "simple" | "bundle"; updated_at: string; description_ar: string | null;
     is_active: boolean; category: { slug: string; name_ar: string } | null; product_variants: RawVariant[];
     product_options: { id: string; name_ar: string; kind: ProductOption["kind"]; sort: number;
       product_option_values: (OptionValue & { sort: number })[] }[];
@@ -280,6 +283,7 @@ export async function loadProduct(supabase: SupabaseClient, by: { slug: string }
     image_path: p.image_path,
     category_id: p.category_id,
     kind: p.kind,
+    updated_at: p.updated_at,
     description_ar: p.description_ar,
     is_active: p.is_active,
     category: p.category,

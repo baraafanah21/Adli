@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/JsonLd";
 import { ProductPurchase, ProductPurchaseFromUrl } from "@/components/ProductPurchase";
 import { ProductUnavailable, ProductView, initialVariant, relatedProducts } from "@/components/ProductView";
 import { getCatalog, getCatalogSlugs, getProduct } from "@/lib/catalog";
+import { formatPrice, productImageSrc } from "@/lib/format";
+import { breadcrumbJsonLd, clampDescription, pageMeta, productJsonLd } from "@/lib/seo";
 
 /** Every live product is prerendered; one shown later is built on its first visit (cached the same way). */
 export async function generateStaticParams() {
@@ -15,11 +18,19 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
   const { slug } = await params;
   const { data } = await getProduct(slug);
   if (!data) return {};
-  const description = data.description_ar ?? undefined;
-  return {
+  const price = `${data.price_varies ? "من " : ""}${formatPrice(data.price_ils)}`;
+  const image = productImageSrc(data.image_path, "lg");
+  return pageMeta({
     title: data.name_ar,
-    description: description && description.length > 160 ? `${description.slice(0, 157)}…` : description,
-  };
+    description: clampDescription(
+      data.description_ar
+        ? `${data.name_ar} من صالون عدلي في قلقيلية، ${price}. ${data.description_ar}`
+        : `${data.name_ar} من صالون عدلي، صالون حلاقة رجالية في قلقيلية. ${price}، اطلبه برسالة واتساب واستلمه من الصالون.`,
+    ),
+    path: `/p/${data.slug}`,
+    // The product's own photo (the large 4:5 WebP) when shared; without one, the site's picture.
+    image: image ? { url: image, alt: data.name_ar, width: 1600, height: 2000 } : undefined,
+  });
 }
 
 /**
@@ -42,8 +53,15 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
     variants: product.variants,
     initialSku: initialVariant(product)?.sku ?? "",
   };
+  const trail = [
+    { name: "المنتجات", path: "/products" },
+    ...(product.category ? [{ name: product.category.name_ar, path: `/c/${product.category.slug}` }] : []),
+    { name: product.name_ar, path: `/p/${product.slug}` },
+  ];
   return (
-    <ProductView
+    <>
+      <JsonLd data={[productJsonLd(product), breadcrumbJsonLd(trail)]} />
+      <ProductView
       product={product}
       related={related}
       purchase={
@@ -52,5 +70,6 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
         </Suspense>
       }
     />
+    </>
   );
 }

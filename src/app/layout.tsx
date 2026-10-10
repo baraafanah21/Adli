@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 
 // Fonts (P-A, docs/PERFORMANCE.md): self-hosted subsets of the same versions Google Fonts serves, built by
 // scripts/fonts/build-fonts.sh (src/fonts/README.md). Swap, each with next/font's size-adjusted fallback (no layout
@@ -55,16 +56,17 @@ const amiriLatin = localFont({
 });
 
 export const metadata: Metadata = {
-  // Absolute canonical URLs (/products). Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deployment, so Preview
-  // pages point at the live site too; locally it is the dev server.
-  metadataBase: new URL(
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000",
-  ),
+  // Absolute canonical and share URLs (src/lib/seo.ts: the production domain on Vercel, the dev server locally).
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "عدلي | صالون حلاقة وعطور",
+    default: SITE_TITLE,
     template: "%s | عدلي",
   },
-  description: "صالون عدلي: حلاقة رجالية، عطور وكريمات. اختر منتجك وثبّت طلبك على واتساب.",
+  description: SITE_DESCRIPTION,
+  // Every public page replaces these with pageMeta() (Open Graph merges shallowly); this is the fallback for the rest.
+  // The picture is app/opengraph-image.tsx.
+  openGraph: { type: "website", locale: "ar_AR", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
   // The logo's icons (public/brand/icons/; /favicon.ico is rewritten there in next.config.ts). Manifest: app/manifest.ts.
   icons: {
     icon: [

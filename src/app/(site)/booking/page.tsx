@@ -4,12 +4,15 @@ import { BookingFlow, BookingFromUrl } from "@/components/booking/BookingFlow";
 import { Button } from "@/components/Button";
 import { ShearsTurntable } from "@/components/ShearsTurntable";
 import { getBarbers, getServices } from "@/lib/salon-data";
+import { pageMeta } from "@/lib/seo";
 import styles from "@/components/booking/booking.module.css";
 
-export const metadata: Metadata = {
-  title: "احجز موعد",
-  description: "احجز موعدك في صالون عدلي: اختر الخدمة والحلاق والوقت.",
-};
+// ?service=&barber=&at= are the sign-in detour: one canonical address.
+export const metadata: Metadata = pageMeta({
+  title: "احجز موعد حلاقة",
+  description: "احجز موعدك في صالون عدلي، صالون حلاقة رجالية في قلقيلية: اختر الخدمة والحلاق والوقت، والتثبيت فوري.",
+  path: "/booking",
+});
 
 /*
   Anyone can look at free times; booking itself needs an account (create_booking checks it again).

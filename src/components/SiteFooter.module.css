@@ -26,10 +26,24 @@
   padding: var(--space-16) var(--space-4) var(--space-6);
 }
 
+.brand {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+}
+
 .logo {
-  justify-self: center;
   border-radius: var(--radius-hair);
   color: var(--cream);
+}
+
+.tagline {
+  max-width: 28ch;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--ink-muted);
 }
 
 .columns {
@@ -143,9 +157,14 @@
     padding: var(--space-24) var(--space-8) var(--space-8);
   }
 
-  .logo {
+  .brand {
     justify-self: start;
+    justify-items: start;
     align-self: start;
+  }
+
+  .tagline {
+    text-align: start;
   }
 
   .columns {

@@ -15,8 +15,15 @@ export type DayHours = { open: string; close: string } | null;
 export type Week = Record<Weekday, DayHours>;
 
 export const SALON = {
+  /** The salon's name and the owner's, spelled the same everywhere people and search engines read them (the footer,
+   * the home page, the JSON-LD in src/lib/seo.ts). */
+  name: "صالون عدلي",
+  owner: "أبو عادل",
+  nameEn: "Adli Salon",
+  ownerEn: "Abu Adel",
   /** The city, always shown in «الموقع» (U4). */
   city: "قلقيلية",
+  cityEn: "Qalqilya",
   /** The street address, e.g. "قلقيلية، شارع …" (one value, used everywhere). Until it is set, «الموقع» shows the city. */
   address: "قلقيلية، السوق، آخر دخلة المسمكة، مقابل عاشور هوم" as string | null,
   /** The Google Maps link the owner gives: «افتح في خرائط جوجل» opens it in a new tab. */
