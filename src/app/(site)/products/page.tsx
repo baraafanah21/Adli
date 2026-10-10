@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Button } from "@/components/Button";
-import { Shelf, ShelfFromUrl } from "@/components/Shelf";
+import { ShelfControls, ShelfControlsFromUrl } from "@/components/Shelf";
+import { ShelfGrid } from "@/components/ShelfGrid";
 import { getCatalog } from "@/lib/catalog";
 import { productCount } from "@/lib/format";
 import styles from "./page.module.css";
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
 
 /**
  * Every published product, with the category chips (?c=slug, applied on the client: the page itself is the cached
- * catalog, the same for everyone). The home page shows the first few and links here.
+ * catalog, the same for everyone). The home page shows the first few and links here. The cards are rendered once on
+ * the server (<ShelfGrid>); only the search field, the chips and the filter are client code (<ShelfControls>).
  */
 export default async function ProductsPage() {
   const catalog = await getCatalog();
@@ -30,9 +32,12 @@ export default async function ProductsPage() {
       </header>
 
       {catalog.data ? (
-        <Suspense fallback={<Shelf categories={catalog.data.categories} products={catalog.data.products} preloadFirst />}>
-          <ShelfFromUrl categories={catalog.data.categories} products={catalog.data.products} preloadFirst />
-        </Suspense>
+        <>
+          <Suspense fallback={<ShelfControls categories={catalog.data.categories} products={catalog.data.products} />}>
+            <ShelfControlsFromUrl categories={catalog.data.categories} products={catalog.data.products} />
+          </Suspense>
+          <ShelfGrid categories={catalog.data.categories} products={catalog.data.products} />
+        </>
       ) : (
         <div className={styles.error} role="alert">
           <p className="body">تعذّر تحميل المنتجات الآن. حاول مرة أخرى بعد قليل.</p>
