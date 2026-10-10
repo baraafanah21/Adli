@@ -47,18 +47,77 @@ export function headingWords(root: ParentNode): Cleanup {
   return undefined;
 }
 
-/** Photos drift inside their frame (CSS `translate` / `scale` on the img, so the card's hover zoom still works). */
+/**
+ * Photos drift inside their frame (CSS `translate` / `scale` on the img, so the card's hover zoom still works): −5% as
+ * the frame enters from the bottom, +5% as it leaves at the top, tied to the scroll. One scroll listener (one update
+ * per frame) for every frame, not a ScrollTrigger each: /products has ~80 cards, and each trigger was measured on every
+ * refresh. Only the frames near the screen (IntersectionObserver) are measured, all reads before all writes, and only
+ * they carry `will-change`. Nothing here forces a layout when it starts: which frames are under the screen (the only
+ * ones that drift, as with `belowFold`) comes from the observer's first answer, measured in the browser's own
+ * rendering step, not from ~80 getBoundingClientRect() calls.
+ */
 export function photoParallax(root: ParentNode): Cleanup {
-  const frames = [...root.querySelectorAll<HTMLElement>("[data-motion~='parallax']")].filter(belowFold);
-  for (const el of frames) {
-    el.dataset.parallax = "on";
-    gsap.fromTo(
-      el,
-      { "--drift": "-5%" },
-      { "--drift": "5%", ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } },
-    );
-  }
+  const frames = [...root.querySelectorAll<HTMLElement>("[data-motion~='parallax']")];
+  if (frames.length === 0) return undefined;
+  const seen = new WeakSet<HTMLElement>();
+  const near = new Set<HTMLElement>();
+
+  const drift = (el: HTMLElement, r: DOMRectReadOnly, vh: number) =>
+    el.style.setProperty("--drift", `${(-5 + 10 * gsap.utils.clamp(0, 1, (vh - r.top) / (vh + r.height))).toFixed(2)}%`);
+
+  const update = () => {
+    const vh = window.innerHeight;
+    const rects = [...near].map((el) => [el, el.getBoundingClientRect()] as const);
+    for (const [el, r] of rects) drift(el, r, vh);
+  };
+
+  // The observer's first answer sorts the frames, as `belowFold` did: one on screen or above it, or hidden by a chip,
+  // stays exactly as it is; one under the screen (or not laid out yet: a card the browser still skips,
+  // content-visibility) gets its zoom and starting drift now, writes only. Then only the frames within half a screen
+  // are measured and carry `will-change`.
+  const io = new IntersectionObserver(
+    (entries) => {
+      const vh = window.innerHeight;
+      for (const e of entries) {
+        const el = e.target as HTMLElement;
+        const box = e.boundingClientRect;
+        if (!seen.has(el)) {
+          seen.add(el);
+          const skipped = box.height === 0 && el.checkVisibility?.() !== false;
+          if (!skipped && (box.height === 0 || box.top < vh)) {
+            io.unobserve(el);
+            continue;
+          }
+          el.dataset.parallax = "on";
+          el.style.setProperty("--drift", "-5%");
+        }
+        if (box.height === 0) continue; // still skipped: its first real box comes as it nears
+        if (e.isIntersecting) {
+          near.add(el);
+          el.dataset.parallax = "near";
+          drift(el, e.boundingClientRect, vh);
+        } else if (near.delete(el)) {
+          el.dataset.parallax = "on";
+        }
+      }
+    },
+    { rootMargin: "50% 0px" },
+  );
+  for (const el of frames) io.observe(el);
+  // At most one update per frame, however many scroll events arrive (Lenis scrolls the window too, so it fires them).
+  let queued = 0;
+  const onScroll = () => {
+    if (!queued) queued = requestAnimationFrame(() => {
+      queued = 0;
+      update();
+    });
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+
   return () => {
+    window.removeEventListener("scroll", onScroll);
+    cancelAnimationFrame(queued);
+    io.disconnect();
     for (const el of frames) {
       delete el.dataset.parallax;
       el.style.removeProperty("--drift");

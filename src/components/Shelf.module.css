@@ -2,6 +2,22 @@
   margin-top: var(--space-8);
 }
 
+/* /products' long list: past the first two rows on a phone, the browser skips a card's style, layout and paint until it
+   comes near. `auto` remembers each card's real height once drawn; until then a card holds its height, so the page is
+   the right length from the start (a jump or a restored scroll lands where it should). Find in page still finds them.
+   Phones (two columns, 16px page padding and gap): the card is (100vw − 48px) / 2 wide, its 4:5 photo 1.25× that, then
+   180px of name, meta and price (measured). Wider: about one card's height (measured 469–481px between 600 and 1440). */
+.lazy > li:nth-child(n + 5) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 470px;
+}
+
+@media (max-width: 599px) {
+  .lazy > li:nth-child(n + 5) {
+    contain-intrinsic-size: auto calc((100vw - 48px) * 0.625 + 180px);
+  }
+}
+
 .empty {
   display: grid;
   justify-items: center;

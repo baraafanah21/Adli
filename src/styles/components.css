@@ -551,7 +551,8 @@ a.ad-chip { display: inline-flex; align-items: center; text-decoration: none; }
    Each rule waits for an attribute the motion layer sets once it has loaded, so before that, without JS and with
    reduced motion (it never loads) nothing here applies. Individual `translate` / `scale`, never `transform`, so the
    card's hover zoom and the button's press keep working underneath. */
-[data-parallax="on"] img { scale: 1.12; translate: 0 var(--drift, 0); }
+[data-parallax] img { scale: 1.12; translate: 0 var(--drift, 0); }
+[data-parallax="near"] img { will-change: translate; } /* only the frames near the screen, while they move */
 [data-magnetic-on] { translate: calc(var(--mag-x, 0) * 1px) calc(var(--mag-y, 0) * 1px); }
 
 /* The gallery's reels viewer is open: the body is fixed (ReelViewer), the page keeps its scrollbar's room (no shift)
