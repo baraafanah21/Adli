@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { expireCatalog } from "@/lib/catalog-cache";
+import { expireCatalogIfStockChanged, publicStockStates } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -54,6 +54,8 @@ export async function setOrderStatus(_prev: StatusState, form: FormData): Promis
   const { orderId, status, note } = parsed.data;
 
   const supabase = await createClient();
+  // The shop's availability before the move (confirm takes stock, cancel gives it back; «done» moves nothing).
+  const before = status === "done" ? null : await publicStockStates();
   const { data, error } = await supabase.rpc("admin_set_order_status", {
     p_order_id: orderId,
     p_status: status,
@@ -65,8 +67,8 @@ export async function setOrderStatus(_prev: StatusState, form: FormData): Promis
   }
 
   const row = (Array.isArray(data) ? data[0] : data) as { status: string; changed: boolean } | undefined;
-  // Confirming takes stock and cancelling gives it back: the shop's availability is stale. «done» moves nothing.
-  if (row?.changed !== false && status !== "done") expireCatalog();
+  // Confirming takes stock and cancelling gives it back: expire the shop only if an in / low / out changed.
+  if (row?.changed !== false && status !== "done") await expireCatalogIfStockChanged(before);
   revalidatePath("/admin", "layout");
 
   if (row && !row.changed) return { ok: true, message: `لم يتغير شيء: الطلب «${STATUS_LABEL[status]}» من قبل.` };
