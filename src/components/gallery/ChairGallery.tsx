@@ -27,7 +27,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSPrope
 import { BrandMark } from "@/components/brand/BrandMark";
 import { GalleryBackdrop } from "./GalleryBackdrop";
 import type { GalleryItem } from "@/lib/gallery";
-import { backdropPhotos, rowItems } from "@/lib/gallery-items";
+import { GALLERY_ALT, backdropPhotos, rowItems } from "@/lib/gallery-items";
 import { play, release } from "./playback";
 import styles from "./ChairGallery.module.css";
 
@@ -285,7 +285,8 @@ export function ChairGallery({ items: all }: { items: GalleryItem[] }) {
                   src={item.sm}
                   srcSet={`${item.sm} 480w, ${poster} 1080w`}
                   sizes="(max-width: 600px) 75vw, 320px"
-                  alt=""
+                  // For Google Images; the button's own label is what a screen reader hears.
+                  alt={GALLERY_ALT}
                   loading="lazy"
                   decoding="async"
                   draggable={false}

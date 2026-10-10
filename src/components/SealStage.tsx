@@ -18,6 +18,8 @@ type Props = {
   size?: "md" | "lg";
   /** Preload the image (above the fold). */
   preload?: boolean;
+  /** The card's name heading: h2 where the cards sit right under the page's h1 (/products, /c/), else h3. */
+  nameAs?: "h2" | "h3";
   /** Extra content under the meta line (the description on the product page). */
   children?: ReactNode;
   /** Product page: replaces the price row (the variant picker owns price, availability and the button). */
@@ -26,12 +28,14 @@ type Props = {
   after?: ReactNode;
 };
 
+const photoAlt = (name: string, category?: string) => (category ? `${name}، ${category} من صالون عدلي` : `${name} من صالون عدلي`);
+
 /**
  * The product card: the photo filling a 4:5 frame (brass hairline, the logo seal as a corner badge), then name,
  * meta, price and «أضف للطلب». A product with options (size, colour) is chosen on its page, so the card links there.
  * Cards load the small photo (480×600), the product page the large one (1600px).
  */
-export function SealStage({ product, categoryName, size = "md", preload, children, purchase, after }: Props) {
+export function SealStage({ product, categoryName, size = "md", preload, nameAs: Name = "h3", children, purchase, after }: Props) {
   const href = `/p/${product.slug}`;
   const isOut = product.stock_state === "out";
   const lg = size === "lg";
@@ -41,7 +45,9 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
     <>
       <Image
         src={src}
-        alt={lg ? product.name_ar : ""}
+        // «الاسم، القسم من صالون عدلي»: what the photo shows and where (Google Images reads it; on a card the photo's
+        // link is aria-hidden, so a screen reader still hears the name once, from the title link).
+        alt={photoAlt(product.name_ar, categoryName)}
         fill
         sizes={lg ? "(max-width: 840px) calc(100vw - 32px), 440px" : "(max-width: 599px) 46vw, 248px"}
         // Cards load the 480×600 .sm.webp as it is (no Vercel transformation); the product page's large photo is
@@ -84,9 +90,9 @@ export function SealStage({ product, categoryName, size = "md", preload, childre
         {lg ? (
           <h1 className="ad-card__name display-md">{product.name_ar}</h1>
         ) : (
-          <h3 className="ad-card__name">
+          <Name className="ad-card__name">
             <Link href={href}>{product.name_ar}</Link>
-          </h3>
+          </Name>
         )}
         <p className="ad-card__meta">{metaLine(product.family_ar, categoryName, product.volume_ml)}</p>
         {children}

@@ -7,20 +7,28 @@ import { Button } from "@/components/Button";
 import { JsonLd } from "@/components/JsonLd";
 import { DrawnLogo } from "@/components/brand/DrawnLogo";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
-import { getCatalog } from "@/lib/catalog";
+import { HOME_SHELF, getCatalog } from "@/lib/catalog";
 import { GALLERY_MIN, getGallery } from "@/lib/gallery";
 import { rowItems } from "@/lib/gallery-items";
 import { OpenNow } from "@/components/OpenNow";
 import { formatPrice } from "@/lib/format";
 import { SALON, hoursRows } from "@/lib/salon";
 import { getServices, getWeek } from "@/lib/salon-data";
-import { SITE_DESCRIPTION, pageMeta, salonJsonLd } from "@/lib/seo";
+import { SITE_DESCRIPTION, pageMeta, salonJsonLd, salonPhotos, websiteJsonLd } from "@/lib/seo";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = pageMeta({ description: SITE_DESCRIPTION, path: "/" });
-
-/** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
-const HOME_SHELF = 4;
+/** The shared picture is a real salon photo when the gallery shows one (app/share/home.jpg), else the logo. `?v=` is
+ *  the photo's id, so a new photo is a new URL for WhatsApp's and Facebook's caches. */
+export async function generateMetadata(): Promise<Metadata> {
+  const [photo] = salonPhotos(await getGallery(), 1);
+  return pageMeta({
+    description: SITE_DESCRIPTION,
+    path: "/",
+    ...(photo && {
+      image: { url: `/share/home.jpg?v=${photo.id.slice(0, 8)}`, width: 1200, height: 630, alt: `${SALON.name} في ${SALON.city}` },
+    }),
+  });
+}
 
 export default async function Home() {
   const [catalog, week, services, gallery] = await Promise.all([getCatalog(), getWeek(), getServices(), getGallery()]);
@@ -30,7 +38,8 @@ export default async function Home() {
     <main>
       {/* The salon for search engines: address, hours from salon_hours, prices from the services, and the products this
           page shows as its offers (structured data describes what is on the page). */}
-      <JsonLd data={salonJsonLd(week, services, catalog.data?.products.slice(0, HOME_SHELF) ?? null)} />
+      <JsonLd data={websiteJsonLd()} />
+      <JsonLd data={salonJsonLd(week, services, catalog.data?.products.slice(0, HOME_SHELF) ?? null, salonPhotos(gallery))} />
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
       <section className={styles.hero} data-theme="night" aria-labelledby="hero-title">
         <div className={styles.heroText}>
