@@ -1,3 +1,86 @@
+/* Readex's fallbacks where Arial is missing (Android, Linux; next/font's own "readex Fallback" is Arial and comes first in
+   --font-sans for Windows and Mac). Readex usually arrives just after the first paint on a slow first visit; these system
+   fonts are narrower, so the text widened and the header, the chips and the paragraphs moved sideways (CLS 0.02). Each
+   size-adjust makes the site's own text (782 Arabic and 297 Latin runs, measured in the browser at the weights used) as
+   wide as in Readex; the ascent / descent overrides are Readex's (1.00 / 0.25 em) divided by it, so lines stay as tall.
+   local() only: nothing is downloaded. */
+@font-face {
+  font-family: "readex-fb-ar-sans";
+  src: local("Noto Sans Arabic UI"), local("NotoSansArabicUI-Regular"), local("Noto Sans Arabic"), local("NotoSansArabic-Regular");
+  font-weight: 100 549;
+  unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF;
+  size-adjust: 110%;
+  ascent-override: 90.91%;
+  descent-override: 22.73%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-ar-sans";
+  src: local("Noto Sans Arabic UI Bold"), local("NotoSansArabicUI-Bold"), local("Noto Sans Arabic Bold"), local("NotoSansArabic-Bold");
+  font-weight: 550 900;
+  unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF;
+  size-adjust: 110%;
+  ascent-override: 90.91%;
+  descent-override: 22.73%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-ar-naskh";
+  src: local("Noto Naskh Arabic UI"), local("NotoNaskhArabicUI-Regular"), local("Noto Naskh Arabic"), local("NotoNaskhArabic-Regular");
+  font-weight: 100 549;
+  unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF;
+  size-adjust: 124%;
+  ascent-override: 80.65%;
+  descent-override: 20.16%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-ar-naskh";
+  src: local("Noto Naskh Arabic UI Bold"), local("NotoNaskhArabicUI-Bold"), local("Noto Naskh Arabic Bold"), local("NotoNaskhArabic-Bold");
+  font-weight: 550 900;
+  unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF;
+  size-adjust: 124%;
+  ascent-override: 80.65%;
+  descent-override: 20.16%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  font-weight: 100 549;
+  size-adjust: 102%;
+  ascent-override: 98.04%;
+  descent-override: 24.51%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 550 900;
+  size-adjust: 102%;
+  ascent-override: 98.04%;
+  descent-override: 24.51%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-liberation";
+  src: local("Liberation Sans"), local("LiberationSans");
+  font-weight: 100 549;
+  size-adjust: 100%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "readex-fb-liberation";
+  src: local("Liberation Sans Bold"), local("LiberationSans-Bold");
+  font-weight: 550 900;
+  size-adjust: 100%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
 *,
 *::before,
 *::after {

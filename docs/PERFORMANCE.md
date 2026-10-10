@@ -304,3 +304,55 @@ Readex Pro متغير (ملف لكل subset بدل 4 أوزان)، وAmiri بل�
   - **الإنتاج**: كان أصلاً على نفس الرقم قبل التغيير (0.019 / 0.020، جدول P0).
   - **الهدف**: ≤ 0.02، ومحقق.
 - **الشكل**: 272 عنصر (عناوين Amiri ونصوص Readex، 6 صفحات، 390 و 1440، بالثيمين) **متطابقين بكسل ببكسل** قبل وبعد. اللقطة: `docs/screens/perf/p-a-fonts-before-after.png` (محلية، `docs/screens/` بـ .gitignore).
+
+### P-A على الإنتاج (بعد الدمج #62، devtools throttling، الوسيط من 3)
+
+| الصفحة | الخطوط | طلبات Google | LCP | CLS |
+|---|---|---|---|---|
+| `/` | 3 ملفات، 144KB | 0 | 1.82s | 0.0193 |
+| `/products` | 3، 144KB | 0 | 1.76s | **0.0209** |
+| `/p/odyssey-elixir` | 4، 164KB | 0 | 1.73s | 0.0160 |
+| `/booking` | 3، 144KB | 0 | 1.66s | 0.0087 |
+
+- `/products` فوق 0.02، بس كانت أصلاً على نفس الرقم قبل P-A (P0: 0.0203). يعني الخطوط ما زادته.
+- العناوين متطابقة مع النسخة اللي قبل.
+
+## P-A2: CLS وقت ما Readex بيوصل (fallbacks معدّلة لـ Android و Linux)
+
+### شو كان التعليق
+
+- **وين بالضبط**: بعد أول رسم بـ 50–60ms، كل نص Readex بيعرض على المحور الأفقي: سطر الهيدر (316 → 329px)، وروابط الأقسام، والـ chips، وفقرة الرئيسية.
+- **ليش Readex بيوصل متأخر**: على Slow 4G بيخلص تحميله قبل أول رسم بـ 15–45ms بس، وفكّه بيصير بعد الرسم.
+- **ليش النص بيتحرك**: الـ fallback المعدّل تبع next/font مبني على Arial، و Arial مش موجود على Android ولا Linux. فالمتصفح بيستعمل Noto Sans/Naskh Arabic و Roboto/Liberation بدون تعديل، وهمّ أضيق من Readex.
+
+### شو جرّبت وما نفع
+
+- **`font-display: optional`**: أول صفحة ضلت بخط النظام.
+- **script من نوع module مع `blocking="render"` بيستنى Readex**: ما غيّر إشي، لأنه Chrome ما بيستنى الـ promise قبل الرسم.
+
+### الحل
+
+- **faces محلية**: `local()` بس، بـ `globals.css`، لـ Noto Sans Arabic (UI) و Noto Naskh Arabic (UI) و Roboto و Liberation Sans، بوزنين لكل خط.
+- **مكانهم بالـ stack**: بعد fallback الـ Arial تبع next/font بـ `--font-sans`، فـ Windows و Mac ما تغيّروا.
+- **size-adjust**: كل واحد بيخلّي نص الموقع نفسه بنفس عرضه بـ Readex. انقاس بالمتصفح على 782 run عربي و 297 لاتيني، بالأوزان المستعملة:
+
+| الخط | size-adjust |
+|---|---|
+| Noto Sans Arabic | 110% |
+| Noto Naskh Arabic | 124% |
+| Roboto | 102% |
+| Liberation | 100% |
+
+- **الارتفاع**: `ascent` و `descent-override` هي قيم Readex (1.00 و 0.25 em) مقسومة على الـ size-adjust، فطول السطور بيضل نفسه.
+- **الشكل النهائي**: ما تغيّر، لأنه الـ fallbacks بس للحظة قبل ما يوصل Readex.
+
+### قبل وبعد (layout-shift entries بنفس الإبطاء، 3 مرات كل وحدة، بنفس الأرقام)
+
+| الصفحة | الإنتاج الحالي | بعد |
+|---|---|---|
+| `/products` | 0.0209 | **0.0011** |
+| `/` | 0.0193 | **0.0037** |
+| `/booking` | 0.0087 | **0.0007** |
+| `/p/odyssey-elixir` (Lighthouse) | 0.0160 | **0.0046** |
+
+Lighthouse مع devtools throttling (الوسيط من 3): `/` 0.0037، `/products` 0.0006، `/p` 0.0046، `/booking` 0.0007. وما تغيّر FCP ولا LCP (1.58–1.68s).
