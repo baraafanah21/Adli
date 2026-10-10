@@ -1,0 +1,49 @@
+/* /privacy: plain reading text inside the AuthShell paper card. */
+.prose {
+  display: grid;
+  gap: var(--space-6);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.prose section {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+
+.prose h2 {
+  margin: 0;
+  font-family: var(--font-amiri);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.prose ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-6);
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose a:not(:global(.ad-btn)) {
+  color: var(--brass);
+  font-weight: 500;
+  text-underline-offset: 4px;
+}
+
+.prose :global(.ad-btn) {
+  margin-top: var(--space-2);
+}
+
+.updated {
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-align: center;
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -123,6 +124,14 @@ export function SignupForm({ next }: { next: string }) {
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
         {status.kind === "busy" ? "جارٍ إنشاء الحساب…" : "أنشئ الحساب"}
       </button>
+      {/* A new tab, so what is typed in the form stays. */}
+      <p className={`${styles.hint} ${styles.consent}`}>
+        بإنشاء حساب توافق على{" "}
+        <Link className={styles.inlineLink} href="/privacy" target="_blank">
+          سياسة الخصوصية
+        </Link>
+        .
+      </p>
     </form>
   );
 }
