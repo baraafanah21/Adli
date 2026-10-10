@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShearsTurntable } from "@/components/ShearsTurntable";
 import styles from "./HeroStage.module.css";
 
 // three.js never enters the first-load bundle: this chunk is fetched only after first paint.
@@ -123,7 +122,7 @@ export function HeroStage() {
         src={HERO_POSTER}
         alt="قنينة عطر عدلي بغطاء نحاسي منحوت عليه ختم الشعار، على منصة الختم"
         fill
-        sizes="(max-width: 840px) 100vw, 520px"
+        sizes="(max-width: 840px) 75vw, 390px"
         // A 16 KB WebP already: served as it is from public/ (immutable), no optimizer round trip before the LCP.
         unoptimized
         preload
@@ -132,10 +131,6 @@ export function HeroStage() {
       {load && !failed && (
         <HeroBottle className={`${styles.canvas} ${live ? "" : styles.hidden}`} onReady={onReady} onError={onError} />
       )}
-      {/* U5.1: the shears beside the bottle, a second object in the same picture (2D, never WebGL). f000 after load. */}
-      <div className={styles.shearsOnPlinth}>
-        <ShearsTurntable inHero degPerS={20} />
-      </div>
       {live && <p className={styles.hint}>اسحب لتدوير القنينة</p>}
     </div>
   );
