@@ -9,7 +9,7 @@ import styles from "./auth.module.css";
 
 type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string; expired?: boolean };
 
-/** Reached after the recovery link signed the visitor in (or from «بياناتي» to change the password). */
+/** Reached after the recovery code (or the email's fallback link) signed the visitor in (or from «بياناتي» to change the password). */
 export function UpdatePasswordForm() {
   const router = useRouter();
   const ids = { password: useId(), confirm: useId() };
@@ -27,7 +27,7 @@ export function UpdatePasswordForm() {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
     if (!data.user) {
-      return setStatus({ kind: "error", message: "انتهت صلاحية رابط الاستعادة. اطلب رابطاً جديداً.", expired: true });
+      return setStatus({ kind: "error", message: "انتهت جلسة الاستعادة. اطلب رمزاً جديداً.", expired: true });
     }
     const { error } = await supabase.auth.updateUser({ password });
     if (error) return setStatus({ kind: "error", message: authMessage(error) });
@@ -52,7 +52,7 @@ export function UpdatePasswordForm() {
       )}
       {status.kind === "error" && status.expired && (
         <Link className="ad-btn ad-btn--ghost ad-btn--block" href="/auth/forgot">
-          اطلب رابطاً جديداً
+          اطلب رمزاً جديداً
         </Link>
       )}
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>

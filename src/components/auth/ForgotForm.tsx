@@ -1,21 +1,30 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure } from "@/lib/auth/errors";
+import { EMAIL_INCOMPLETE, isCompleteEmail, OTP_LENGTH, sendFailure } from "@/lib/auth/errors";
+import { useOtpPending } from "@/lib/auth/otp-session";
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { OtpStep } from "@/components/auth/OtpStep";
 import styles from "./auth.module.css";
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "busy" }
-  | { kind: "error"; message: string; contact?: boolean }
-  | { kind: "sent"; email: string };
+type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string; contact?: boolean };
+
+/** The reset email's fallback link still goes through /auth/confirm; the code is the main way. */
+const sendReset = async (email: string) =>
+  (
+    await createClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`,
+    })
+  ).error;
 
 export function ForgotForm() {
+  const router = useRouter();
   const id = useId();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const otp = useOtpPending("recovery");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -23,23 +32,39 @@ export function ForgotForm() {
     if (!em) return setStatus({ kind: "error", message: "اكتب البريد الذي سجلت به." });
     if (!isCompleteEmail(em)) return setStatus({ kind: "error", message: EMAIL_INCOMPLETE });
     setStatus({ kind: "busy" });
-    const { error } = await createClient().auth.resetPasswordForEmail(em, {
-      redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`,
-    });
-    if (error && (error.status === 429 || error.code?.startsWith("over_"))) {
-      return setStatus({ kind: "error", message: authMessage(error) });
-    }
-    // The send itself failed (500 unexpected_failure). Saying so is better than a «sent» that never arrives.
-    if (error && isEmailSendFailure(error)) return setStatus({ kind: "error", ...emailSendFailure("reset") });
-    setStatus({ kind: "sent", email: em });
+    // Rate limits and a failed send are told; «no such account» never is.
+    const failure = sendFailure(await sendReset(em), "reset");
+    if (failure) return setStatus({ kind: "error", ...failure });
+    setStatus({ kind: "idle" });
+    otp.save(em, "recovery");
   }
 
-  if (status.kind === "sent") {
+  if (otp.pending) {
+    const sentTo = otp.pending.email;
     return (
-      <p className={styles.notice} role="status">
-        إذا كان لـ <bdi dir="ltr">{status.email}</bdi> حساب عندنا، فقد أرسلنا إليه رابطاً لتعيين كلمة مرور جديدة. افتح
-        الرسالة واضغط الرابط خلال ساعة.
-      </p>
+      <OtpStep
+        email={sentTo}
+        type="recovery"
+        sentAt={otp.pending.sentAt}
+        what="reset"
+        lede={
+          <>
+            إذا كان لـ <bdi dir="ltr">{sentTo}</bdi> حساب عندنا، فقد أرسلنا إليه رمزاً من {OTP_LENGTH} أرقام. اكتبه هنا، ثم
+            تختار كلمة مرور جديدة.
+          </>
+        }
+        resend={() => sendReset(sentTo)}
+        onResent={() => otp.save(sentTo, "recovery")}
+        onVerified={() => {
+          otp.clear();
+          router.replace("/auth/update-password");
+          router.refresh();
+        }}
+        onChangeEmail={() => {
+          setEmail(sentTo);
+          otp.clear();
+        }}
+      />
     );
   }
 
@@ -51,7 +76,7 @@ export function ForgotForm() {
       </div>
       {status.kind === "error" && <AuthAlert error={status} />}
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
-        {status.kind === "busy" ? "جارٍ الإرسال…" : "أرسل رابط الاستعادة"}
+        {status.kind === "busy" ? "جارٍ الإرسال…" : "أرسل رمز الاستعادة"}
       </button>
     </form>
   );

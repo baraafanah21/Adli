@@ -102,14 +102,25 @@ Opening hours, services and barbers live in the database (`salon_hours`, `servic
 - JSON-LD prints through `JsonLd` (`src/components/JsonLd.tsx`, `<` `>` `&` escaped). Home: one business typed `["HairSalon", "Store"]` (one place, two types; not a `@graph` of two businesses), `alternateName`, address and geo from `SALON`, `telephone` from `NEXT_PUBLIC_WHATSAPP_NUMBER`, `openingHoursSpecification` from `salon_hours` (a closed day is left out), `priceRange` from the services, `hasOfferCatalog` with the products the page shows (`HOME_SHELF`). `/p/`: `Product` + `Offer` / `AggregateOffer` (ILS, availability from `stock_state`) and `BreadcrumbList`; `/c/`: `BreadcrumbList`.
 - `src/app/robots.ts` (disallows `/admin`, `/account`, `/auth`, `/login`, `/signup`, `/api`) and `src/app/sitemap.ts` (`/`, `/products`, `/booking`, live categories with products, live products with `lastModified` = `products.updated_at`, read from the cached catalog as anon, so nothing hidden can appear). Share image: `src/app/opengraph-image.tsx`, the mono logo file in cream on forest (the SVG read is `"use cache"`, or the route turns dynamic and prerendered pages lose it).
 
-## Email (off for now)
+## Email: six-digit codes (Phase V)
 
-Customers can't receive auth email yet (Resend has no verified sending domain; only the project owner's address gets mail). Temporary decision:
-- **Supabase → Authentication → Sign In / Providers → «Confirm email» is OFF.** `signUp()` returns a session, and `SignupForm` signs the customer in and goes back to `next` (e.g. the confirm step of `/booking`). With confirmation on it returns no session and the form shows «افحص بريدك» as before; no code change either way.
-- **`NEXT_PUBLIC_EMAIL_ENABLED` is unset / `false`** (`src/lib/auth/email.ts`): the login page hides «أرسل لي رابط دخول» and the resend-confirmation button, and «نسيت كلمة المرور؟» becomes «تواصل مع الصالون» on WhatsApp (also on `/auth/forgot`). The salon resets a password by hand in the Supabase dashboard.
-- **E4 (booking emails) is postponed.**
+Auth email goes out through Resend's SMTP (`smtp.resend.com`) from `no-reply@adlisalon.com`, the domain verified with DKIM / SPF / DMARC (set in the Supabase dashboard; nothing about it in the repo, never a secret in a file). Every auth email carries a six-digit code that the customer types on the same page, so the account is proven and the visit stays on the site; the old button / link stays in each email as a fallback through `/auth/confirm` (`ConfirmLink`, unchanged).
+- **One step for all three flows:** `OtpStep` (`src/components/auth/OtpStep.tsx`): one field (`inputMode="numeric"`, `autoComplete="one-time-code"`, `dir="ltr"`, pasting the whole code and Arabic digits work, verifies on the sixth digit), «أعد إرسال الرمز» after 60 s (Supabase's minimum interval per address, `RESEND_SECONDS`), «غيّر البريد» back to the form. The email, the flow and the send time are kept per page in sessionStorage (`src/lib/auth/otp-session.ts`, try/catch, memory if storage is blocked; never the password or the code), so a reload lands on the same step.
+  - Sign-up (`SignupForm`): `signUp()` with a session (Confirm email off) signs in and goes to `next` as before; without one, the code step: `verifyOtp({ type: "email" })`, then `router.replace(next)` (the confirm step of `/booking` keeps its choice). Resend = `auth.resend({ type: "signup" })`.
+  - Sign-in (`LoginForm`): «أرسل لي رمز دخول» = `signInWithOtp` (`shouldCreateUser: false`), then `type: "email"`. «لم تؤكد بريدك» (`email_not_confirmed`): «أرسل لي رمز تأكيد جديداً» resends the sign-up code and opens the same step.
+  - «نسيت كلمة المرور» (`ForgotForm`): `resetPasswordForEmail`, then `type: "recovery"`, then `/auth/update-password`.
+  - `emailRedirectTo` / `redirectTo` are still sent: the fallback link needs them.
+- **Messages** (`src/lib/auth/errors.ts`): `otpMessage()` (a wrong code and an expired one are one answer, as Supabase gives them), `sendFailure()` (rate limits, a failed send and offline are told; «no such account» never is: sign-in and reset say «إذا كان لـ … حساب عندنا»).
+- **Dashboard:** «Email OTP Expiration» 600 s, «Email OTP Length» 6, subjects and templates from `supabase/templates/README.md` (confirm signup, magic link, reset password; no change-email template, the site can't change an email).
+- **`NEXT_PUBLIC_EMAIL_ENABLED`** (`src/lib/auth/email.ts`): unset / `false` hides the sign-in code, the sign-up code resend on the login page and «نسيت كلمة المرور» («تواصل مع الصالون» on WhatsApp instead, also on `/auth/forgot`). Sign-up follows «Confirm email» by itself.
+- **E4 (booking emails) is still postponed.**
 
-To turn email on: verify the sending domain in Resend and set the SMTP sender in Supabase (`supabase/templates/README.md`); switch «Confirm email» back on; set `NEXT_PUBLIC_EMAIL_ENABLED=true` on Vercel (all environments) and redeploy; then build E4.
+Turning it on, in this order (Bara does each step; Claude never changes Supabase or Vercel settings):
+1. Merge the code.
+2. Paste the new templates and subjects into Supabase; set Email OTP Expiration = 600 and OTP length = 6.
+3. Switch «Confirm email» on (Authentication → Sign In / Providers).
+4. `NEXT_PUBLIC_EMAIL_ENABLED=true` on Vercel (all environments), then redeploy.
+5. Real test: sign up, sign in with a code, forgot password.
 
 ## Env
 

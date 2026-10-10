@@ -158,6 +158,39 @@
   cursor: pointer;
 }
 
+.linkButton:disabled {
+  color: var(--ink-muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Phase V: the six-digit code. One field, large, spaced, centred; the digits read left to right. */
+.form input.code {
+  min-height: 56px;
+  font-size: 28px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.4em;
+  text-align: center;
+  padding-inline-start: 0.4em; /* balances the trailing letter-spacing so the code sits in the middle */
+}
+
+.hint {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* «أعد إرسال الرمز» and «غيّر البريد» under the button. */
+.otpActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+  font-size: 14px;
+}
+
 /* A link inside an error sentence (the WhatsApp contact). Plain text link: the WhatsApp fill is only for sending an order. */
 .inlineLink {
   color: var(--brass);
