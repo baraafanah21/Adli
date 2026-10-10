@@ -8,6 +8,7 @@ import { formatPrice, joinAnd } from "@/lib/format";
 import { buildOrderMessage, whatsappChatUrl, whatsappUrl, type PlacedOrder } from "@/lib/whatsapp";
 import type { CartLine } from "@/lib/cart-store";
 import type { OrderError } from "@/app/api/orders/route";
+import { PHONE_MESSAGES, phoneProblem } from "@/lib/phone";
 import { PhoneField, initialPhoneValue } from "@/components/PhoneField";
 import { BrandMark } from "@/components/brand/BrandMark";
 
@@ -306,7 +307,7 @@ export function OrderSheet({ open, onClose, prefill }: Props) {
               />
               {phoneError && (
                 <span className="ad-field__error" id={ids.phoneErr}>
-                  اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة <bdi dir="ltr">+970</bdi> أو <bdi dir="ltr">+972</bdi>
+                  {PHONE_MESSAGES[phoneProblem(phone.value) ?? "number"]}
                 </span>
               )}
             </div>

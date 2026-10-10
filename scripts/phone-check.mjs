@@ -1,6 +1,6 @@
 // Phone rules (E3.1): paste, local part, prefix, server check, WhatsApp. Run: npm run check:phone
 // The prefix is only ever taken from an explicit +970 / +972 / 00970 / 00972; nothing is guessed.
-import { splitPasted, localMobile, fullMobile, parseMobile, normalizeMobile, whatsappDigits } from "../src/lib/phone.ts";
+import { splitPasted, localMobile, fullMobile, parseMobile, normalizeMobile, whatsappDigits, phoneProblem } from "../src/lib/phone.ts";
 let fail = 0;
 const eq = (label, got, want) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
@@ -43,5 +43,16 @@ eq("parse legacy 0594369494 → null", parseMobile("0594369494"), null);
 eq("whatsapp +970594369494", whatsappDigits("+970594369494"), "970594369494");
 eq("whatsapp 0594369494 → no link", whatsappDigits("0594369494"), null);
 eq("whatsapp null", whatsappDigits(null), null);
+// What is wrong with a submitted value (no default prefix: the bare local number means «choose the prefix»).
+eq("problem +970599123456 → none", phoneProblem("+970599123456"), null);
+eq("problem +972521234567 → none", phoneProblem("+972521234567"), null);
+eq("problem empty", phoneProblem(""), "empty");
+eq("problem spaces only", phoneProblem("   "), "empty");
+eq("problem 0591234567 (no prefix chosen)", phoneProblem("0591234567"), "prefix");
+eq("problem 591234567 (no prefix chosen)", phoneProblem("591234567"), "prefix");
+eq("problem ٠٥٩١٢٣٤٥٦٧ (no prefix chosen)", phoneProblem("٠٥٩١٢٣٤٥٦٧"), "prefix");
+eq("problem +970 + 22345678 (landline)", phoneProblem("+97022345678"), "number");
+eq("problem 059123 (too short)", phoneProblem("059123"), "number");
+eq("problem +9700591 (prefix, short)", phoneProblem("+9700591"), "number");
 console.log(fail ? `\n${fail} FAILED` : "\nall passed");
 process.exit(fail ? 1 : 0);

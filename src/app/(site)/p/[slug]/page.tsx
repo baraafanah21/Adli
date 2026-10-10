@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductPurchase, ProductPurchaseFromUrl } from "@/components/ProductPurchase";
 import { ProductUnavailable, ProductView, initialVariant, relatedProducts } from "@/components/ProductView";
-import { HOME_SHELF, getCatalog, getCatalogSlugs, getProduct } from "@/lib/catalog";
+import { getCatalog, getProduct, homeShelf } from "@/lib/catalog";
 import { formatPrice, productImageSrc } from "@/lib/format";
 import { breadcrumbJsonLd, clampDescription, pageMeta, productJsonLd } from "@/lib/seo";
 
@@ -15,8 +15,9 @@ import { breadcrumbJsonLd, clampDescription, pageMeta, productJsonLd } from "@/l
   Cache Components needs at least one param here.
 */
 export async function generateStaticParams() {
-  const { products } = await getCatalogSlugs();
-  return products.length ? products.slice(0, HOME_SHELF).map((slug) => ({ slug })) : [{ slug: "oud-malaki" }];
+  const { data } = await getCatalog();
+  const shelf = homeShelf(data?.products ?? []);
+  return shelf.length ? shelf.map((p) => ({ slug: p.slug })) : [{ slug: "oud-malaki" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {

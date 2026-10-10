@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSiteSession } from "@/components/session/session-store";
 import { formatPrice } from "@/lib/format";
+import { PHONE_MESSAGES, phoneProblem } from "@/lib/phone";
 import { PhoneField, initialPhoneValue, type PhoneValue } from "@/components/PhoneField";
 import { BOOKING_STATUS, dayChip, formatSlot, formatWhen, type AvailabilityDay, type PlacedBooking } from "@/lib/bookings";
 import type { BookingError } from "@/app/api/bookings/route";
@@ -87,6 +88,11 @@ export function BookingFlow({ services, barbers, initial }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const wantedAt = useRef(initial.at ?? null);
   const confirmRef = useRef<HTMLElement>(null);
+  const barberRef = useRef<HTMLElement>(null);
+  const dayRef = useRef<HTMLElement>(null);
+  // The next step to bring up after a tap (never on arrival from ?service=&barber=&at=): the barbers once a service is
+  // chosen, the day and its times once a barber is chosen and the times have loaded.
+  const bringUp = useRef<"barber" | "day" | null>(null);
   const doneRef = useRef<HTMLDivElement>(null);
   const ids = { name: useId(), phone: useId(), nameErr: useId(), phoneErr: useId() };
 
@@ -143,13 +149,27 @@ export function BookingFlow({ services, barbers, initial }: Props) {
     if (phase.kind === "done") doneRef.current?.focus();
   }, [phase.kind]);
 
+  // The day step waits for its answer (times or «أعد المحاولة»), so the screen lands on what to choose next.
+  const dayAnswered = current !== null;
+  useEffect(() => {
+    const target = bringUp.current;
+    const el = target === "barber" ? barberRef.current : target === "day" && dayAnswered ? dayRef.current : null;
+    if (!el) return;
+    bringUp.current = null;
+    el.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "start" });
+    // Keyboard and screen-reader users continue from the new step's heading.
+    el.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+  }, [serviceId, barberId, dayAnswered]);
+
   function chooseService(id: string) {
+    if (id !== serviceId) bringUp.current = barberId ? "day" : "barber";
     setServiceId(id);
     setSlot(null);
     if (phase.kind === "error") setPhase({ kind: "idle" });
   }
 
   function chooseBarber(id: string) {
+    if (id !== barberId) bringUp.current = "day";
     setBarberId(id);
     setSlot(null);
     if (phase.kind === "error") setPhase({ kind: "idle" });
@@ -321,8 +341,8 @@ export function BookingFlow({ services, barbers, initial }: Props) {
       </section>
 
       {service && (
-        <section className={styles.step} aria-labelledby="step-barber">
-          <h2 id="step-barber" className={styles.stepTitle}>
+        <section className={styles.step} aria-labelledby="step-barber" ref={barberRef}>
+          <h2 id="step-barber" className={styles.stepTitle} tabIndex={-1}>
             <span className={styles.stepNo}>2</span> الحلاق
           </h2>
           <div className="ad-chips">
@@ -336,8 +356,8 @@ export function BookingFlow({ services, barbers, initial }: Props) {
       )}
 
       {service && barber && (
-        <section className={styles.step} aria-labelledby="step-day" aria-busy={!current}>
-          <h2 id="step-day" className={styles.stepTitle}>
+        <section className={styles.step} aria-labelledby="step-day" aria-busy={!current} ref={dayRef}>
+          <h2 id="step-day" className={styles.stepTitle} tabIndex={-1}>
             <span className={styles.stepNo}>3</span> اليوم
           </h2>
           {current?.kind === "error" ? (
@@ -465,7 +485,7 @@ export function BookingFlow({ services, barbers, initial }: Props) {
                 />
                 {phoneError && (
                   <span className="ad-field__error" id={ids.phoneErr}>
-                    اكتب رقم الجوال: 9 أرقام تبدأ بـ 5، واختر المقدمة <bdi dir="ltr">+970</bdi> أو <bdi dir="ltr">+972</bdi>
+                    {PHONE_MESSAGES[phoneProblem(phone.value) ?? "number"]}
                   </span>
                 )}
               </div>

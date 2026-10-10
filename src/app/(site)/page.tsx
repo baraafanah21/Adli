@@ -7,7 +7,7 @@ import { Button } from "@/components/Button";
 import { JsonLd } from "@/components/JsonLd";
 import { DrawnLogo } from "@/components/brand/DrawnLogo";
 import { ChairGallery } from "@/components/gallery/ChairGallery";
-import { HOME_SHELF, getCatalog } from "@/lib/catalog";
+import { HOME_SHELF, getCatalog, homeShelf } from "@/lib/catalog";
 import { GALLERY_MIN, getGallery } from "@/lib/gallery";
 import { rowItems } from "@/lib/gallery-items";
 import { OpenNow } from "@/components/OpenNow";
@@ -36,10 +36,10 @@ export default async function Home() {
 
   return (
     <main>
-      {/* The salon for search engines: address, hours from salon_hours, prices from the services, and the products this
-          page shows as its offers (structured data describes what is on the page). */}
+      {/* The salon for search engines: address, hours from salon_hours, and the services with their prices (the price
+          board). The products have their own Product + Offer on /p/, not here (see salonJsonLd). */}
       <JsonLd data={websiteJsonLd()} />
-      <JsonLd data={salonJsonLd(week, services, catalog.data?.products.slice(0, HOME_SHELF) ?? null, salonPhotos(gallery))} />
+      <JsonLd data={salonJsonLd(week, services, salonPhotos(gallery))} />
       {/* The opening sits on the logo's forest in both themes, like the 3D set behind the bottle. */}
       <section className={styles.hero} data-theme="night" aria-labelledby="hero-title">
         <div className={styles.heroText}>
@@ -48,9 +48,16 @@ export default async function Home() {
             <DrawnLogo label="عدلي" />
           </h1>
           <p className={`body-lg ${styles.lede}`}>صالون حلاقة رجالي في قلقيلية، وعطور وكريمات تختارها هنا وتثبّت طلبها على واتساب.</p>
-          <Button variant="ghost" href="#shelf">
-            تصفّح المنتجات
-          </Button>
+          {/* Booking first: the salon's main door (the header's «احجز موعد» is small on a phone, and some missed it). */}
+          <div className={styles.heroActions}>
+            <Button variant="primary" href="/booking" data-magnetic>
+              احجز موعدك
+            </Button>
+            <Button variant="ghost" href="#shelf">
+              تصفّح المنتجات
+            </Button>
+          </div>
+          <p className={styles.heroNote}>اختر الخدمة والحلاق والوقت في دقيقة، والدفع في الصالون.</p>
           {week && (
             <div className={styles.heroOpen}>
               <OpenNow week={week} />
@@ -72,7 +79,7 @@ export default async function Home() {
           catalog.data.products.length > 0 ? (
             <>
               <ul className={`ad-shelf ${styles.shelfGrid}`}>
-                {catalog.data.products.slice(0, HOME_SHELF).map((p) => (
+                {homeShelf(catalog.data.products).map((p) => (
                   <li key={p.id}>
                     <SealStage product={p} categoryName={categoryName.get(p.category_id)} />
                   </li>

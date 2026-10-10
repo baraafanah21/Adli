@@ -312,8 +312,29 @@ export async function getProduct(slug: string): Promise<Result<ProductDetail | n
 }
 
 /** Every live product and category slug, for generateStaticParams (prerendered at build). */
-/** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
+/** The home page shows HOME_SHELF products (homeShelf) and links to /products for all of them, with the chips. */
 export const HOME_SHELF = 4;
+
+/**
+ * The home shelf: one product from each category in turn (categories in their order), so it's never four of one kind
+ * while others exist; in each category, products in stock first, then catalog order. Fewer categories than places:
+ * the round goes on to each category's second product, and so on.
+ */
+export function homeShelf(products: ProductCard[], n = HOME_SHELF): ProductCard[] {
+  const byCategory = new Map<string, ProductCard[]>();
+  for (const p of products) {
+    const list = byCategory.get(p.category_id);
+    if (list) list.push(p);
+    else byCategory.set(p.category_id, [p]);
+  }
+  // Stable sort: in-stock (in / low) before out, catalog order otherwise.
+  const queues = [...byCategory.values()].map((list) => [...list].sort((a, b) => Number(a.stock_state === "out") - Number(b.stock_state === "out")));
+  const shelf: ProductCard[] = [];
+  for (let i = 0; shelf.length < n && queues.some((q) => i < q.length); i++) {
+    for (const q of queues) if (shelf.length < n && i < q.length) shelf.push(q[i]);
+  }
+  return shelf;
+}
 
 export async function getCatalogSlugs(): Promise<{ products: string[]; categories: string[] }> {
   const { data } = await getCatalog();

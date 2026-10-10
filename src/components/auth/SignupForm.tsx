@@ -10,6 +10,7 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { confirmUrl } from "@/components/auth/LoginForm";
 import { OtpStep } from "@/components/auth/OtpStep";
 import { EMAIL_ENABLED } from "@/lib/auth/email";
+import { NAME_PART_MAX, joinName, nameMessage, nameProblem, type NamePart } from "@/lib/person-name";
 import styles from "./auth.module.css";
 
 type Status =
@@ -21,8 +22,11 @@ type Status =
 
 export function SignupForm({ next }: { next: string }) {
   const router = useRouter();
-  const ids = { name: useId(), email: useId(), password: useId() };
-  const [name, setName] = useState("");
+  const ids = { first: useId(), last: useId(), firstErr: useId(), lastErr: useId(), email: useId(), password: useId() };
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
+  // Each name field's own message, shown once the form is sent; while it's corrected only that field is re-checked.
+  const [nameErrors, setNameErrors] = useState<Partial<Record<NamePart, string>>>({});
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -30,9 +34,15 @@ export function SignupForm({ next }: { next: string }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const n = name.trim();
     const em = email.trim();
-    if (!n) return setStatus({ kind: "error", message: "اكتب اسمك ليظهر على طلباتك." });
+    const errors = { first: nameError("first", first), last: nameError("last", last) };
+    setNameErrors(errors);
+    if (errors.first || errors.last) {
+      setStatus({ kind: "idle" });
+      return document.getElementById(errors.first ? ids.first : ids.last)?.focus();
+    }
+    // One field in the database, as before: «الأول العائلة».
+    const n = joinName(first, last);
     if (!em) return setStatus({ kind: "error", message: "اكتب بريدك الإلكتروني." });
     if (!isCompleteEmail(em)) return setStatus({ kind: "error", message: EMAIL_INCOMPLETE });
     if (password.length < MIN_PASSWORD)
@@ -123,9 +133,31 @@ export function SignupForm({ next }: { next: string }) {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <div className="ad-field">
-        <label htmlFor={ids.name}>الاسم</label>
-        <input id={ids.name} name="name" autoComplete="name" maxLength={80} required value={name} onChange={(e) => setName(e.target.value)} />
+      <div className={styles.nameRow}>
+        <NameField
+          id={ids.first}
+          errorId={ids.firstErr}
+          label="الاسم الأول"
+          autoComplete="given-name"
+          value={first}
+          error={nameErrors.first}
+          onChange={(v) => {
+            setFirst(v);
+            if (nameErrors.first) setNameErrors({ ...nameErrors, first: nameError("first", v) });
+          }}
+        />
+        <NameField
+          id={ids.last}
+          errorId={ids.lastErr}
+          label="اسم العائلة"
+          autoComplete="family-name"
+          value={last}
+          error={nameErrors.last}
+          onChange={(v) => {
+            setLast(v);
+            if (nameErrors.last) setNameErrors({ ...nameErrors, last: nameError("last", v) });
+          }}
+        />
       </div>
       <div className="ad-field">
         <label htmlFor={ids.email}>البريد الإلكتروني</label>
@@ -193,5 +225,42 @@ export function SignupForm({ next }: { next: string }) {
         .
       </p>
     </form>
+  );
+}
+
+/** A name field's message, or undefined when it's fine. */
+function nameError(part: NamePart, value: string) {
+  const problem = nameProblem(value);
+  return problem ? nameMessage(part, problem) : undefined;
+}
+
+function NameField(props: {
+  id: string;
+  errorId: string;
+  label: string;
+  autoComplete: string;
+  value: string;
+  error?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="ad-field">
+      <label htmlFor={props.id}>{props.label}</label>
+      <input
+        id={props.id}
+        autoComplete={props.autoComplete}
+        maxLength={NAME_PART_MAX + 10}
+        required
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        aria-invalid={props.error ? true : undefined}
+        aria-describedby={props.error ? props.errorId : undefined}
+      />
+      {props.error && (
+        <span className="ad-field__error" id={props.errorId}>
+          {props.error}
+        </span>
+      )}
+    </div>
   );
 }

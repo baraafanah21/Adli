@@ -26,3 +26,12 @@
   outline: 2px solid var(--brass);
   outline-offset: 2px;
 }
+
+/* «المقدمة» shows as a placeholder until a prefix is chosen. */
+.prefix[data-empty] {
+  color: var(--ink-muted);
+}
+
+.prefix[aria-invalid="true"] {
+  border-color: var(--oud);
+}

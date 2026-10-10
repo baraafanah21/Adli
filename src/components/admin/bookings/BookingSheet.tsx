@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import { addWalkIn, clearFlag, closeTime, deleteClosure, setBookingStatus } from "@/app/admin/bookings/actions";
+import { addWalkIn, clearFlag, closeTime, deleteClosure, setBookingPaid, setBookingStatus } from "@/app/admin/bookings/actions";
 import { formatPrice } from "@/lib/format";
 import { formatSlot, minutesToHHMM, type BookingStatus } from "@/lib/bookings";
 import { reminderUrl, type DayBarber, type DayBooking, type DayClosure } from "@/lib/admin/bookings";
@@ -180,8 +180,8 @@ function WalkInForm({ day, barbers, services, barberId, start, onDone }: Props &
       </Field>
       <Field label="الاسم (اختياري)">{(id) => <input id={id} name="name" maxLength={80} autoComplete="off" />}</Field>
       <Field label="الجوال (اختياري)">
-        {/* The prefix this device used last (most walk-ins share one), +970 the first time. */}
-        {(id) => <PhoneField id={id} name="phone" rememberKey="adli-walkin-prefix" />}
+        {/* Empty, the prefix too: chosen for each customer (the same 05… can be on WhatsApp under either). */}
+        {(id) => <PhoneField id={id} name="phone" />}
       </Field>
       <Result state={state} />
       <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={pending}>
@@ -233,7 +233,14 @@ function CloseForm({ day, closable, isOwner, barberId, start, onDone }: Props & 
   );
 }
 
-type Move = { to: "confirmed" | "rejected" | "cancelled" | "completed" | "no_show"; label: string; ask?: string; reason?: boolean };
+type Move = {
+  to: "confirmed" | "rejected" | "cancelled" | "completed" | "no_show";
+  label: string;
+  ask?: string;
+  reason?: boolean;
+  /** «حضر»: asks for the amount paid, filled with the booking's price. */
+  paid?: boolean;
+};
 
 /** What the staff can do from each status. «حضر» and «لم يحضر» only once the start time has come. */
 function movesFor(b: DayBooking, started: boolean): Move[] {
@@ -247,7 +254,7 @@ function movesFor(b: DayBooking, started: boolean): Move[] {
       return [
         ...(started
           ? ([
-              { to: "completed", label: "حضر" },
+              { to: "completed", label: "حضر", paid: true },
               {
                 to: "no_show",
                 label: "لم يحضر",
@@ -260,7 +267,7 @@ function movesFor(b: DayBooking, started: boolean): Move[] {
         { to: "cancelled", label: "ألغِ الموعد", ask: "سيظهر الإلغاء والسبب للزبون في حسابه.", reason: true },
       ];
     case "no_show":
-      return [{ to: "completed", label: "حضر (تصحيح)", ask: "يُسجَّل «حضر»، ويُرفع الوسم الذي وضعه هذا الموعد." }];
+      return [{ to: "completed", label: "حضر (تصحيح)", ask: "يُسجَّل «حضر»، ويُرفع الوسم الذي وضعه هذا الموعد.", paid: true }];
     default:
       return [];
   }
@@ -270,6 +277,7 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
   const [state, action, pending] = useSheetAction(setBookingStatus, onDone);
   const [asking, setAsking] = useState<Move | null>(null);
   const noteId = useId();
+  const paidId = useId();
   const started = nowMs !== null && nowMs >= Date.parse(b.starts_at);
   const moves = movesFor(b, started);
   const remind = reminderUrl(b, barberName(b.barber_id));
@@ -297,6 +305,12 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
             {b.service_name_ar} · {formatPrice(b.price_ils)}
           </dd>
         </div>
+        {b.status === "completed" && b.paid_ils !== null && (
+          <div>
+            <dt>المدفوع</dt>
+            <dd>{formatPrice(b.paid_ils)}</dd>
+          </div>
+        )}
         <div>
           <dt>الحلاق</dt>
           <dd>{barberName(b.barber_id)}</dd>
@@ -345,6 +359,24 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
           {asking ? (
             <div className={styles.sheetStack} role="group" aria-label={asking.label}>
               {asking.ask && <p className={styles.question}>{asking.ask}</p>}
+              {asking.paid && (
+                <div className="ad-field">
+                  <label htmlFor={paidId}>المبلغ المدفوع (₪)</label>
+                  <input
+                    id={paidId}
+                    name="paid"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9٠-٩]*"
+                    maxLength={5}
+                    defaultValue={b.price_ils}
+                    dir="ltr"
+                    autoComplete="off"
+                    required
+                  />
+                  <span className="ad-field__hint">سعر الخدمة {formatPrice(b.price_ils)}. غيّره إن دفع غير ذلك.</span>
+                </div>
+              )}
               {asking.reason && (
                 <div className="ad-field">
                   <label htmlFor={noteId}>السبب (يظهر للزبون)</label>
@@ -353,7 +385,7 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
               )}
               <div className="ad-form-actions">
                 <button type="submit" name="status" value={asking.to} className="ad-btn ad-btn--primary" disabled={pending}>
-                  {pending ? "جارٍ الحفظ…" : `نعم، ${asking.label}`}
+                  {pending ? "جارٍ الحفظ…" : asking.paid ? "سجّل الحضور" : `نعم، ${asking.label}`}
                 </button>
                 <button type="button" className="ad-btn ad-btn--ghost" onClick={() => setAsking(null)} disabled={pending}>
                   تراجع
@@ -363,8 +395,14 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
           ) : (
             <div className={styles.moveGrid}>
               {moves.map((m) =>
-                m.ask ? (
-                  <button key={m.to} type="button" className="ad-btn ad-btn--ghost" onClick={() => setAsking(m)} disabled={pending}>
+                m.ask || m.paid ? (
+                  <button
+                    key={m.to}
+                    type="button"
+                    className={`ad-btn ${m.paid ? "ad-btn--primary" : "ad-btn--ghost"}`}
+                    onClick={() => setAsking(m)}
+                    disabled={pending}
+                  >
                     {m.label}
                   </button>
                 ) : (
@@ -378,6 +416,7 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
           <Result state={state} />
         </form>
       )}
+      {b.status === "completed" && <PaidForm booking={b} onDone={onDone} />}
       {b.status === "confirmed" && !started && <p className={styles.muted}>«حضر» و«لم يحضر» يظهران عند وقت الموعد.</p>}
 
       {remind && (b.status === "confirmed" || b.status === "pending") && (
@@ -386,6 +425,50 @@ function BookingDetails({ booking: b, barberName, statusLabel, nowMs, onDone, on
         </a>
       )}
     </div>
+  );
+}
+
+/** «عدّل المبلغ»: the amount paid for a completed visit, changed afterwards (filled with what is saved). */
+function PaidForm({ booking: b, onDone }: { booking: DayBooking; onDone: (m: string) => void }) {
+  const [state, action, pending] = useSheetAction(setBookingPaid, onDone);
+  const [open, setOpen] = useState(false);
+  const paidId = useId();
+  if (!open) {
+    return (
+      <button type="button" className="ad-btn ad-btn--ghost ad-btn--block" onClick={() => setOpen(true)}>
+        عدّل المبلغ المدفوع
+      </button>
+    );
+  }
+  return (
+    <form action={action} className={styles.sheetStack}>
+      <input type="hidden" name="bookingId" value={b.id} />
+      <div className="ad-field">
+        <label htmlFor={paidId}>المبلغ المدفوع (₪)</label>
+        <input
+          id={paidId}
+          name="paid"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9٠-٩]*"
+          maxLength={5}
+          defaultValue={b.paid_ils ?? b.price_ils}
+          dir="ltr"
+          autoComplete="off"
+          required
+        />
+        <span className="ad-field__hint">سعر الخدمة {formatPrice(b.price_ils)}. يُحفظ التعديل في سجل الموعد.</span>
+      </div>
+      <div className="ad-form-actions">
+        <button type="submit" className="ad-btn ad-btn--primary" disabled={pending}>
+          {pending ? "جارٍ الحفظ…" : "احفظ المبلغ"}
+        </button>
+        <button type="button" className="ad-btn ad-btn--ghost" onClick={() => setOpen(false)} disabled={pending}>
+          تراجع
+        </button>
+      </div>
+      <Result state={state} />
+    </form>
   );
 }
 

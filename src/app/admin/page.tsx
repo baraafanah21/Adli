@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SalesChart, type DailySales } from "@/components/admin/SalesChart";
+import { RevenueSection } from "./RevenueSection";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
@@ -92,6 +93,13 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const d = dashRes.data as Dashboard | null;
   const daily = (dailyRes.data ?? []) as DailySales[];
   const who = user.name ?? user.email ?? "";
+  /** A sales period link that keeps the revenue card's filters (rev, rev_from, …). */
+  const salesHref = (p: Period) => {
+    const q = new URLSearchParams();
+    if (p !== "month") q.set("period", p);
+    for (const [k, v] of Object.entries(sp)) if (k.startsWith("rev") && typeof v === "string") q.set(k, v);
+    return `/admin${q.size ? `?${q}` : ""}#sales-title`;
+  };
 
   return (
     <main className={styles.page}>
@@ -227,7 +235,9 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         )}
       </section>
 
-      {/* Money: owner only */}
+      {/* Money: owner only. The salon's visits first, then the shop's sales (perfumes and creams aren't in revenue). */}
+      {isOwner && <RevenueSection sp={sp} salesPeriod={sp.period === "day" || sp.period === "week" ? sp.period : null} />}
+
       {isOwner && (
         <section aria-labelledby="sales-title" className={styles.section}>
           <div className={styles.sectionHead}>
@@ -236,7 +246,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
             </h2>
             <nav className="ad-chips" aria-label="الفترة">
               {(Object.keys(PERIODS) as Period[]).map((p) => (
-                <Link key={p} className="ad-chip" href={p === "month" ? "/admin" : `/admin?period=${p}`} aria-current={p === period ? "page" : undefined}>
+                <Link key={p} className="ad-chip" href={salesHref(p)} aria-current={p === period ? "page" : undefined} scroll={false}>
                   {PERIODS[p].label}
                 </Link>
               ))}
