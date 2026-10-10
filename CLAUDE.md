@@ -95,6 +95,13 @@ Follow `docs/ROADMAP.md` phase by phase. Finish and verify one phase (build pass
 
 Opening hours, services and barbers live in the database (`salon_hours`, `services`, `barbers`), read on the server by `src/lib/salon-data.ts` (`getWeek()`, `getServices()`, `getBarbers()`). `src/lib/salon.ts` only formats (`hoursRows(week)`, `openStatus(at, week)`, salon time `Asia/Hebron`) and is safe in the browser; `OpenNow` gets the week as a prop. Add-ons (`bookable_online = false`) show «تُطلب في الصالون مع خدمتك».
 
+## SEO
+
+- Everything is in `src/lib/seo.ts`: `SITE_URL` (from `VERCEL_PROJECT_PRODUCTION_URL`, so `adlisalon.com` on every Vercel build, the dev server locally), `pageMeta()` (title, description ≤ 160 chars via `clampDescription()`, canonical, Open Graph `ar_AR` + Twitter), and the JSON-LD builders. Every public page sets its metadata with `pageMeta()`, never by hand: Open Graph merges shallowly, so a page's own `openGraph` replaces the layout's whole object, the picture included; `pageMeta()` always names one (the product photo on `/p/`, else `SHARE_IMAGE`). The private pages (`/account`, `/auth`, `/login`, `/signup`, admin) keep `robots: { index: false }`.
+- The names are one spelling everywhere, from `SALON` (`name` «صالون عدلي», `owner` «أبو عادل», `nameEn`, `ownerEn`, `cityEn`): the home page's «الصالون» text (with one English line), the footer's tagline, the JSON-LD. No `meta keywords`, no hidden text.
+- JSON-LD prints through `JsonLd` (`src/components/JsonLd.tsx`, `<` `>` `&` escaped). Home: one business typed `["HairSalon", "Store"]` (one place, two types; not a `@graph` of two businesses), `alternateName`, address and geo from `SALON`, `telephone` from `NEXT_PUBLIC_WHATSAPP_NUMBER`, `openingHoursSpecification` from `salon_hours` (a closed day is left out), `priceRange` from the services, `hasOfferCatalog` with the products the page shows (`HOME_SHELF`). `/p/`: `Product` + `Offer` / `AggregateOffer` (ILS, availability from `stock_state`) and `BreadcrumbList`; `/c/`: `BreadcrumbList`.
+- `src/app/robots.ts` (disallows `/admin`, `/account`, `/auth`, `/login`, `/signup`, `/api`) and `src/app/sitemap.ts` (`/`, `/products`, `/booking`, live categories with products, live products with `lastModified` = `products.updated_at`, read from the cached catalog as anon, so nothing hidden can appear). Share image: `src/app/opengraph-image.tsx`, the mono logo file in cream on forest (the SVG read is `"use cache"`, or the route turns dynamic and prerendered pages lose it).
+
 ## Email (off for now)
 
 Customers can't receive auth email yet (Resend has no verified sending domain; only the project owner's address gets mail). Temporary decision:

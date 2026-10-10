@@ -5,14 +5,15 @@ import { ShelfControls, ShelfControlsFromUrl } from "@/components/Shelf";
 import { ShelfGrid } from "@/components/ShelfGrid";
 import { getCatalog } from "@/lib/catalog";
 import { productCount } from "@/lib/format";
+import { pageMeta } from "@/lib/seo";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "كل المنتجات",
-  description: "عطور وكريمات صالون عدلي، كلها في صفحة واحدة. اختر منتجك وثبّت طلبك على واتساب.",
-  // ?c= only filters what is already on the page: one canonical address for every filter.
-  alternates: { canonical: "/products" },
-};
+// ?c= and ?q= only filter what is already on the page: one canonical address for every filter.
+export const metadata: Metadata = pageMeta({
+  title: "عطور وكريمات عدلي في قلقيلية",
+  description: "عطور وكريمات رجالية من صالون عدلي، صالون حلاقة رجالية في قلقيلية. اختر منتجك واطلبه برسالة واتساب، واستلمه من الصالون.",
+  path: "/products",
+});
 
 /**
  * Every published product, with the category chips (?c=slug, applied on the client: the page itself is the cached
