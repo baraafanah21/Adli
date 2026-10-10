@@ -3,6 +3,9 @@ import type { ProductCard, ProductDetail } from "@/lib/catalog";
 import { productImageSrc } from "@/lib/format";
 import { SALON, type Week, type Weekday } from "@/lib/salon";
 import type { SalonService } from "@/lib/salon-data";
+import type { GalleryItem } from "@/lib/gallery";
+import { GALLERY_MIN } from "@/lib/gallery";
+import { backdropPhotos, rowItems } from "@/lib/gallery-items";
 
 /*
   Search and sharing: the site's absolute address, each public page's metadata (title, description, canonical, Open
@@ -26,6 +29,10 @@ export const SITE_NAME = "عدلي";
 /** The shared picture (app/opengraph-image.tsx) and its alt text. */
 export const SHARE_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, type: "image/png", alt: "عدلي، صالون حلاقة رجالية في قلقيلية" };
 export const SITE_TITLE = "صالون عدلي | حلاق وعطور في قلقيلية – Adli Salon";
+/** Google may show a large image preview and choose the snippet length; no limit on video previews (robots meta,
+ *  https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag). Private pages set index: false. */
+export const ROBOTS = { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } as const;
+
 export const SITE_DESCRIPTION =
   "صالون عدلي (أبو عادل) للحلاقة الرجالية والعطور في قلقيلية: احجز موعدك من الموقع، واطلب العطور والكريمات برسالة واتساب.";
 
@@ -40,6 +47,8 @@ export function clampDescription(text: string, max = 158): string {
 type PageMetaInput = {
   /** Page title (the layout's template adds «| عدلي»); omitted on the home page. */
   title?: string;
+  /** A whole title that names the salon itself («عطور في قلقيلية | صالون عدلي»), instead of the template. */
+  fullTitle?: string;
   description: string;
   /** Canonical path, e.g. "/products". */
   path: string;
@@ -49,17 +58,17 @@ type PageMetaInput = {
 };
 
 /** Title, description, canonical, Open Graph and Twitter for one public page. */
-export function pageMeta({ title, description, path, image, type = "website" }: PageMetaInput): Metadata {
-  const shareTitle = title ? `${title} | ${SITE_NAME}` : SITE_TITLE;
+export function pageMeta({ title, fullTitle, description, path, image, type = "website" }: PageMetaInput): Metadata {
+  const shareTitle = fullTitle ?? (title ? `${title} | ${SITE_NAME}` : SITE_TITLE);
   const picture = image ?? SHARE_IMAGE;
   return {
-    ...(title ? { title } : { title: { absolute: SITE_TITLE } }),
+    ...(fullTitle ? { title: { absolute: fullTitle } } : title ? { title } : { title: { absolute: SITE_TITLE } }),
     description,
     alternates: { canonical: path },
     openGraph: {
       type,
       locale: "ar_AR",
-      siteName: SITE_NAME,
+      siteName: SALON.name,
       url: path,
       title: shareTitle,
       description,
@@ -110,15 +119,75 @@ function priceRange(services: SalonService[] | null): string | undefined {
 }
 
 /**
+ * The salon photos the home page shows, for its JSON-LD `image` and its shared picture: the gallery's backdrop photos
+ * and the featured video's poster, then the row's cards (a photo or a video's poster); only when the section is on the page (from
+ * GALLERY_MIN items in the row), since structured data and previews describe what people see. Large files.
+ */
+export function salonPhotos(items: GalleryItem[] | null, max = 3): { url: string; id: string }[] {
+  if (!items || rowItems(items).length < GALLERY_MIN) return [];
+  const featured = items.filter((i) => i.featured && i.poster).map((i) => ({ url: i.poster!, id: i.id }));
+  const backdrops = backdropPhotos(items).map((i) => ({ url: i.src, id: i.id }));
+  // The row's cards: a photo, or a video's poster (the frame its card shows).
+  const cards = rowItems(items)
+    .filter((i) => !i.featured)
+    .map((i) => ({ url: i.kind === "image" ? i.src : (i.poster ?? i.sm), id: i.id }));
+  return [...backdrops, ...featured, ...cards].slice(0, max);
+}
+
+/** The price board's services as offers: one Service each, priced in shekels, the same list and prices the page shows. */
+function serviceOffers(services: SalonService[]): Thing[] {
+  return services.map((s) => ({
+    "@type": "Offer",
+    itemOffered: { "@type": "Service", name: s.name_ar, provider: { "@id": absolute("/#salon") } },
+    priceCurrency: "ILS",
+    price: s.price_ils,
+  }));
+}
+
+/** The home page's name for Google's site names: one WebSite node (https://developers.google.com/search/docs/appearance/site-names). */
+export function websiteJsonLd(): Thing {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": absolute("/#website"),
+    name: SALON.name,
+    alternateName: [SITE_NAME, SALON.nameEn],
+    url: absolute("/"),
+    inLanguage: "ar",
+  };
+}
+
+/**
  * The home page's business. One place that cuts hair and sells perfume is one LocalBusiness with two types,
  * `["HairSalon", "Store"]` (schema.org has no BarberShop; a JSON-LD @type may be a list), not a @graph of two
  * businesses at the same address, which would read as two separate places with one name. Opening hours come from
  * `salon_hours` (getWeek()): a weekday with no row is closed and left out, as schema.org expects. The products the
  * page shows are its offers (`hasOfferCatalog`), from the same cached catalog as the shelf (live products only).
  */
-export function salonJsonLd(week: Week | null, services: SalonService[] | null, products: ProductCard[] | null): Thing {
+export function salonJsonLd(
+  week: Week | null,
+  services: SalonService[] | null,
+  products: ProductCard[] | null,
+  photos: { url: string }[] = [],
+): Thing {
   const telephone = salonTelephone();
   const range = priceRange(services);
+  const logo = absolute("/brand/icons/icon-512.png");
+  const catalogs = [
+    services?.length && { "@type": "OfferCatalog", name: "الخدمات والأسعار", itemListElement: serviceOffers(services) },
+    products?.length && {
+      "@type": "OfferCatalog",
+      name: "عطور وكريمات",
+      url: absolute("/products"),
+      itemListElement: products.map((p) => ({
+        "@type": "Offer",
+        itemOffered: { "@type": "Product", name: p.name_ar, url: absolute(`/p/${p.slug}`) },
+        priceCurrency: "ILS",
+        price: p.price_ils,
+        availability: AVAILABILITY[p.stock_state],
+      })),
+    },
+  ].filter(Boolean);
   return {
     "@context": "https://schema.org",
     "@type": ["HairSalon", "Store"],
@@ -127,8 +196,9 @@ export function salonJsonLd(week: Week | null, services: SalonService[] | null, 
     alternateName: [SITE_NAME, SALON.owner, SALON.nameEn, "Adli", SALON.ownerEn],
     description: SITE_DESCRIPTION,
     url: absolute("/"),
-    logo: absolute("/brand/icons/icon-512.png"),
-    image: absolute("/brand/icons/icon-512.png"),
+    logo,
+    // Real salon photos when the page shows them (salonPhotos), else the logo.
+    image: photos.length ? photos.map((p) => p.url) : logo,
     address: {
       "@type": "PostalAddress",
       ...(SALON.address && { streetAddress: SALON.address }),
@@ -149,19 +219,8 @@ export function salonJsonLd(week: Week | null, services: SalonService[] | null, 
     ...(range && { priceRange: range }),
     currenciesAccepted: "ILS",
     ...(SALON.instagram && { sameAs: [SALON.instagram] }),
-    ...(products?.length && {
-      hasOfferCatalog: {
-        "@type": "OfferCatalog",
-        name: "عطور وكريمات",
-        url: absolute("/products"),
-        itemListElement: products.map((p) => ({
-          "@type": "Offer",
-          itemOffered: { "@type": "Product", name: p.name_ar, url: absolute(`/p/${p.slug}`) },
-          priceCurrency: "ILS",
-          price: p.price_ils,
-          availability: AVAILABILITY[p.stock_state],
-        })),
-      },
+    ...(catalogs.length && {
+      hasOfferCatalog: { "@type": "OfferCatalog", name: SALON.name, itemListElement: catalogs },
     }),
   };
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { expireCatalog } from "@/lib/catalog-cache";
+import { expireCatalogIfStockChanged, publicStockStates } from "@/lib/catalog-cache";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -29,6 +29,7 @@ export async function adjustStock(_prev: ActionState, form: FormData): Promise<A
   if (a.reason !== "adjust" && a.quantity === 0) return { ok: false, message: "الكمية يجب أن تكون 1 على الأقل." };
 
   const supabase = await createClient();
+  const before = await publicStockStates();
   const { data, error } = await supabase.rpc("admin_adjust_stock", {
     p_variant_id: a.variantId,
     p_reason: a.reason,
@@ -46,8 +47,8 @@ export async function adjustStock(_prev: ActionState, form: FormData): Promise<A
     return { ok: false, message: adminErrorMessage(error) };
   }
 
-  // The shop shows availability (in / low / out), the admin shows the numbers: both are stale now.
-  expireCatalog();
+  // The admin shows the numbers (always stale now); the shop only in / low / out: expire it only if one changed.
+  await expireCatalogIfStockChanged(before);
   revalidatePath("/admin", "layout");
   const done = MANUAL_REASONS.find((r) => r.reason === a.reason)!.done;
   return { ok: true, message: `${done}. المخزون الآن ${data as number}.` };

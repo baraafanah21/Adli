@@ -1,0 +1,45 @@
+/* Breadcrumbs: one quiet line of links above a page's title, the same size as the back link it replaced. */
+
+.crumbs {
+  position: relative;
+  z-index: 1;
+  margin-bottom: var(--space-6);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crumbs li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-1);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.crumbs li:first-child a {
+  padding-inline-start: 0;
+}
+
+.crumbs a:hover {
+  color: var(--brass);
+}
+
+.sep {
+  padding-inline: var(--space-1);
+  color: var(--line-strong);
+}

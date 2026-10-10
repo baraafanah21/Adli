@@ -14,7 +14,7 @@ import type { CategoryIconName } from "@/components/icons";
     category:<slug>    one category page
     product:<slug>     one product page
   Every admin write that changes what the shop shows calls updateTag("catalog") after its RPC succeeds (see
-  src/lib/catalog-cache.ts); the profile's 5 minutes are the safety net for changes made elsewhere (SQL Editor).
+  src/lib/catalog-cache.ts); the profile's day is the safety net for changes made elsewhere (SQL Editor).
   A read error is thrown inside the cached function, so it is never cached; the exported getters turn it into
   { error } for the page.
 */
@@ -312,6 +312,9 @@ export async function getProduct(slug: string): Promise<Result<ProductDetail | n
 }
 
 /** Every live product and category slug, for generateStaticParams (prerendered at build). */
+/** The home page shows the first products (catalog order) and links to /products for all of them, with the chips. */
+export const HOME_SHELF = 4;
+
 export async function getCatalogSlugs(): Promise<{ products: string[]; categories: string[] }> {
   const { data } = await getCatalog();
   return { products: (data?.products ?? []).map((p) => p.slug), categories: (data?.categories ?? []).map((c) => c.slug) };

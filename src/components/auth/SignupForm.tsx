@@ -4,14 +4,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD, OTP_LENGTH } from "@/lib/auth/errors";
+import { authMessage, emailSendFailure, EMAIL_INCOMPLETE, isCompleteEmail, isEmailSendFailure, MIN_PASSWORD, OTP_LENGTH, sendFailure } from "@/lib/auth/errors";
 import { useOtpPending } from "@/lib/auth/otp-session";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { confirmUrl } from "@/components/auth/LoginForm";
 import { OtpStep } from "@/components/auth/OtpStep";
+import { EMAIL_ENABLED } from "@/lib/auth/email";
 import styles from "./auth.module.css";
 
-type Status = { kind: "idle" } | { kind: "busy" } | { kind: "error"; message: string; contact?: boolean };
+type Status =
+  | { kind: "idle" }
+  | { kind: "busy" }
+  | { kind: "error"; message: string; contact?: boolean }
+  /** The email already has an account: Supabase sent nothing, so offer a sign-in code or a password reset. */
+  | { kind: "exists"; email: string; sending?: boolean; failure?: { message: string; contact?: boolean } };
 
 export function SignupForm({ next }: { next: string }) {
   const router = useRouter();
@@ -39,6 +45,10 @@ export function SignupForm({ next }: { next: string }) {
       // The redirect is only for the email's fallback link (/auth/confirm); the code is the main way in.
       options: { data: { full_name: n.slice(0, 80) }, emailRedirectTo: confirmUrl(next) },
     });
+    // «Confirm email» off: Supabase says it itself. Same screen as below, when codes can reach the customer.
+    if (error && EMAIL_ENABLED && (error.code === "user_already_exists" || error.code === "email_exists")) {
+      return setStatus({ kind: "exists", email: em });
+    }
     if (error) {
       return setStatus(
         isEmailSendFailure(error) ? { kind: "error", ...emailSendFailure("confirm") } : { kind: "error", message: authMessage(error) },
@@ -51,28 +61,53 @@ export function SignupForm({ next }: { next: string }) {
       router.refresh();
       return;
     }
-    // Confirmation on: the email carries a six-digit code. Same answer whether or not the email already had an account.
+    // Confirmation on and the email already has an account: Supabase answers a user with no identities and sends no
+    // email, so a code step would wait for nothing. Say so, and offer a sign-in code or a reset instead.
+    if (data.user && data.user.identities?.length === 0) return setStatus({ kind: "exists", email: em });
+    // Confirmation on: the email carries a six-digit code.
     setStatus({ kind: "idle" });
     otp.save(em, "signup");
   }
 
+  const sendLoginCode = async (target: string) =>
+    (await createClient().auth.signInWithOtp({ email: target, options: { shouldCreateUser: false, emailRedirectTo: confirmUrl(next) } }))
+      .error;
+
+  /** «ادخل برمز على بريدك»: a sign-in code to the account's email, then the code step (verify type "email"). */
+  async function loginWithCode(target: string) {
+    setStatus({ kind: "exists", email: target, sending: true });
+    const failure = sendFailure(await sendLoginCode(target), "login");
+    if (failure) return setStatus({ kind: "exists", email: target, failure });
+    setStatus({ kind: "idle" });
+    otp.save(target, "login");
+  }
+
   if (otp.pending) {
-    const sentTo = otp.pending.email;
+    const { email: sentTo, flow } = otp.pending;
+    const login = flow === "login";
     return (
       <OtpStep
         email={sentTo}
         type="email"
         sentAt={otp.pending.sentAt}
-        what="confirm"
+        what={login ? "login" : "confirm"}
         lede={
-          <>
-            أرسلنا رمزاً من {OTP_LENGTH} أرقام إلى <bdi dir="ltr">{sentTo}</bdi>. اكتبه هنا لتفعيل حسابك.
-          </>
+          login ? (
+            <>
+              أرسلنا رمز دخول من {OTP_LENGTH} أرقام إلى <bdi dir="ltr">{sentTo}</bdi>. اكتبه هنا فتدخل إلى حسابك.
+            </>
+          ) : (
+            <>
+              أرسلنا رمزاً من {OTP_LENGTH} أرقام إلى <bdi dir="ltr">{sentTo}</bdi>. اكتبه هنا لتفعيل حسابك.
+            </>
+          )
         }
         resend={async () =>
-          (await createClient().auth.resend({ type: "signup", email: sentTo, options: { emailRedirectTo: confirmUrl(next) } })).error
+          login
+            ? sendLoginCode(sentTo)
+            : (await createClient().auth.resend({ type: "signup", email: sentTo, options: { emailRedirectTo: confirmUrl(next) } })).error
         }
-        onResent={() => otp.save(sentTo, "signup")}
+        onResent={() => otp.save(sentTo, flow)}
         onVerified={() => {
           otp.clear();
           router.replace(next);
@@ -103,7 +138,10 @@ export function SignupForm({ next }: { next: string }) {
           dir="ltr"
           required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (status.kind === "exists") setStatus({ kind: "idle" });
+          }}
         />
       </div>
       <div className="ad-field">
@@ -121,9 +159,31 @@ export function SignupForm({ next }: { next: string }) {
         />
       </div>
       {status.kind === "error" && <AuthAlert error={status} />}
-      <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
-        {status.kind === "busy" ? "جارٍ إنشاء الحساب…" : "أنشئ الحساب"}
-      </button>
+      {status.kind === "exists" && (
+        <div className={styles.exists}>
+          <p className={styles.lede} role="alert">
+            لهذا البريد حساب عندنا من قبل.
+          </p>
+          {status.failure && <AuthAlert error={status.failure} />}
+          <button
+            type="button"
+            className="ad-btn ad-btn--primary ad-btn--block"
+            disabled={status.sending}
+            onClick={() => loginWithCode(status.email)}
+          >
+            {status.sending ? "جارٍ الإرسال…" : "ادخل برمز على بريدك"}
+          </button>
+          <Link className="ad-btn ad-btn--ghost ad-btn--block" href={`/auth/forgot?next=${encodeURIComponent(next)}`}>
+            نسيت كلمة المرور
+          </Link>
+        </div>
+      )}
+      {/* While the email has an account, the way on is the code or the reset above; a new email brings this back. */}
+      {status.kind !== "exists" && (
+        <button type="submit" className="ad-btn ad-btn--primary ad-btn--block" disabled={status.kind === "busy"}>
+          {status.kind === "busy" ? "جارٍ إنشاء الحساب…" : "أنشئ الحساب"}
+        </button>
+      )}
       {/* A new tab, so what is typed in the form stays. */}
       <p className={`${styles.hint} ${styles.consent}`}>
         بإنشاء حساب توافق على{" "}

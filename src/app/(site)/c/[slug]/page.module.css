@@ -10,25 +10,6 @@
   }
 }
 
-.back {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  margin-bottom: var(--space-6);
-  padding-inline-end: var(--space-2);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  text-decoration: none;
-}
-
-.back:hover {
-  color: var(--brass);
-}
-
 /* The header on a deeper band, full width (the same box-shadow trick as the hero). */
 .head {
   display: grid;
@@ -88,6 +69,16 @@
   height: 56px;
   border: 2px solid var(--brass);
   border-radius: var(--radius-seal);
+  color: var(--brass);
+}
+
+/* «في قلقيلية» under the category's name: part of the heading, on its own line, quieter. */
+.city {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.6;
   color: var(--brass);
 }
 

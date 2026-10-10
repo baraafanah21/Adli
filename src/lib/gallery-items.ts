@@ -10,3 +10,6 @@ export const rowItems = (items: GalleryItem[]) => items.filter((i) => !i.backdro
 
 /** The «خلفية» photos behind the section (GalleryBackdrop). */
 export const backdropPhotos = (items: GalleryItem[]) => items.filter((i) => i.backdrop && i.kind === "image");
+
+/** Every gallery photo's alt text (cards, backdrop): what it shows and where, the same words for each (no caption). */
+export const GALLERY_ALT = "قصة شعر في صالون عدلي، قلقيلية";

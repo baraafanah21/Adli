@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +47,9 @@ export async function updateProfile(_prev: ProfileState, form: FormData): Promis
     console.error("updateProfile", error.code, error.message);
     return { error: "تعذّر حفظ بياناتك الآن. حاول مرة أخرى بعد قليل." };
   }
-  revalidatePath("/", "layout");
+  // The browser re-renders this page and SessionIsland with the new profile (the order and booking forms read it).
+  // Only the session's own view changes; the cached public pages don't depend on it.
+  refresh();
   return { ok: true };
 }
 

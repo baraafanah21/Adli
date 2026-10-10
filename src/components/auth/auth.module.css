@@ -203,3 +203,9 @@
   font-weight: 500;
   text-underline-offset: 4px;
 }
+
+/* Sign-up with an email that already has an account: the line, then a sign-in code or a reset. */
+.exists {
+  display: grid;
+  gap: var(--space-3);
+}

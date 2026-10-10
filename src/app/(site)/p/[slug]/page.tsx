@@ -4,14 +4,19 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductPurchase, ProductPurchaseFromUrl } from "@/components/ProductPurchase";
 import { ProductUnavailable, ProductView, initialVariant, relatedProducts } from "@/components/ProductView";
-import { getCatalog, getCatalogSlugs, getProduct } from "@/lib/catalog";
+import { HOME_SHELF, getCatalog, getCatalogSlugs, getProduct } from "@/lib/catalog";
 import { formatPrice, productImageSrc } from "@/lib/format";
 import { breadcrumbJsonLd, clampDescription, pageMeta, productJsonLd } from "@/lib/seo";
 
-/** Every live product is prerendered; one shown later is built on its first visit (cached the same way). */
+/*
+  Only the home shelf's products are prerendered; every other product is built on its first visit, then cached the
+  same way (tag `catalog`). Every deployment, Preview included, writes what it prerenders to Vercel's ISR cache: all
+  84 product pages were ~1,300 of a deploy's ~1,800 write units (Hobby: 200,000 a month). docs/PERFORMANCE.md «ISR».
+  Cache Components needs at least one param here.
+*/
 export async function generateStaticParams() {
   const { products } = await getCatalogSlugs();
-  return products.length ? products.map((slug) => ({ slug })) : [{ slug: "oud-malaki" }];
+  return products.length ? products.slice(0, HOME_SHELF).map((slug) => ({ slug })) : [{ slug: "oud-malaki" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {

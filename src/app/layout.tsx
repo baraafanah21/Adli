@@ -3,7 +3,8 @@ import localFont from "next/font/local";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
+import { ROBOTS, SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/seo";
+import { SALON } from "@/lib/salon";
 
 // Fonts (P-A, docs/PERFORMANCE.md): self-hosted subsets of the same versions Google Fonts serves, built by
 // scripts/fonts/build-fonts.sh (src/fonts/README.md). Swap, each with next/font's size-adjusted fallback (no layout
@@ -63,15 +64,19 @@ export const metadata: Metadata = {
     template: "%s | عدلي",
   },
   description: SITE_DESCRIPTION,
+  // Large image previews, any snippet length (src/lib/seo.ts). The private pages override it with index: false.
+  robots: ROBOTS,
   // Every public page replaces these with pageMeta() (Open Graph merges shallowly); this is the fallback for the rest.
   // The picture is app/opengraph-image.tsx.
-  openGraph: { type: "website", locale: "ar_AR", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION },
+  openGraph: { type: "website", locale: "ar_AR", siteName: SALON.name, title: SITE_TITLE, description: SITE_DESCRIPTION },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
   // The logo's icons (public/brand/icons/; /favicon.ico is rewritten there in next.config.ts). Manifest: app/manifest.ts.
   icons: {
     icon: [
       { url: "/brand/icons/favicon.ico", sizes: "16x16 32x32 48x48" },
       { url: "/brand/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/icons/icon-48.png", sizes: "48x48", type: "image/png" },
+      // Larger than 48px, square, for Google's search results (https://developers.google.com/search/docs/appearance/favicon-in-search).
       { url: "/brand/icons/icon-192.png", sizes: "192x192", type: "image/png" },
     ],
     apple: { url: "/brand/icons/apple-touch-icon.png", sizes: "180x180" },

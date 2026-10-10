@@ -20,7 +20,7 @@ import styles from "./auth.module.css";
 type Status =
   | { kind: "idle" }
   | { kind: "busy" }
-  | { kind: "error"; message: string; contact?: boolean; canResend?: boolean };
+  | { kind: "error"; message: string; contact?: boolean; canResend?: boolean; canLoginCode?: boolean };
 
 /** Where the emails' fallback links land (/auth/confirm verifies them); the six-digit code is the main way in. */
 export const confirmUrl = (next: string) => `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`;
@@ -50,7 +50,12 @@ export function LoginForm({ next }: { next: string }) {
     setStatus({ kind: "busy" });
     const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
-      setStatus({ kind: "error", message: authMessage(error), canResend: error.code === "email_not_confirmed" });
+      setStatus({
+        kind: "error",
+        message: authMessage(error),
+        canResend: error.code === "email_not_confirmed",
+        canLoginCode: error.code === "invalid_credentials",
+      });
       return;
     }
     router.replace(next);
@@ -67,17 +72,21 @@ export function LoginForm({ next }: { next: string }) {
     otp.save(target, "confirm");
   }
 
-  async function sendCode(e: FormEvent) {
-    e.preventDefault();
-    const target = email.trim();
-    if (!target) return setCodeStatus({ kind: "error", message: "اكتب بريدك أولاً." });
-    if (!isCompleteEmail(target)) return setCodeStatus({ kind: "error", message: EMAIL_INCOMPLETE });
-    setCodeStatus({ kind: "busy" });
+  /** A sign-in code to `target`, then the code step; `report` is the status line under the button that asked. */
+  async function sendCodeTo(target: string, report: (s: Status) => void) {
+    if (!target) return report({ kind: "error", message: "اكتب بريدك أولاً." });
+    if (!isCompleteEmail(target)) return report({ kind: "error", message: EMAIL_INCOMPLETE });
+    report({ kind: "busy" });
     // Rate limits and a failed send are told; «no such account» never is.
     const failure = sendFailure(await sendLoginCode(target), "login");
-    if (failure) return setCodeStatus({ kind: "error", ...failure });
-    setCodeStatus({ kind: "idle" });
+    if (failure) return report({ kind: "error", ...failure });
+    report({ kind: "idle" });
     otp.save(target, "login");
+  }
+
+  function sendCode(e: FormEvent) {
+    e.preventDefault();
+    void sendCodeTo(email.trim(), setCodeStatus);
   }
 
   if (otp.pending) {
@@ -167,6 +176,12 @@ export function LoginForm({ next }: { next: string }) {
           )}
         </div>
         {status.kind === "error" && <AuthAlert error={status} />}
+        {/* Wrong email or password: the same email gets a sign-in code at once, no need to scroll to the code form. */}
+        {status.kind === "error" && status.canLoginCode && EMAIL_ENABLED && (
+          <button type="button" className="ad-btn ad-btn--ghost ad-btn--block" onClick={() => sendCodeTo(email.trim(), setStatus)}>
+            أرسل لي رمز دخول
+          </button>
+        )}
         {status.kind === "error" && status.canResend && EMAIL_ENABLED && (
           <button type="button" className="ad-btn ad-btn--ghost ad-btn--block" onClick={resendConfirmation}>
             أرسل لي رمز تأكيد جديداً

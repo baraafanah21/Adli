@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { GalleryItem } from "@/lib/gallery";
+import { GALLERY_ALT } from "@/lib/gallery-items";
 import styles from "./ChairGallery.module.css";
 
 const SHOW_MS = 7000;
@@ -135,7 +136,9 @@ export function GalleryBackdrop({ images, paused }: { images: GalleryItem[]; pau
               src={item.sm}
               srcSet={`${item.sm} 480w, ${item.src} 1080w`}
               sizes="100vw"
-              alt=""
+              // The words for Google Images; a backdrop is scenery, so screen readers skip it.
+              alt={GALLERY_ALT}
+              aria-hidden="true"
               loading="lazy"
               decoding="async"
               data-fit={fit ? "" : undefined}

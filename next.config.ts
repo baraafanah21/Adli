@@ -7,16 +7,17 @@ const nextConfig: NextConfig = {
   // Phase G: public pages are prerendered from "use cache" data (src/lib/supabase/public.ts only) and refreshed by
   // updateTag() from the admin's Server Actions; anything that reads the session sits behind <Suspense>.
   cacheComponents: true,
+  // Every admin write expires its tag at once (updateTag), so the times below are only a safety net for a change
+  // made outside the admin (SQL Editor): it shows within a day, plus one visit. Kept long because each regeneration
+  // whose output changed is an ISR write (Vercel Hobby: 200,000 a month; docs/PERFORMANCE.md «ISR»).
   cacheLife: {
-    // Hours, services, barbers: they change only from «الصالون», which calls updateTag("salon") at once. The times
-    // below are a safety net for a change made elsewhere (SQL Editor): at most an hour, plus one visit.
-    salon: { stale: 300, revalidate: 3600, expire: 86400 },
+    // Hours, services, barbers: they change only from «الصالون», which calls updateTag("salon").
+    salon: { stale: 300, revalidate: 86400, expire: 604800 },
     // Categories, products, prices, photos, availability: every admin write (and every stock movement from an order
-    // or «المخزون») calls updateTag("catalog"). Safety net for anything else: 5 minutes, plus one visit.
-    catalog: { stale: 60, revalidate: 300, expire: 86400 },
-    // «من الكرسي»: changes only from the admin's gallery page, which calls updateTag("gallery") at once. Safety net
-    // for a change made elsewhere: at most an hour, plus one visit.
-    gallery: { stale: 300, revalidate: 3600, expire: 86400 },
+    // or «المخزون») calls updateTag("catalog").
+    catalog: { stale: 300, revalidate: 86400, expire: 604800 },
+    // «زبايننا المرتّبين»: changes only from the admin's gallery page, which calls updateTag("gallery").
+    gallery: { stale: 300, revalidate: 86400, expire: 604800 },
   },
   images: {
     remotePatterns: supabaseUrl ? [new URL(`${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/products/**`)] : [],
@@ -30,7 +31,11 @@ const nextConfig: NextConfig = {
   },
   // The hero's DrawnLogo reads public/brand/adli-logo-mono.svg on the server (src/lib/brand-paths.ts): keep the file
   // in every server bundle, so a page rebuilt after a revalidation finds it too.
-  outputFileTracingIncludes: { "/*": ["./public/brand/adli-logo-mono.svg"] },
+  outputFileTracingIncludes: {
+    "/*": ["./public/brand/adli-logo-mono.svg"],
+    // The home page's shared picture composes the seal file (app/share/home.jpg) when the gallery changes.
+    "/share/home.jpg": ["./public/brand/adli-seal.svg"],
+  },
   async headers() {
     return [
       // Hero frames are versioned by folder (public/hero/v1, v2…): a new set gets a new path.

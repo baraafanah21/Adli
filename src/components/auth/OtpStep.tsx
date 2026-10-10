@@ -128,7 +128,7 @@ export function OtpStep({ email, type, sentAt, lede, what, resend, onResent, onV
           onChange={(e) => onInput(e.target.value)}
         />
         <p id={ids.hint} className={styles.hint}>
-          الرمز صالح لمدة 10 دقائق ولمرة واحدة. لم يصل؟ انظر في مجلد الرسائل غير المرغوب فيها.
+          الرمز صالح لمدة 10 دقائق ولمرة واحدة. لم يصل؟ انتظر دقيقة، وافتح مجلد البريد غير الهام (Junk)، خصوصاً iCloud.
         </p>
       </div>
       {status.kind === "error" && <AuthAlert error={status} />}
