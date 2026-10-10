@@ -1,25 +1,57 @@
 import type { Metadata, Viewport } from "next";
-import { Amiri, Readex_Pro } from "next/font/google";
+import localFont from "next/font/local";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 import "./globals.css";
 
-// Fonts (Phase G, measured in docs/PERFORMANCE.md): Arabic and Latin only, swap.
-// Amiri is for display text only and its Arabic files are ~100 KB each, so it isn't preloaded: it loads where a
-// display style is used, with next/font's size-adjusted fallback until then (no layout shift).
-const amiri = Amiri({
-  variable: "--font-amiri-loaded",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "700"],
+// Fonts (P-A, docs/PERFORMANCE.md): self-hosted subsets of the same versions Google Fonts serves, built by
+// scripts/fonts/build-fonts.sh (src/fonts/README.md). Swap, each with next/font's size-adjusted fallback (no layout
+// shift when it arrives). The unicode-range values match the script's.
+
+// Readex Pro, the text font: one variable file (weights 160–700, as Google serves it) with Arabic, Latin and ₪, the only
+// font preloaded.
+const readex = localFont({
+  src: "../fonts/readex-pro.woff2",
+  weight: "160 700",
+  variable: "--font-readex-loaded",
   display: "swap",
-  preload: false,
+  adjustFontFallback: "Arial",
 });
 
-// Readex Pro is a variable font: no `weight` → one file per subset for every weight (300–600 are used).
-const readex = Readex_Pro({
-  variable: "--font-readex-loaded",
-  subsets: ["arabic", "latin"],
+// Amiri, display text only: never preloaded, it loads where a display style is used. Arabic (with the space, digits and
+// punctuation, so an Arabic heading needs only this file) and Latin letters are separate files: the Latin one loads only
+// for a heading with a Latin name.
+const amiri = localFont({
+  src: [
+    { path: "../fonts/amiri-regular-arabic.woff2", weight: "400" },
+    { path: "../fonts/amiri-bold-arabic.woff2", weight: "700" },
+  ],
+  variable: "--font-amiri-loaded",
   display: "swap",
+  preload: false,
+  adjustFontFallback: "Times New Roman",
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0020-0040,U+005B-0060,U+007B-007E,U+00A0,U+00AB,U+00BB,U+00D7,U+060C,U+061B,U+061F,U+0621-0652,U+0640,U+0670,U+067E,U+0686,U+06A4,U+06A9,U+06AF,U+06CC,U+200C-200F,U+2010-2014,U+2018-201D,U+2026,U+25CC",
+    },
+  ],
+});
+
+// Latin letters, digits and punctuation, as Google's latin file had them (scripts/fonts/build-fonts.sh says why). Listed
+// before the Arabic family in --font-amiri (tokens.css), without a fallback of its own: a Latin letter skips the Arabic
+// family (its unicode-range) and would otherwise land on that family's Times New Roman fallback first.
+const amiriLatin = localFont({
+  src: [
+    { path: "../fonts/amiri-regular-latin.woff2", weight: "400" },
+    { path: "../fonts/amiri-bold-latin.woff2", weight: "700" },
+  ],
+  variable: "--font-amiri-latin-loaded",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: false,
+  declarations: [{ prop: "unicode-range", value: "U+0021-007E,U+00A1-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2010-2027,U+2030-205E,U+20AC,U+2122" }],
 });
 
 export const metadata: Metadata = {
@@ -62,7 +94,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ar"
       dir="rtl"
       data-theme="night"
-      className={`${amiri.variable} ${readex.variable}`}
+      className={`${amiri.variable} ${amiriLatin.variable} ${readex.variable}`}
       suppressHydrationWarning
     >
       <head>
