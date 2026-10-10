@@ -16,7 +16,7 @@ import { breadcrumbJsonLd, clampDescription, pageMeta, productJsonLd } from "@/l
 */
 export async function generateStaticParams() {
   const { data } = await getCatalog();
-  const shelf = homeShelf(data?.products ?? []);
+  const shelf = homeShelf(data?.products ?? [], data?.home);
   return shelf.length ? shelf.map((p) => ({ slug: p.slug })) : [{ slug: "oud-malaki" }];
 }
 

@@ -396,3 +396,23 @@ export async function setBundle(input: z.input<typeof BundleInput>): Promise<Act
   revalidateCatalog(b.productId);
   return { ok: true, message: "حُفظت البكجة." };
 }
+
+/** «منتجات الرئيسية» (owner): the products in the home page's 4 places, in order; an empty place fills by itself. */
+export async function setHomeProducts(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireRole(["owner"], "/admin/products/home");
+  const ids = form
+    .getAll("slot")
+    .map(String)
+    .filter((v) => v !== "");
+  if (!ids.every((id) => z.uuid().safeParse(id).success)) return INVALID;
+  if (new Set(ids).size !== ids.length) return { ok: false, message: "اخترت نفس المنتج في مكانين. اختر منتجاً مختلفاً لكل مكان." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_home_products", { p_product_ids: ids });
+  if (error) return fail(error, "admin_set_home_products");
+  expireCatalog();
+  revalidatePath("/admin/products/home");
+  return {
+    ok: true,
+    message: ids.length === 0 ? "حُفظ: الرئيسية تختار منتجاتها تلقائياً." : "حُفظت منتجات الرئيسية. تظهر للزبائن الآن.",
+  };
+}
